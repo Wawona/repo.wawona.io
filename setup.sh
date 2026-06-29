@@ -6,6 +6,7 @@
 set -e
 
 echo "[*] Wawona Repository Setup"
+echo "[!] Jailbreak only — App Store modules use wwn-apt (repo.wawona.io prohibited on App Store builds)"
 
 # Detect OS
 OS_TYPE=$(uname -o 2>/dev/null || echo "Unknown")
