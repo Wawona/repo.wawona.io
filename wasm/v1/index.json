@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "channel": "wasm",
+  "mode": "A",
+  "description": "Wawona Runtime WASI packages (Mode A). Not jailbreak APT.",
+  "packages": []
+}
