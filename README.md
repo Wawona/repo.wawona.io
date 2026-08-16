@@ -2,31 +2,31 @@
 
 Hosted at [repo.wawona.io](https://repo.wawona.io)
 
-## Two channels (do not mix)
+## Channels (do not mix)
 
-| Path | Audience | Contents |
-|------|----------|----------|
-| **`/wasm/`** | App Store, Play, macOS Wawona | WASI `.wasm` packages for **Wawona Runtime** only |
-| **`/jailbreak/`** (APT / Sileo) | Jailbroken iOS (+ Termux where applicable) | **`.deb` tweaks** (Desktop, anowaW Mode B, …) |
+| Path / artifact | Audience | Contents |
+|-----------------|----------|----------|
+| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime** |
+| **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, anowaW Mode B, …) |
+| **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT — **never** submitted to App Store |
 
-### Wasm channel (Mode A — store-safe)
+### Mode A (store-safe)
 
-Store / Play builds of Wawona may download **Wasm bytecode** from `/wasm/` as
-input to the reviewed in-app WASI interpreter. Packages are **not** iOS/Android
-apps and **not** Mach-O/ELF.
+Store / Play Wawona may download Wasm from `/wasm/` only. VMs/containers in the
+**App Store IPA** use jitless UTM-SE–class engines only (see Wawona docs).
 
-Plan: [Wawona `docs/wasm-package-manager.md`](https://github.com/Wawona/Wawona/blob/development/docs/wasm-package-manager.md).
+### Mode B (jailbreak)
 
-### Jailbreak channel (Mode B — stays)
+1. Keep Procursus/Sileo **`.deb`** packaging ([docs/packaging.md](docs/packaging.md)).
+2. **CI must build and publish a Mode B Wawona iOS IPA** for Sileo so jailbroken
+   users get JIT UTM containers/VMs and jailbreak APT tooling.
+3. Store-shaped binaries must never embed Mode B engines or link this IPA’s JIT path.
 
-This repo continues to host a **Debian APT flat repo** for jailbroken iOS
-(Procursus / Sileo) and related tweak packaging. See [docs/packaging.md](docs/packaging.md).
-
-**Store-shaped Wawona binaries must never link, list, or install from the
-jailbreak APT tree.** Website Mode B docs may; the App Store IPA must not.
+Plan: [mode-a-b.md](https://github.com/Wawona/Wawona/blob/development/docs/mode-a-b.md),
+[wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/development/docs/wasm-package-manager.md).
 
 ## Historical note
 
-Older docs said App Store builds must never touch `repo.wawona.io` at all —
-that was when this host was APT-only. The Wasm path is the store-safe exception;
-the firewall is now **path-based**, not host-based.
+Older docs said App Store builds must never touch this host — that was when the
+host was APT-only. **`/wasm/`** is the store-safe exception; jailbreak APT and
+Mode B IPA remain off-limits inside store binaries.
