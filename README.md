@@ -7,7 +7,7 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 | Path / artifact | Audience | Contents |
 |-----------------|----------|----------|
 | **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime** |
-| **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, anowaW Mode B, …) |
+| **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, Wawona Swinging Bridge Mode B, …) |
 | **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT — **never** submitted to App Store |
 
 ### Mode A (store-safe)
