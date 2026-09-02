@@ -54,3 +54,22 @@ The Wawona repository automated scripts handle these fields for you, but for man
 - **Data Storage**: Store all app/binary data in `/var/` within the jbroot.
 - **Reserved Paths**: `/System/` in jbroot is reserved for system mirroring; do not store files there.
 - **Macho Loading**: Executables, frameworks, or dylibs stored in `jbroot:/var` or `jbroot:/tmp` **cannot** be loaded by iOS security; place them in other jbroot directories.
+
+## 6. Rootful vs rootless (Wawona Mode B app packages)
+
+Rootful and rootless are **different builds**, not a renamed tree.
+
+| Scheme | dpkg `Architecture` | Install prefix | Who |
+|---|---|---|---|
+| **rootless** | `iphoneos-arm64` | `/var/jb` | Dopamine, palera1n rootless, Procursus |
+| **rootful** | `iphoneos-arm` | `/` | checkra1n / unc0ver / palera1n rootful class |
+| **roothide** | `iphoneos-arm64e` | `jbroot()` | RootHide randomized jbroot |
+
+Use `mkWawonaPackage.nix` with `jailbreakScheme = "rootless" | "rootful" | "roothide"`.
+GitHub Release names: `Wawona-{calver}-iOS-arm64-rootless.deb` /
+`…-rootful.deb`. Never one `.deb` for both. Never under `/wasm/`. Store IPAs
+must never fetch `/jailbreak/` packages.
+
+Rootless SpringBoard tweaks (Desktop / LockScreen / Swinging Bridge inject)
+`Depends: ellekit`. Never link ElleKit into the App Store IPA or TrollStore `.tipa`.
+
