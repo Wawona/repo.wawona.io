@@ -6,11 +6,11 @@
   "packages": [
     {
       "name": "hello-wasi",
-      "version": "0.1.0",
-      "digest": "sha256:718f7ee9149b5f63ef62ded7bf41d35438b03d3180af05827d763483560de957",
-      "url": "packages/hello-wasi/0.1.0/component.wasm",
+      "version": "0.1.1",
+      "digest": "sha256:573f0e7f8d2c52a30646e791ae0213d479af80411900ee6a4f954bdc8c0a2c24",
+      "url": "packages/hello-wasi/0.1.1/component.wasm",
       "wasi": "p1",
-      "summary": "Tiny WASI P1 hello (smoke test for wpm)"
+      "summary": "Tiny WASI P1 hello (smoke test for wpm; default prints hello)"
     },
     {
       "name": "hello-wasi-gui",
