@@ -13,6 +13,14 @@
       "summary": "Tiny WASI P1 hello (smoke test for wpm)"
     },
     {
+      "name": "hello-wasi-gui",
+      "version": "0.1.0",
+      "digest": "sha256:7922af0bebbe3f3c2665d798be1a3c73877089c533169ac461daa81558d015a5",
+      "url": "packages/hello-wasi-gui/0.1.0/component.wasm",
+      "wasi": "p1",
+      "summary": "Hello window over wl_shm + xdg (WASI P1 Wayland smoke)"
+    },
+    {
       "name": "wayland-shm-demo",
       "version": "0.1.0",
       "digest": "sha256:f2f7aa691174d88ff7afc76097dc62c8999cdc7600dddaff8281b631fbe39b5a",
