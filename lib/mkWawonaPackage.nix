@@ -4,6 +4,8 @@
 , version
 , src
 , target ? "ios" # "ios" or "android"
+, # Jailbreak layout for iOS packages. Rootful and rootless are different builds.
+  jailbreakScheme ? "rootless" # "rootless" | "rootful" | "roothide"
 , sileo ? {} # Reused for metadata
 , patches ? []
 , iosPatches ? []
@@ -15,14 +17,24 @@
 } @ args:
 
 let
+  scheme = jailbreakScheme;
+  iosPrefix =
+    if scheme == "rootful" then "/"
+    else if scheme == "roothide" then "/var/jb" # jbroot() at runtime; packaging under /var/jb layout
+    else "/var/jb";
+  iosArch =
+    if scheme == "rootful" then "iphoneos-arm"
+    else if scheme == "roothide" then (args.sileo.architecture or "iphoneos-arm64e")
+    else (args.sileo.architecture or "iphoneos-arm64");
+
   # Explicit target validation and defaults
   targetData = if target == "android" then {
     prefix = "/data/data/com.termux/files/usr";
     arch = "aarch64";
     host = "aarch64-linux-android";
   } else if target == "ios" then {
-    prefix = "/var/jb";
-    arch = args.sileo.architecture or "iphoneos-arm64";
+    prefix = iosPrefix;
+    arch = iosArch;
     host = "aarch64-apple-ios";
   } else throw "Wawona: Unsupported target '${target}'. Expecting 'ios' or 'android'.";
 
@@ -36,7 +48,7 @@ in
 stdenv.mkDerivation (rec {
   inherit pname version src buildInputs;
   patches = allPatches;
-  
+
   nativeBuildInputs = [ dpkg coreutils ] ++ (args.nativeBuildInputs or []);
 
   configureFlags = [
@@ -69,4 +81,4 @@ EOF
     dpkg-deb -Zxz -b $out $out/deb/${pname}_${version}_${arch}.deb
   '';
 
-} // (lib.filterAttrs (n: v: ! lib.elem n [ "sileo" "postInstall" "prefix" "target" ]) args))
+} // (lib.filterAttrs (n: v: ! lib.elem n [ "sileo" "postInstall" "prefix" "target" "jailbreakScheme" ]) args))
