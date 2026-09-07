@@ -11,7 +11,9 @@
     <meta property="og:url" content="https://repo.wawona.io/search/">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="../images/favicon.png">
-    <link rel="search" type="application/opensearchdescription+xml" title="Wawona packages" href="opensearch.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="Wawona catalogs" href="opensearch.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="Wawona wasm" href="opensearch-wasm.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="Wawona debs" href="opensearch-deb.xml">
     <link rel="stylesheet" href="catalog.css">
 </head>
 <body data-channel="choose">
@@ -90,6 +92,18 @@
                 <label><input type="radio" name="kind" value="" checked> All</label>
                 <label><input type="radio" name="kind" value="cli"> CLI</label>
                 <label><input type="radio" name="kind" value="wayland"> Wayland</label>
+            </fieldset>
+            <fieldset class="deb-only">
+                <legend>Architecture</legend>
+                <div id="arch-options">
+                    <label><input type="radio" name="arch" value="" checked> All</label>
+                </div>
+            </fieldset>
+            <fieldset class="deb-only">
+                <legend>Section</legend>
+                <div id="section-options">
+                    <label><input type="radio" name="section" value="" checked> All</label>
+                </div>
             </fieldset>
             <fieldset>
                 <legend>Sort</legend>

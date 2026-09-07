@@ -1,5 +1,5 @@
 {
-  description = "Wawona Nix flake for iOS jailbreak packages (converted from Procursus-roothide)";
+  description = "Wawona package host: Mode A wasm (/wasm/v1) plus Mode B Sileo APT at repo root";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

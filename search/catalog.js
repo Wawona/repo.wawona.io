@@ -25,6 +25,7 @@
     const wasiInputs = [...document.querySelectorAll('input[name="wasi"]')];
     const kindInputs = [...document.querySelectorAll('input[name="kind"]')];
     const sortInputs = [...document.querySelectorAll('input[name="sort"]')];
+    const filtersEl = document.querySelector(".filters");
 
     let packages = [];
     let loadedLane = "";
@@ -58,6 +59,29 @@
             i = hit + needle.length;
         }
         return out;
+    };
+
+    const namedInputs = (name) => [...document.querySelectorAll(`input[name="${name}"]`)];
+
+    const fillChoices = (hostId, inputName, values, selected) => {
+        const host = document.getElementById(hostId);
+        if (!host) return;
+        const unique = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        const allChecked = !selected ? " checked" : "";
+        const options = unique
+            .map((value) => {
+                const checked = selected === value ? " checked" : "";
+                return `<label><input type="radio" name="${inputName}" value="${escapeHtml(value)}"${checked}> ${escapeHtml(value)}</label>`;
+            })
+            .join("");
+        host.innerHTML = `<label><input type="radio" name="${inputName}" value=""${allChecked}> All</label>${options}`;
+    };
+
+    const fillDebFilters = (selectedArch, selectedSection) => {
+        const archs = packages.filter((pkg) => pkg.channel === "deb").map((pkg) => pkg.architecture);
+        const sections = packages.filter((pkg) => pkg.channel === "deb").map((pkg) => pkg.section);
+        fillChoices("arch-options", "arch", archs, selectedArch);
+        fillChoices("section-options", "section", sections, selectedSection);
     };
 
     const compareVersions = (a, b) => {
@@ -209,6 +233,8 @@
             channel,
             wasi: params.get("wasi") || "",
             kind: params.get("kind") || "",
+            arch: params.get("arch") || "",
+            section: params.get("section") || "",
             sort: params.get("sort") || "relevance",
         };
     };
@@ -221,6 +247,10 @@
         if (state.channel === "wasm") {
             if (state.wasi) params.set("wasi", state.wasi);
             if (state.kind) params.set("kind", state.kind);
+        }
+        if (state.channel === "deb") {
+            if (state.arch) params.set("arch", state.arch);
+            if (state.section) params.set("section", state.section);
         }
         if (state.sort && state.sort !== "relevance") params.set("sort", state.sort);
         const next = params.toString() ? `?${params.toString()}` : "./";
@@ -319,6 +349,15 @@
         if (![...wasiInputs].some((el) => el.checked) && wasiInputs[0]) wasiInputs[0].checked = true;
         for (const el of kindInputs) el.checked = el.value === state.kind;
         if (![...kindInputs].some((el) => el.checked) && kindInputs[0]) kindInputs[0].checked = true;
+        if (state.channel === "deb") fillDebFilters(state.arch, state.section);
+        for (const el of namedInputs("arch")) el.checked = el.value === state.arch;
+        if (![...namedInputs("arch")].some((el) => el.checked) && namedInputs("arch")[0]) {
+            namedInputs("arch")[0].checked = true;
+        }
+        for (const el of namedInputs("section")) el.checked = el.value === state.section;
+        if (![...namedInputs("section")].some((el) => el.checked) && namedInputs("section")[0]) {
+            namedInputs("section")[0].checked = true;
+        }
         for (const el of sortInputs) el.checked = el.value === state.sort;
         if (![...sortInputs].some((el) => el.checked) && sortInputs[0]) sortInputs[0].checked = true;
     };
@@ -331,6 +370,8 @@
             channel: live.channel || (channelInputs.find((el) => el.checked) || {}).value || "",
             wasi: (wasiInputs.find((el) => el.checked) || {}).value || "",
             kind: (kindInputs.find((el) => el.checked) || {}).value || "",
+            arch: (namedInputs("arch").find((el) => el.checked) || {}).value || "",
+            section: (namedInputs("section").find((el) => el.checked) || {}).value || "",
             sort: (sortInputs.find((el) => el.checked) || {}).value || "relevance",
         };
     };
@@ -358,6 +399,8 @@
                 return false;
             }
             if (state.kind && pkg.channel === "wasm" && packageKind(pkg) !== state.kind) return false;
+            if (state.arch && pkg.channel === "deb" && pkg.architecture !== state.arch) return false;
+            if (state.section && pkg.channel === "deb" && pkg.section !== state.section) return false;
             if (q && !group.versions.some((row) => haystack(row).includes(q))) return false;
             return true;
         });
@@ -405,6 +448,13 @@
         return "";
     };
 
+    const packageLink = (pkg) => {
+        const params = new URLSearchParams();
+        params.set("channel", pkg.channel);
+        params.set("show", pkgKey(pkg));
+        return `https://repo.wawona.io/search/?${params.toString()}`;
+    };
+
     const wasmBody = (group, pkg, q) => {
         const programs = (pkg.programs || []).map((p) => `<code>${escapeHtml(p)}</code>`).join(" ");
         const platforms = Array.isArray(pkg.platforms) ? pkg.platforms.join(", ") : "";
@@ -419,11 +469,13 @@
         const install = `wpm install ${pkg.name}`;
         const run = `wasm ${pkg.name}`;
         const kind = packageKind(pkg);
+        const link = packageLink(pkg);
         return `
     ${pkg.long_description ? `<p class="long-desc">${highlight(pkg.long_description, q)}</p>` : ""}
     <div class="install-row">
       <div class="cmd"><code>${escapeHtml(install)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(install)}">Copy</button></div>
       <div class="cmd"><code>${escapeHtml(run)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(run)}">Copy</button></div>
+      <div class="cmd"><code>permalink</code><button type="button" class="copy-btn" data-copy="${escapeHtml(link)}">Copy link</button></div>
     </div>
     <table class="meta">
       ${metaRow("Catalog", "<code>Mode A wasm</code> (App Store / Play, <code>wpm</code>)")}
@@ -453,11 +505,13 @@
         const versions = group.versions.map((v) => `<code>${escapeHtml(v.version)}</code>`).join(" ");
         const source = "https://repo.wawona.io/";
         const apt = `apt install ${pkg.name}`;
+        const link = packageLink(pkg);
         return `
     ${pkg.long_description && pkg.long_description !== pkg.summary ? `<p class="long-desc">${highlight(pkg.long_description, q)}</p>` : ""}
     <div class="install-row">
       <div class="cmd"><code>${escapeHtml(source)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(source)}">Copy</button></div>
       <div class="cmd"><code>${escapeHtml(apt)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(apt)}">Copy</button></div>
+      <div class="cmd"><code>permalink</code><button type="button" class="copy-btn" data-copy="${escapeHtml(link)}">Copy link</button></div>
     </div>
     <table class="meta">
       ${metaRow("Catalog", "<code>Mode B deb</code> (jailbreak Sileo, not App Store)")}
@@ -520,6 +574,8 @@
             channel: state.channel,
             wasi: state.wasi,
             kind: state.kind,
+            arch: state.arch,
+            section: state.section,
             sort: state.sort,
         });
 
@@ -636,6 +692,9 @@
             if (state.channel === "deb") {
                 state.wasi = "";
                 state.kind = "";
+            } else {
+                state.arch = "";
+                state.section = "";
             }
             state.show = "";
             goLane(state);
@@ -644,6 +703,17 @@
 
     for (const el of [...wasiInputs, ...kindInputs, ...sortInputs]) {
         el.addEventListener("change", () => {
+            const state = currentFilters();
+            writeState(state, true);
+            render(state, false);
+        });
+    }
+
+    if (filtersEl) {
+        filtersEl.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            if (target.name !== "arch" && target.name !== "section") return;
             const state = currentFilters();
             writeState(state, true);
             render(state, false);

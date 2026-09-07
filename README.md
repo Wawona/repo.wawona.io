@@ -11,10 +11,10 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 | **`/search/?channel=deb`** | Humans (Mode B) | Jailbreak Sileo debs. Not for store binaries. |
 | **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. `index.json` plus blobs. Every package lists GitHub maintainers. Do not redirect this tree. |
 | **`/` APT** (`Packages`, `debs/`) | Sileo | Jailbreak **`.deb`** at the repo root. Source URL stays `https://repo.wawona.io/`. |
-| **`/jailbreak/`** | Jailbroken iOS (docs / extra APT) | Mode B channel. Store `wpm` never probes it. |
+| **`/jailbreak/`** | Humans (Mode B bookmark) | HTML landing onto `/search/?channel=deb`. **Not** a second APT tree. Store `wpm` never probes it. |
 | **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT. **Never** submitted to App Store. |
 
-`/wasm/` and `/deb/` HTML pages redirect humans to `/search/?channel=…`. Bookmarks keep working. `wpm` still talks to `/wasm/v1/`.
+`/wasm/`, `/deb/`, and `/jailbreak/` HTML pages redirect humans to `/search/?channel=…`. Bookmarks keep working. `wpm` still talks to `/wasm/v1/`. Sileo still talks to `/`.
 
 ### Mode A (store-safe)
 

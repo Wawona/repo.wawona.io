@@ -14,13 +14,12 @@ a compliance bug.
 /search/?channel=deb     → humans: jailbreak Sileo debs
 /wasm/v1/                → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
 /                        → Sileo APT (Packages + debs). Do not move for the catalog.
-/jailbreak/              → Mode B: extra APT / Mode B IPA, Desktop tweaks
+/jailbreak/              → human landing onto the deb catalog. Not a second APT tree.
 ```
 
-`/wasm/` HTML redirects to `/search/?channel=wasm`. `/deb/` HTML redirects to
-`/search/?channel=deb`. Never redirect `/wasm/v1/` or `/Packages`. The website
-may link both catalogs. It must not show them as one results list. Store `wpm`
-must never see debs.
+`/wasm/`, `/deb/`, and `/jailbreak/` HTML redirect to `/search/?channel=…`. Never
+redirect `/wasm/v1/` or `/Packages`. The website may link both catalogs. It must
+not show them as one results list. Store `wpm` must never see debs.
 
 ## Hard firewall
 

@@ -397,6 +397,33 @@ def check_search_pages() -> list[str]:
         text = deb_html.read_text(encoding="utf-8")
         if "/search/" not in text or "channel=deb" not in text:
             errors.append("deb/index.html must redirect humans to /search/?channel=deb")
+    jail_html = ROOT / "jailbreak" / "index.html"
+    if not jail_html.is_file():
+        errors.append("jailbreak/index.html missing (human landing; APT stays at repo root)")
+    else:
+        text = jail_html.read_text(encoding="utf-8")
+        if "/search/" not in text or "channel=deb" not in text:
+            errors.append("jailbreak/index.html must redirect humans to /search/?channel=deb")
+        if "https://repo.wawona.io/" not in text:
+            errors.append("jailbreak/index.html must say Sileo still uses https://repo.wawona.io/")
+    not_found = ROOT / "404.html"
+    if not not_found.is_file():
+        errors.append("404.html missing (GitHub Pages unknown-path landing)")
+    else:
+        text = not_found.read_text(encoding="utf-8")
+        if "/search/?channel=wasm" not in text or "/search/?channel=deb" not in text:
+            errors.append("404.html must link both catalog lanes")
+    for name in ("opensearch.xml", "opensearch-wasm.xml", "opensearch-deb.xml"):
+        path = ROOT / "search" / name
+        if not path.is_file():
+            errors.append(f"search/{name} missing")
+    setup = ROOT / "setup.sh"
+    if setup.is_file():
+        text = setup.read_text(encoding="utf-8")
+        if "wwn-apt" in text:
+            errors.append("setup.sh must not mention retired wwn-apt")
+        if "wasm/v1" not in text and "wpm" not in text:
+            errors.append("setup.sh must say store Wawona uses wpm / wasm/v1")
     return errors
 
 

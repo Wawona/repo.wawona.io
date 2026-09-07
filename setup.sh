@@ -6,7 +6,7 @@
 set -e
 
 echo "[*] Wawona Repository Setup"
-echo "[!] Jailbreak only — App Store modules use wwn-apt (repo.wawona.io prohibited on App Store builds)"
+echo "[!] Jailbreak / Termux APT only. App Store and Play Wawona use wpm and /wasm/v1. Do not run this in a store binary."
 
 # Detect OS
 OS_TYPE=$(uname -o 2>/dev/null || echo "Unknown")

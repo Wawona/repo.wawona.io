@@ -263,7 +263,9 @@ a:hover {
     cursor: pointer;
 }
 
-body[data-channel="deb"] .wasm-only {
+body[data-channel="deb"] .wasm-only,
+body[data-channel="wasm"] .deb-only,
+body[data-channel="choose"] .deb-only {
     display: none;
 }
 
