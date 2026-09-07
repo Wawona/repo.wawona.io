@@ -6,4 +6,8 @@ mkWawonaPackage rec {
   src = pkgs.xorg.xorgserver.src;
   
   buildInputs = pkgs.xorg.xorgserver.buildInputs;
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

@@ -6,7 +6,7 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 
 | Path / artifact | Audience | Contents |
 |-----------------|----------|----------|
-| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime**. Human search catalog plus `v1/index.json` for `wpm`. |
+| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime**. Human search catalog plus `v1/index.json` for `wpm`. Every package lists GitHub maintainers. |
 | **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, Wawona Swinging Bridge Mode B, …) |
 | **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT. **Never** submitted to App Store. |
 

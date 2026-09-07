@@ -15,6 +15,8 @@ See [Wawona wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/devel
 
 To publish a package, add a row to `index.json` and place the blob under
 `v1/packages/<name>/<version>/component.wasm` with matching `sha256:` digest.
-Optional catalog fields (`kind`, `long_description`, `license`, `homepage`,
-`source`, `programs`, `capabilities`, `platforms`) are ignored by `wpm` and
-shown on the search page.
+**`maintainers`** is required: a list of GitHub usernames from
+[`maintainers.json`](../maintainers.json). Names are resolved from GitHub, not
+typed. Optional catalog fields (`kind`, `long_description`, `license`,
+`homepage`, `source`, `programs`, `capabilities`, `platforms`) are ignored by
+`wpm` and shown on the search page.

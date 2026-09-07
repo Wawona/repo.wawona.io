@@ -13,6 +13,7 @@ mkWawonaPackage rec {
     package = "com.aspauldingcode.hello";
     architecture = "iphoneos-arm64";
     description = "Rootless Hello";
+    maintainers = [ "aspauldingcode" ];
   };
 
   meta = {

@@ -21,5 +21,6 @@ mkWawonaPackage rec {
     package = "io.wawona.bash";
     architecture = "iphoneos-arm64";
     description = "Wawona port of GNU Bash shell for iOS";
+    maintainers = [ "aspauldingcode" ];
   };
 }

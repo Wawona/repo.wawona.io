@@ -19,7 +19,7 @@
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/rust",
       "programs": ["hello-wasi"],
-      "maintainers": ["Wawona"],
+      "maintainers": ["aspauldingcode"],
       "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": false,
@@ -42,7 +42,7 @@
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/hello-wasi-gui",
       "programs": ["hello-wasi-gui"],
-      "maintainers": ["Wawona"],
+      "maintainers": ["aspauldingcode"],
       "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": true,
@@ -65,7 +65,7 @@
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/wayland-shm",
       "programs": ["wayland-shm-demo"],
-      "maintainers": ["Wawona"],
+      "maintainers": ["aspauldingcode"],
       "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": true,

@@ -455,6 +455,21 @@ mark {
     word-break: break-all;
 }
 
+.who {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 10px;
+    color: inherit;
+    font-weight: 600;
+}
+
+.who img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+}
+
 .raw-json {
     margin-top: 12px;
 }

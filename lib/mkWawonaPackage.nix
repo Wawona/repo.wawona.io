@@ -15,6 +15,15 @@
 } @ args:
 
 let
+  maintainersLib = import ./maintainers.nix;
+  maintainerHandles = maintainersLib.requireHandles pname (sileo.maintainers or []);
+  maintainerLines = map maintainersLib.debianLine maintainerHandles;
+  maintainerField = builtins.head maintainerLines;
+  uploadersField =
+    if builtins.length maintainerLines > 1
+    then lib.concatStringsSep ", " (lib.drop 1 maintainerLines)
+    else null;
+
   # Explicit target validation and defaults
   targetData = if target == "android" then {
     prefix = "/data/data/com.termux/files/usr";
@@ -51,12 +60,16 @@ stdenv.mkDerivation (rec {
 Package: ${sileo.package or pname}
 Version: ${version}
 Architecture: ${arch}
-Maintainer: ${sileo.maintainer or "Wawona Team <team@wawona.io>"}
+Maintainer: ${maintainerField}
+Author: ${maintainerField}
 Description: ${sileo.description or ((args.meta or {}).description or "Wawona utility")}
 Section: ${sileo.section or "Utilities"}
 Priority: ${sileo.priority or "optional"}
 Homepage: ${sileo.homepage or ((args.meta or {}).homepage or "https://repo.wawona.io")}
 EOF
+    ${lib.optionalString (uploadersField != null) ''
+      echo "Uploaders: ${uploadersField}" >> $out/DEBIAN/control
+    ''}
 
     # iOS-specific RootHide tags
     if [ "${arch}" = "iphoneos-arm64e" ]; then

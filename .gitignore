@@ -2,3 +2,6 @@ result/Procursus-roothide/
 Procursus-roothide/
 result*
 .direnv/
+.DS_Store
+scripts/__pycache__/
+

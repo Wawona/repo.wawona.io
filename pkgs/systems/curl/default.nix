@@ -15,4 +15,8 @@ mkWawonaPackage rec {
     description = "Command line tool for transferring data with URL syntax";
     homepage = "https://curl.se";
   };
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

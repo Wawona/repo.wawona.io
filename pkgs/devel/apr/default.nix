@@ -14,4 +14,8 @@ mkWawonaPackage rec {
     sed -i 's|};|};*/|g' include/apr_want.h
     sed -i 's|msg = strerror_r(statcode, buf, bufsize);|strerror_r(statcode, buf, bufsize); msg = buf;|g' misc/unix/errorcodes.c
   '';
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

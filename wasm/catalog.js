@@ -12,6 +12,7 @@
     const sortInputs = [...document.querySelectorAll('input[name="sort"]')];
 
     let packages = [];
+    let resolvedMaintainers = {};
 
     const escapeHtml = (value) =>
         String(value ?? "")
@@ -91,6 +92,8 @@
             pkg.runtime,
             ...(pkg.programs || []),
             pkg.digest,
+            ...(pkg.maintainers || []),
+            ...(pkg.maintainers || []).map((h) => (resolvedMaintainers[h] || {}).name || ""),
         ]
             .filter(Boolean)
             .join(" ")
@@ -186,6 +189,21 @@
         return escapeHtml(bits.join(" · "));
     };
 
+    const renderMaintainers = (handles) => {
+        if (!Array.isArray(handles) || !handles.length) return "";
+        return handles
+            .map((handle) => {
+                const info = resolvedMaintainers[handle] || {};
+                const name = info.name || handle;
+                const url = info.html_url || `https://github.com/${handle}`;
+                const avatar = info.avatar_url
+                    ? `<img src="${escapeHtml(info.avatar_url)}" alt="" width="22" height="22">`
+                    : "";
+                return `<a class="who" href="${escapeHtml(url)}" rel="noopener">${avatar}<span>${escapeHtml(name)}</span> <code>@${escapeHtml(handle)}</code></a>`;
+            })
+            .join(" ");
+    };
+
     const renderPackage = (group, state) => {
         const pkg = group.latest;
         const q = state.query;
@@ -217,6 +235,7 @@
       <span class="chip">${escapeHtml(kind)}</span>
       ${pkg.license ? `<span class="chip">${escapeHtml(pkg.license)}</span>` : ""}
       ${pkg.runtime ? `<span class="chip">${escapeHtml(pkg.runtime)}</span>` : ""}
+      ${(pkg.maintainers || []).map((h) => `<span class="chip">@${escapeHtml(h)}</span>`).join("")}
     </div>
   </button>
   <div class="pkg-body">
@@ -236,6 +255,7 @@
       ${metaRow("Programs", programs)}
       ${metaRow("Capabilities", capabilityBits(pkg.capabilities))}
       ${metaRow("Platforms", escapeHtml(platforms))}
+      ${metaRow("Maintainers", renderMaintainers(pkg.maintainers))}
       ${metaRow("Links", [homepage, source].filter(Boolean).join(" · "))}
       ${metaRow("Digest", `<span class="digest mono">${escapeHtml(pkg.digest || "")}</span>`)}
       ${metaRow("Blob", blob ? `<a href="${escapeHtml(blob)}">${escapeHtml(pkg.url)}</a>` : "")}
@@ -347,6 +367,17 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const index = await response.json();
             packages = Array.isArray(index.packages) ? index.packages : [];
+            try {
+                const people = await fetch("../maintainers.resolved.json", { cache: "no-cache" });
+                if (people.ok) {
+                    const body = await people.json();
+                    resolvedMaintainers = Object.fromEntries(
+                        Object.entries(body).filter(([key, value]) => !key.startsWith("_") && value && value.github)
+                    );
+                }
+            } catch {
+                resolvedMaintainers = {};
+            }
             render(state, false);
         } catch (err) {
             statusEl.classList.add("error");

@@ -48,7 +48,14 @@ The easiest way to build compatible packages is using the RootHide fork of **The
 The Wawona repository automated scripts handle these fields for you, but for manual packaging, ensure the following are set in the `control` file:
 
 - **Architecture**: `iphoneos-arm64` OR `iphoneos-arm64e`
+- **Maintainer**: required. `Full Name <email>` where the name is the GitHub
+  profile name (queried from `api.github.com/users/<login>`, never typed) and
+  the email is in `maintainers.json`. Today that is
+  `Alex Spaulding <aspauldingcode@gmail.com>` for GitHub user `aspauldingcode`.
 - **RootHide Tag**: For packages specifically tested on RootHide, add `roothide: true` and `roothide::compatible` tagging.
+
+Recipes must set `sileo.maintainers = [ "aspauldingcode" ];`. Run
+`python3 scripts/check-packages.py` before publishing.
 
 ## 5. Directory Structure Guidelines
 - **Data Storage**: Store all app/binary data in `/var/` within the jbroot.

@@ -21,4 +21,8 @@ mkWawonaPackage rec {
     description = "A command-line system information tool written in bash 3.2+";
     homepage = "https://github.com/dylanaraps/neofetch";
   };
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

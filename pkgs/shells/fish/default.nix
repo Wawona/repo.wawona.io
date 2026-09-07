@@ -15,5 +15,6 @@ mkWawonaPackage rec {
     package = "io.wawona.fish";
     architecture = "iphoneos-arm64";
     description = "User-friendly command line shell for iOS";
+    maintainers = [ "aspauldingcode" ];
   };
 }

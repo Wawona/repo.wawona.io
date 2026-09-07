@@ -1,0 +1,65 @@
+---
+description: Every wasm and deb package must have GitHub-queryable maintainers (nixpkgs-style)
+globs: wasm/**/*.json,pkgs/**/*.nix,debs/**/*.deb,Packages,maintainers.json,lib/mkWawonaPackage.nix
+alwaysApply: true
+---
+
+# Package maintainers (GitHub, not handwritten names)
+
+Every **wasm** package and every **`.deb`** must have at least one maintainer.
+The handle is a **GitHub username**. Display names come from
+`https://api.github.com/users/<login>` (same idea as nixpkgs `github` /
+`githubId`). Never type a person's name into package metadata.
+
+## Roster
+
+`maintainers.json` is the only place a human adds a person:
+
+```json
+"aspauldingcode": {
+  "github": "aspauldingcode",
+  "githubId": 10196826,
+  "email": "aspauldingcode@gmail.com"
+}
+```
+
+- `github` / object key: GitHub login
+- `githubId`: numeric id from the GitHub API (pins against renames)
+- `email`: required for Debian `Maintainer: Name <email>` (GitHub often hides email)
+
+Then:
+
+```bash
+python3 scripts/check-packages.py --sync
+```
+
+That writes `maintainers.resolved.json` (`name`, `html_url`, `avatar_url`) from
+GitHub. Do not edit that file by hand.
+
+## Per package
+
+Wasm `wasm/v1/index.json`:
+
+```json
+"maintainers": ["aspauldingcode"]
+```
+
+Deb recipes `pkgs/**/default.nix`:
+
+```nix
+sileo.maintainers = [ "aspauldingcode" ];
+```
+
+`mkWawonaPackage` refuses an empty list. Published `.deb` control and the APT
+`Packages` index must be `Alex Spaulding <aspauldingcode@gmail.com>` once GitHub
+says the name is Alex Spaulding. CI re-queries GitHub and fails on drift.
+
+## Never
+
+- `"maintainers": ["Wawona"]` or a default `Wawona Team <team@wawona.io>`
+- Handwritten display names in `index.json` / nix / control
+- A wasm or deb with no maintainer
+- Mixing `/wasm/` and APT indexes
+
+Canonical check: `python3 scripts/check-packages.py` (GitHub Actions
+`Gate: packages`).
