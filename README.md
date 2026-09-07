@@ -6,9 +6,13 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 
 | Path / artifact | Audience | Contents |
 |-----------------|----------|----------|
-| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime**. Human search catalog plus `v1/index.json` for `wpm`. Every package lists GitHub maintainers. |
-| **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, Wawona Swinging Bridge Mode B, …) |
+| **`/search/`** | Humans | Unified catalog. `?channel=wasm` or `?channel=deb`. Never a mixed machine index. |
+| **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. `index.json` plus blobs. Every package lists GitHub maintainers. Do not redirect this tree. |
+| **`/` APT** (`Packages`, `debs/`) | Sileo | Jailbreak **`.deb`** at the repo root. Source URL stays `https://repo.wawona.io/`. |
+| **`/jailbreak/`** | Jailbroken iOS (docs / extra APT) | Mode B channel. Store `wpm` never probes it. |
 | **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT. **Never** submitted to App Store. |
+
+`/wasm/` and `/deb/` HTML pages redirect humans to `/search/?channel=…`. Bookmarks keep working. `wpm` still talks to `/wasm/v1/`.
 
 ### Mode A (store-safe)
 

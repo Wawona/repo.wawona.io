@@ -5,9 +5,10 @@ Identity is a GitHub username. Display names are queried from
 api.github.com (never handwritten). Email lives in maintainers.json
 because GitHub often hides it; Debian still needs Name <email>.
 
-  python3 scripts/check-packages.py          # CI
-  python3 scripts/check-packages.py --sync   # write maintainers.resolved.json
-  python3 scripts/check-packages.py --fix    # rewrite .deb control + Packages
+  python3 scripts/check-packages.py                 # CI (queries GitHub)
+  python3 scripts/check-packages.py --sync          # write maintainers.resolved.json
+  python3 scripts/check-packages.py --fix           # rewrite .deb control + Packages
+  python3 scripts/check-packages.py --offline --root .  # flake / no network
 """
 
 from __future__ import annotations
@@ -41,6 +42,17 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEBIAN_MAINT = re.compile(r"^(.+?) <([^>]+)>$")
 AR_MAGIC = b"!<arch>\n"
 AR_HEADER = 60
+
+
+def bind_root(root: Path) -> None:
+    global ROOT, MAINTAINERS, RESOLVED, WASM_INDEX, PACKAGES, DEBS, PKGS
+    ROOT = root.resolve()
+    MAINTAINERS = ROOT / "maintainers.json"
+    RESOLVED = ROOT / "maintainers.resolved.json"
+    WASM_INDEX = ROOT / "wasm/v1/index.json"
+    PACKAGES = ROOT / "Packages"
+    DEBS = ROOT / "debs"
+    PKGS = ROOT / "pkgs"
 
 
 def fail(errors: list[str]) -> None:
@@ -197,9 +209,8 @@ def debian_line(handle: str, roster: dict, resolved: dict) -> str:
     return f"{name} <{rec['email']}>"
 
 
-def query_github(roster: dict) -> tuple[dict, list[str]]:
+def validate_roster(roster: dict) -> list[str]:
     errors: list[str] = []
-    resolved: dict[str, dict] = {}
     for handle, rec in roster.items():
         if not HANDLE_RE.match(handle):
             errors.append(f"maintainers.json: invalid GitHub login {handle!r}")
@@ -212,6 +223,17 @@ def query_github(roster: dict) -> tuple[dict, list[str]]:
         github_id = rec.get("githubId")
         if not isinstance(github_id, int):
             errors.append(f"{handle}: githubId must be the numeric GitHub user id")
+    return errors
+
+
+def query_github(roster: dict) -> tuple[dict, list[str]]:
+    errors = validate_roster(roster)
+    resolved: dict[str, dict] = {}
+    for handle, rec in roster.items():
+        if not HANDLE_RE.match(handle):
+            continue
+        github_id = rec.get("githubId")
+        if not isinstance(github_id, int):
             continue
         try:
             user = github_user(handle)
@@ -341,6 +363,30 @@ def check_packages_index(roster: dict, resolved: dict) -> list[str]:
     return errors
 
 
+def check_search_pages() -> list[str]:
+    errors: list[str] = []
+    search = ROOT / "search" / "index.html"
+    if not search.is_file():
+        errors.append("search/index.html missing (human catalog lives at /search/)")
+    wasm_html = ROOT / "wasm" / "index.html"
+    if not wasm_html.is_file():
+        errors.append("wasm/index.html missing")
+    else:
+        text = wasm_html.read_text(encoding="utf-8")
+        if "/search/" not in text or "channel=wasm" not in text:
+            errors.append("wasm/index.html must redirect humans to /search/?channel=wasm")
+    if not (ROOT / "wasm" / "v1" / "index.json").is_file():
+        errors.append("wasm/v1/index.json must remain for wpm (do not redirect the machine API)")
+    deb_html = ROOT / "deb" / "index.html"
+    if not deb_html.is_file():
+        errors.append("deb/index.html missing")
+    else:
+        text = deb_html.read_text(encoding="utf-8")
+        if "/search/" not in text or "channel=deb" not in text:
+            errors.append("deb/index.html must redirect humans to /search/?channel=deb")
+    return errors
+
+
 def check_debs(roster: dict, resolved: dict) -> list[str]:
     errors: list[str] = []
     debs = sorted(DEBS.glob("*.deb")) if DEBS.is_dir() else []
@@ -435,15 +481,50 @@ def fix_published_artifacts(roster: dict, resolved: dict) -> None:
     print("updated Packages, Packages.gz, Release")
 
 
+def package_errors(roster: dict, resolved: dict) -> list[str]:
+    errors: list[str] = []
+    errors.extend(check_wasm(roster))
+    errors.extend(check_nix_recipes())
+    errors.extend(check_packages_index(roster, resolved))
+    errors.extend(check_debs(roster, resolved))
+    errors.extend(check_search_pages())
+    return errors
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sync", action="store_true", help="write maintainers.resolved.json from GitHub")
     parser.add_argument("--fix", action="store_true", help="rewrite published .deb Maintainer fields")
+    parser.add_argument("--offline", action="store_true", help="skip GitHub; use committed maintainers.resolved.json")
+    parser.add_argument("--root", type=Path, default=None, help="repository root (default: parent of scripts/)")
     args = parser.parse_args()
+    bind_root(args.root or Path(__file__).resolve().parents[1])
+
+    if args.offline and (args.sync or args.fix):
+        fail(["--offline cannot be combined with --sync or --fix"])
 
     roster = load_json(MAINTAINERS)
     if not roster:
         fail(["maintainers.json is empty"])
+
+    if args.offline:
+        errors = validate_roster(roster)
+        committed = load_committed_resolved() if RESOLVED.is_file() else {}
+        for handle in roster:
+            if HANDLE_RE.match(handle) and handle not in committed:
+                errors.append(f"{handle}: missing from maintainers.resolved.json")
+        if set(committed) - set(roster):
+            extra = ", ".join(sorted(set(committed) - set(roster)))
+            errors.append(f"maintainers.resolved.json has extra handles: {extra}")
+        resolved = committed
+        errors.extend(package_errors(roster, resolved))
+        if errors:
+            fail(errors)
+        print(
+            f"OK offline {len(roster)} GitHub maintainers, "
+            f"{len(list(DEBS.glob('*.deb')))} debs"
+        )
+        return
 
     live, query_errors = query_github(roster)
     if args.sync:
@@ -456,8 +537,6 @@ def main() -> None:
     committed = load_committed_resolved() if RESOLVED.is_file() else {}
     errors = list(query_errors)
     if not args.sync:
-        if set(live) != set(h for h in roster if HANDLE_RE.match(h) and h in live):
-            pass
         for handle, rec in live.items():
             got = committed.get(handle) or {}
             for key in ("github", "githubId", "name", "html_url"):
@@ -471,10 +550,7 @@ def main() -> None:
             errors.append(f"maintainers.resolved.json has extra handles: {extra}")
 
     resolved = live or committed
-    errors.extend(check_wasm(roster))
-    errors.extend(check_nix_recipes())
-    errors.extend(check_packages_index(roster, resolved))
-    errors.extend(check_debs(roster, resolved))
+    errors.extend(package_errors(roster, resolved))
 
     if args.fix:
         if errors and not any("Maintainer" in e or "Author" in e or e.endswith(".deb") for e in errors):
@@ -483,10 +559,7 @@ def main() -> None:
         fix_published_artifacts(roster, resolved)
         errors = []
         errors.extend(query_errors)
-        errors.extend(check_wasm(roster))
-        errors.extend(check_nix_recipes())
-        errors.extend(check_packages_index(roster, resolved))
-        errors.extend(check_debs(roster, resolved))
+        errors.extend(package_errors(roster, resolved))
 
     if errors:
         fail(errors)

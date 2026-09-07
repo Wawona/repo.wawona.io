@@ -3,9 +3,9 @@
 Static registry for **Wawona Runtime** packages. Consumed by `wpm` in store /
 Play / macOS builds.
 
-- Human catalog: [`https://repo.wawona.io/wasm/`](https://repo.wawona.io/wasm/)
-  (search, filters, per-package detail; same data as the index)
-- Index: [`v1/index.json`](v1/index.json)
+- Human catalog: [`https://repo.wawona.io/search/?channel=wasm`](https://repo.wawona.io/search/?channel=wasm)
+  (`/wasm/` HTML redirects here; same data as the index)
+- Index: [`v1/index.json`](v1/index.json) (machine API; do not redirect)
 - Default client base: `https://repo.wawona.io/wasm/v1`
 
 Jailbreak `.deb` APT and Mode B IPA live under `/jailbreak/` and the [Sileo

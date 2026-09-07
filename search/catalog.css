@@ -3,15 +3,15 @@
     --secondary: #4b0082;
     --accent: #007aff;
     --bg: #f5f5f7;
-    --card-bg: rgba(255, 255, 255, 0.78);
+    --card-bg: #fff;
     --text: #1d1d1f;
     --text-dim: #6e6e73;
-    --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     --border: rgba(0, 0, 0, 0.08);
     --code-bg: rgba(0, 0, 0, 0.05);
     --chip-bg: rgba(138, 43, 226, 0.1);
     --match-bg: rgba(255, 214, 10, 0.45);
-    --header-bg: rgba(245, 245, 247, 0.82);
+    --header-bg: #f5f5f7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,15 +20,15 @@
         --secondary: #4b0082;
         --accent: #00f2ff;
         --bg: #050505;
-        --card-bg: rgba(255, 255, 255, 0.05);
+        --card-bg: #121214;
         --text: #f5f5f7;
         --text-dim: #b0b0b0;
-        --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+        --shadow: none;
         --border: rgba(255, 255, 255, 0.1);
         --code-bg: rgba(0, 0, 0, 0.35);
         --chip-bg: rgba(168, 85, 247, 0.18);
         --match-bg: rgba(168, 85, 247, 0.35);
-        --header-bg: rgba(5, 5, 5, 0.86);
+        --header-bg: #050505;
     }
 }
 
@@ -40,10 +40,16 @@ html {
     scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
 body {
     margin: 0;
     min-height: 100vh;
-    font-family: Outfit, system-ui, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.45;
@@ -52,7 +58,7 @@ body {
 code,
 kbd,
 .mono {
-    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 a {
@@ -76,23 +82,12 @@ a:hover {
     border: 0;
 }
 
-.background-glow {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at 50% 12%, var(--secondary) 0%, transparent 58%);
-    opacity: 0.14;
-    z-index: -1;
-    pointer-events: none;
-}
-
 .site-header {
     position: sticky;
     top: 0;
     z-index: 20;
     padding: 16px 20px 18px;
     background: var(--header-bg);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
     border-bottom: 1px solid var(--border);
 }
 
@@ -129,7 +124,6 @@ a:hover {
     width: 56px;
     height: 56px;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .logo-dark {
@@ -160,10 +154,6 @@ a:hover {
     font-size: clamp(1.7rem, 3vw, 2.35rem);
     font-weight: 800;
     letter-spacing: -0.04em;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
 .lede {
@@ -231,13 +221,8 @@ a:hover {
     font: inherit;
     font-weight: 700;
     color: #fff;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: var(--primary);
     cursor: pointer;
-    box-shadow: 0 8px 16px -4px rgba(138, 43, 226, 0.35);
-}
-
-.btn-search:hover {
-    transform: translateY(-1px);
 }
 
 .layout {
@@ -278,6 +263,10 @@ a:hover {
     cursor: pointer;
 }
 
+body[data-channel="deb"] .wasm-only {
+    display: none;
+}
+
 .filter-note {
     font-size: 0.82rem;
     color: var(--text-dim);
@@ -301,6 +290,8 @@ a:hover {
 }
 
 .pkg {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 128px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -311,6 +302,7 @@ a:hover {
 
 .pkg.open {
     border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    contain-intrinsic-size: auto;
 }
 
 .pkg-head {
@@ -339,7 +331,7 @@ a:hover {
 }
 
 .pkg-version {
-    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.92rem;
     color: var(--text-dim);
     white-space: nowrap;
@@ -520,6 +512,10 @@ mark {
     .filters h2,
     .filter-note {
         grid-column: 1 / -1;
+    }
+
+    body[data-channel="deb"] .filters {
+        grid-template-columns: 1fr 1fr;
     }
 
     .search-form {

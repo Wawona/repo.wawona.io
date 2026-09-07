@@ -1,5 +1,5 @@
 ---
-description: repo.wawona.io — dual channel /wasm (Mode A) vs /jailbreak (Mode B); firewall
+description: repo.wawona.io dual channel /wasm (Mode A) vs /jailbreak (Mode B); firewall
 alwaysApply: true
 ---
 
@@ -9,9 +9,14 @@ One host, **two channels**. Mixing indexes or auto-discovery across channels is
 a compliance bug.
 
 ```text
-/wasm/        → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
-/jailbreak/   → Mode B: Sileo/Procursus APT (.deb), Mode B IPA, Desktop tweaks
+/search/      → humans: unified catalog (?channel=wasm|deb). Not a machine index.
+/wasm/v1/     → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
+/             → Sileo APT (Packages + debs). Do not move for the catalog.
+/jailbreak/   → Mode B: extra APT / Mode B IPA, Desktop tweaks
 ```
+
+`/wasm/` and `/deb/` HTML redirect to `/search/`. Never redirect `/wasm/v1/` or
+`/Packages`. The website may list both channels. Store `wpm` must never see debs.
 
 ## Hard firewall
 
@@ -24,7 +29,7 @@ a compliance bug.
 ## Also publish (Mode B)
 
 - Auto-package **Wawona iOS Mode B IPA** for Sileo (distinct from App Store IPA).
-- Desktop / LockScreen / Swinging Bridge Mode B **tweaks** as `.deb` — not as
+- Desktop / LockScreen / Swinging Bridge Mode B **tweaks** as `.deb`, not as
   Wasm packages.
 
 ## Never

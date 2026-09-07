@@ -6,62 +6,63 @@
   };
 
   outputs = { self, nixpkgs }: let
-    # System for the build host (macOS)
-    hostSystem = "aarch64-darwin";  # Adjust if you're on x86_64-darwin
+    inherit (nixpkgs) lib;
+    darwinHost = "aarch64-darwin";
+    checkSystems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
 
-    # Target system for iOS cross-compilation
-    targetSystem = {
-      config = "aarch64-apple-ios";
-      isStatic = true;  # For static linking in jailbreak envs
-      sdkVer = "15.5";  # Adjust to your target iOS version
-      # Use Xcode SDK if available; Nix will leverage it for cross-compilation
-    };
+    nativePkgsFor = system: import nixpkgs { inherit system; };
 
-    # iOS package set (cross-compilation)
-    pkgsIOS = import nixpkgs {
-      system = hostSystem;
-      crossSystem = targetSystem;
-      overlays = [
-        (final: prev: {
-          Libc = prev.Libc.overrideAttrs (oldAttrs: {
-            preConfigure = ''
-              export SDKROOT=${prev.apple_sdk.sdkPath}
-            '';
-          });
-        })
-      ];
-    };
-
-    # Android package set (cross-compilation for Termux)
-    pkgsAndroid = import nixpkgs {
-      system = hostSystem;
-      crossSystem = {
-        config = "aarch64-unknown-linux-android";
-        androidSdkVersion = "33";
+    # Cross recipes need Xcode / Darwin. Do not import them at flake eval for
+    # Linux checks; Gate: packages uses python3 --offline instead.
+    mkDarwinPackages = hostSystem:
+      let
+        nativePkgs = nativePkgsFor hostSystem;
+        pkgsIOS = import nixpkgs {
+          system = hostSystem;
+          crossSystem = {
+            config = "aarch64-apple-ios";
+            isStatic = true;
+            sdkVer = "15.5";
+          };
+          overlays = [
+            (final: prev: {
+              Libc = prev.Libc.overrideAttrs (oldAttrs: {
+                preConfigure = ''
+                  export SDKROOT=${prev.apple_sdk.sdkPath}
+                '';
+              });
+            })
+          ];
+        };
+        pkgsAndroid = import nixpkgs {
+          system = hostSystem;
+          crossSystem = {
+            config = "aarch64-unknown-linux-android";
+            androidSdkVersion = "33";
+          };
+        };
+        iosPackages = import ./pkgs/top-level.nix {
+          inherit self nativePkgs;
+          pkgs = pkgsIOS;
+          target = "ios";
+        };
+        androidPackages = import ./pkgs/top-level.nix {
+          inherit self nativePkgs;
+          pkgs = pkgsAndroid;
+          target = "android";
+        };
+      in {
+        ios = iosPackages.all;
+        android = androidPackages.all;
+        ios-pkgs = iosPackages;
+        android-pkgs = androidPackages;
+        hello = iosPackages.hello;
       };
-    };
-
-    # Native pkgs for host tools (dpkg, etc)
-    nativePkgs = import nixpkgs {
-      system = hostSystem;
-    };
-
-    # Modular package sets
-    iosPackages = import ./pkgs/top-level.nix { 
-      inherit self nativePkgs;
-      pkgs = pkgsIOS;
-      target = "ios";
-    };
-
-    androidPackages = import ./pkgs/top-level.nix {
-      inherit self nativePkgs;
-      pkgs = pkgsAndroid;
-      target = "android";
-    };
   in {
-    # Default dev shell for building/testing
-    devShells.${hostSystem}.default = nativePkgs.mkShell {
-      buildInputs = with nativePkgs; [
+    packages.${darwinHost} = mkDarwinPackages darwinHost;
+
+    devShells.${darwinHost}.default = (nativePkgsFor darwinHost).mkShell {
+      buildInputs = with (nativePkgsFor darwinHost); [
         clang
         dpkg
         gnused
@@ -72,27 +73,25 @@
       '';
     };
 
-    packages.${hostSystem} = {
-      # Platform bundles
-      ios = iosPackages.all;
-      android = androidPackages.all;
-
-      # Individual access
-      ios-pkgs = iosPackages;
-      android-pkgs = androidPackages;
-
-      # Default to ios hello for legacy convenience
-      hello = iosPackages.hello;
-    };
-
-    apps.${hostSystem} = {
+    apps.${darwinHost} = {
       update = {
         type = "app";
-        program = "${nativePkgs.writeShellScript "update-repo" ''
-          export PATH="${nativePkgs.lib.makeBinPath (with nativePkgs; [ dpkg gnused coreutils gnugrep findutils ])}:$PATH"
+        program = "${(nativePkgsFor darwinHost).writeShellScript "update-repo" ''
+          export PATH="${(nativePkgsFor darwinHost).lib.makeBinPath (with (nativePkgsFor darwinHost); [ dpkg gnused coreutils gnugrep findutils ])}:$PATH"
           ./scripts/update.sh
         ''}";
       };
     };
+
+    checks = lib.genAttrs checkSystems (system:
+      let pkgs = nativePkgsFor system;
+      in {
+        packages-offline = pkgs.runCommand "repo-wawona-io-packages-offline" {
+          nativeBuildInputs = [ pkgs.python3 ];
+        } ''
+          python3 ${self}/scripts/check-packages.py --root ${self} --offline
+          mkdir "$out"
+        '';
+      });
   };
 }

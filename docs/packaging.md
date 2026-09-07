@@ -55,7 +55,9 @@ The Wawona repository automated scripts handle these fields for you, but for man
 - **RootHide Tag**: For packages specifically tested on RootHide, add `roothide: true` and `roothide::compatible` tagging.
 
 Recipes must set `sileo.maintainers = [ "aspauldingcode" ];`. Run
-`python3 scripts/check-packages.py` before publishing.
+`python3 scripts/check-packages.py` before publishing. Humans browse debs at
+`/search/?channel=deb`. Sileo still uses `https://repo.wawona.io/` as the
+source URL.
 
 ## 5. Directory Structure Guidelines
 - **Data Storage**: Store all app/binary data in `/var/` within the jbroot.
