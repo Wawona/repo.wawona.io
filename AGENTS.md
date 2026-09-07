@@ -2,7 +2,8 @@
 
 ## Product boundaries
 
-Dual channel `/wasm/v1` vs APT / `/jailbreak`. Humans search at `/search/`.
+Dual channel `/wasm/v1` vs APT / `/jailbreak`. Humans pick a catalog at `/search/`
+(Mode A wasm or Mode B debs, never one mixed list).
 See `.cursor/rules/repo-wawona-io-channels.mdc`.
 
 Every wasm package and every `.deb` needs GitHub-queryable maintainers.

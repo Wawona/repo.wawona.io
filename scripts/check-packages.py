@@ -368,6 +368,19 @@ def check_search_pages() -> list[str]:
     search = ROOT / "search" / "index.html"
     if not search.is_file():
         errors.append("search/index.html missing (human catalog lives at /search/)")
+    else:
+        text = search.read_text(encoding="utf-8")
+        if 'id="door-wasm"' not in text or 'id="door-deb"' not in text:
+            errors.append("search/index.html must offer separate Mode A wasm and Mode B deb doors")
+        if "Mode A" not in text or "Mode B" not in text:
+            errors.append("search/index.html must label Mode A (store-safe) and Mode B (jailbreak)")
+        if re.search(r'type="radio"[^>]*name="channel"[^>]*value=""', text):
+            errors.append("search/index.html must not offer a mixed All channel")
+    js_path = ROOT / "search" / "catalog.js"
+    if js_path.is_file():
+        js = js_path.read_text(encoding="utf-8")
+        if "wasmPkgs, ...deb" in js or "[...wasmPkgs, ...debPkgs]" in js:
+            errors.append("search/catalog.js must not concatenate wasm and deb into one results list")
     wasm_html = ROOT / "wasm" / "index.html"
     if not wasm_html.is_file():
         errors.append("wasm/index.html missing")

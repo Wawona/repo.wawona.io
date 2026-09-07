@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Wawona packages</title>
-    <meta name="description" content="Search WASI Runtime packages and jailbreak .deb packages on repo.wawona.io. Channel filter: wasm or deb.">
+    <title>Choose a Wawona package catalog</title>
+    <meta name="description" content="Two separate catalogs. Mode A: App Store and Play wasm for wpm. Mode B: jailbreak debs for Sileo. Never one mixed list.">
     <link rel="canonical" href="https://repo.wawona.io/search/">
-    <meta property="og:title" content="Search Wawona packages">
-    <meta property="og:description" content="Unified catalog for wpm wasm packages and Sileo debs.">
+    <meta property="og:title" content="Wawona package catalogs">
+    <meta property="og:description" content="App Store-safe wasm and jailbreak debs are separate catalogs. Pick one.">
     <meta property="og:url" content="https://repo.wawona.io/search/">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="../images/favicon.png">
     <link rel="search" type="application/opensearchdescription+xml" title="Wawona packages" href="opensearch.xml">
     <link rel="stylesheet" href="catalog.css">
 </head>
-<body>
+<body data-channel="choose">
     <header class="site-header">
-        <nav class="top-nav" aria-label="Channels">
+        <nav class="top-nav" aria-label="Catalogs">
             <a href="https://wawona.io">wawona.io</a>
-            <a href="../">Sileo repo</a>
-            <a href="./" aria-current="page">Search</a>
-            <a href="./?channel=wasm">Wasm</a>
-            <a href="./?channel=deb">Deb</a>
+            <a href="./" id="nav-choose">Choose catalog</a>
+            <a href="./?channel=wasm" id="nav-wasm">Mode A wasm</a>
+            <a href="./?channel=deb" id="nav-deb">Mode B debs</a>
+            <a href="../">Sileo source</a>
             <a href="https://wawona.io/docs/wasm/">Runtime docs</a>
         </nav>
 
@@ -30,39 +30,54 @@
                 <img src="../images/logo/wawona-mark-light.png" alt="" class="logo-img logo-light" width="56" height="56">
                 <img src="../images/logo/wawona-mark-dark.png" alt="" class="logo-img logo-dark" width="56" height="56">
                 <div>
-                    <p class="kicker">repo.wawona.io/search</p>
-                    <h1>Package search</h1>
+                    <p class="kicker" id="kicker">repo.wawona.io/search</p>
+                    <h1 id="page-title">Two catalogs. Pick one.</h1>
                 </div>
             </div>
-            <p class="lede">
-                One catalog, two channels. <strong>Wasm</strong> is Mode A for
-                <code>wpm</code> (<a href="../wasm/v1/index.json">index.json</a>).
-                <strong>Deb</strong> is Sileo APT at the repo root (not mixed into the wasm index).
+            <p class="lede" id="lede">
+                App Store / Play wasm and jailbreak debs are not the same product.
+                They do not share an index. Choose a catalog before you search.
             </p>
+            <p class="lane-banner" id="lane-banner" hidden></p>
         </div>
 
         <form id="search-form" class="search-form" role="search" action="./" method="get">
+            <input type="hidden" name="channel" id="channel-hidden" value="">
             <label class="sr-only" for="q">Search packages</label>
             <div class="search-box">
                 <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle>
                     <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                 </svg>
-                <input id="q" name="query" type="search" placeholder="Search wasm and deb packages" autocomplete="off" spellcheck="false">
+                <input id="q" name="query" type="search" placeholder="Search after you pick a catalog" autocomplete="off" spellcheck="false">
                 <kbd class="slash-hint" title="Press / to focus">/</kbd>
             </div>
             <button type="submit" class="btn-search">Search</button>
         </form>
     </header>
 
-    <main class="layout">
+    <section id="chooser" class="chooser" aria-label="Pick a catalog">
+        <a class="door door-wasm" id="door-wasm" href="./?channel=wasm">
+            <p class="door-kicker">Mode A</p>
+            <h2>App Store / Play wasm</h2>
+            <p>WASI packages for <code>wpm</code>. Store-safe bytecode. Machine API:
+            <code>/wasm/v1</code>. Jailbreak debs are not listed here.</p>
+        </a>
+        <a class="door door-deb" id="door-deb" href="./?channel=deb">
+            <p class="door-kicker">Mode B</p>
+            <h2>Jailbreak debs</h2>
+            <p>Sileo / Zebra APT at <code>https://repo.wawona.io/</code>. Not for
+            App Store or Play binaries. Store <code>wpm</code> never sees this list.</p>
+        </a>
+    </section>
+
+    <main class="layout" id="catalog-main" hidden>
         <aside class="filters" aria-label="Filters">
-            <h2>Filters</h2>
+            <h2>This catalog</h2>
             <fieldset>
-                <legend>Channel</legend>
-                <label><input type="radio" name="channel" value="" checked> All</label>
-                <label><input type="radio" name="channel" value="wasm"> Wasm (<code>wpm</code>)</label>
-                <label><input type="radio" name="channel" value="deb"> Deb (Sileo)</label>
+                <legend>Lane</legend>
+                <label><input type="radio" name="channel" value="wasm"> Mode A wasm (store-safe)</label>
+                <label><input type="radio" name="channel" value="deb"> Mode B debs (jailbreak)</label>
             </fieldset>
             <fieldset class="wasm-only">
                 <legend>WASI</legend>
@@ -82,22 +97,19 @@
                 <label><input type="radio" name="sort" value="name"> Name</label>
                 <label><input type="radio" name="sort" value="version"> Version</label>
             </fieldset>
-            <p class="filter-note" id="filter-note">
-                Wasm: <code>wpm install &lt;name&gt;</code>. Deb: add
-                <code>https://repo.wawona.io/</code> in Sileo.
-            </p>
+            <p class="filter-note" id="filter-note"></p>
         </aside>
         <section class="results" aria-live="polite">
-            <div id="status" class="status">Loading catalog…</div>
+            <div id="status" class="status">Pick a catalog.</div>
             <div id="results"></div>
         </section>
     </main>
 
     <footer class="site-footer">
         <p>
-            Human search only. Machine APIs stay split:
-            <a href="../wasm/v1/index.json"><code>/wasm/v1</code></a> for wpm,
-            <a href="../Packages"><code>/Packages</code></a> for APT.
+            Two machine APIs, never mixed:
+            <a href="../wasm/v1/index.json"><code>/wasm/v1</code></a> for store <code>wpm</code>,
+            <a href="../Packages"><code>/Packages</code></a> for Sileo.
             Source: <a href="https://github.com/Wawona/repo.wawona.io">repo.wawona.io</a>.
         </p>
         <p class="copy">&copy; 2025-<span id="year"></span> Wawona Project. MIT.</p>

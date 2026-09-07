@@ -6,17 +6,32 @@
 
     const form = document.getElementById("search-form");
     const input = document.getElementById("q");
+    const channelHidden = document.getElementById("channel-hidden");
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
-    const channelInputs = [...document.querySelectorAll('input[name="channel"]')];
+    const chooserEl = document.getElementById("chooser");
+    const catalogMain = document.getElementById("catalog-main");
+    const doorWasm = document.getElementById("door-wasm");
+    const doorDeb = document.getElementById("door-deb");
+    const pageTitle = document.getElementById("page-title");
+    const ledeEl = document.getElementById("lede");
+    const kickerEl = document.getElementById("kicker");
+    const laneBanner = document.getElementById("lane-banner");
+    const filterNote = document.getElementById("filter-note");
+    const navChoose = document.getElementById("nav-choose");
+    const navWasm = document.getElementById("nav-wasm");
+    const navDeb = document.getElementById("nav-deb");
+    const channelInputs = [...document.querySelectorAll('aside input[name="channel"]')];
     const wasiInputs = [...document.querySelectorAll('input[name="wasi"]')];
     const kindInputs = [...document.querySelectorAll('input[name="kind"]')];
     const sortInputs = [...document.querySelectorAll('input[name="sort"]')];
 
     let packages = [];
+    let loadedLane = "";
     let resolvedMaintainers = {};
     let roster = {};
     let lastListSig = "";
+    let loadToken = 0;
 
     const escapeHtml = (value) =>
         String(value ?? "")
@@ -183,9 +198,11 @@
         return false;
     };
 
+    const laneOf = (channel) => (channel === "wasm" || channel === "deb" ? channel : "");
+
     const readState = () => {
         const params = new URLSearchParams(window.location.search);
-        const channel = params.get("channel") || "";
+        const channel = laneOf(params.get("channel") || "");
         return {
             query: params.get("query") || params.get("q") || "",
             show: normalizeShow(params.get("show") || "", channel),
@@ -198,10 +215,10 @@
 
     const writeState = (state, replace) => {
         const params = new URLSearchParams();
-        if (state.query) params.set("query", state.query);
         if (state.channel) params.set("channel", state.channel);
+        if (state.query) params.set("query", state.query);
         if (state.show) params.set("show", state.show);
-        if (state.channel !== "deb") {
+        if (state.channel === "wasm") {
             if (state.wasi) params.set("wasi", state.wasi);
             if (state.kind) params.set("kind", state.kind);
         }
@@ -212,27 +229,111 @@
         else history.pushState(state, "", url);
     };
 
-    const applyControls = (state) => {
-        input.value = state.query;
-        document.body.dataset.channel = state.channel || "all";
-        for (const el of channelInputs) el.checked = el.value === state.channel;
-        if (![...channelInputs].some((el) => el.checked)) channelInputs[0].checked = true;
-        for (const el of wasiInputs) el.checked = el.value === state.wasi;
-        if (![...wasiInputs].some((el) => el.checked)) wasiInputs[0].checked = true;
-        for (const el of kindInputs) el.checked = el.value === state.kind;
-        if (![...kindInputs].some((el) => el.checked)) kindInputs[0].checked = true;
-        for (const el of sortInputs) el.checked = el.value === state.sort;
-        if (![...sortInputs].some((el) => el.checked)) sortInputs[0].checked = true;
+    const doorHref = (channel, query) => {
+        const params = new URLSearchParams();
+        params.set("channel", channel);
+        if (query) params.set("query", query);
+        return `./?${params.toString()}`;
     };
 
-    const currentFilters = () => ({
-        query: input.value.trim(),
-        show: readState().show,
-        channel: (channelInputs.find((el) => el.checked) || {}).value || "",
-        wasi: (wasiInputs.find((el) => el.checked) || {}).value || "",
-        kind: (kindInputs.find((el) => el.checked) || {}).value || "",
-        sort: (sortInputs.find((el) => el.checked) || {}).value || "relevance",
-    });
+    const syncChooserLinks = (query) => {
+        if (doorWasm) doorWasm.href = doorHref("wasm", query);
+        if (doorDeb) doorDeb.href = doorHref("deb", query);
+    };
+
+    const applyLaneCopy = (channel) => {
+        if (navChoose) navChoose.removeAttribute("aria-current");
+        if (navWasm) navWasm.removeAttribute("aria-current");
+        if (navDeb) navDeb.removeAttribute("aria-current");
+        if (!channel) {
+            document.title = "Choose a Wawona package catalog";
+            if (kickerEl) kickerEl.textContent = "repo.wawona.io/search";
+            if (pageTitle) pageTitle.textContent = "Two catalogs. Pick one.";
+            if (ledeEl) {
+                ledeEl.textContent =
+                    "App Store / Play wasm and jailbreak debs are not the same product. They do not share an index. Choose a catalog before you search.";
+            }
+            if (laneBanner) {
+                laneBanner.hidden = true;
+                laneBanner.textContent = "";
+            }
+            if (filterNote) filterNote.textContent = "";
+            input.placeholder = "Type a name, then pick a catalog";
+            if (channelHidden) channelHidden.value = "";
+            if (navChoose) navChoose.setAttribute("aria-current", "page");
+            return;
+        }
+        if (channelHidden) channelHidden.value = channel;
+        if (channel === "wasm") {
+            document.title = "Mode A wasm packages (App Store / Play)";
+            if (kickerEl) kickerEl.textContent = "Mode A · store-safe";
+            if (pageTitle) pageTitle.textContent = "Wasm packages for wpm";
+            if (ledeEl) {
+                ledeEl.innerHTML =
+                    "App Store, Play, and macOS Runtime packages. Install with <code>wpm</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. Jailbreak debs are a different catalog.";
+            }
+            if (laneBanner) {
+                laneBanner.hidden = false;
+                laneBanner.className = "lane-banner lane-a";
+                laneBanner.textContent =
+                    "Mode A. Store-safe WASI bytecode. Store binaries must never read the jailbreak APT list.";
+            }
+            if (filterNote) {
+                filterNote.innerHTML = "Install: <code>wpm install &lt;name&gt;</code>. Not Sileo. Not <code>/Packages</code>.";
+            }
+            input.placeholder = "Search wasm packages";
+            if (navWasm) navWasm.setAttribute("aria-current", "page");
+            return;
+        }
+        document.title = "Mode B jailbreak debs (Sileo)";
+        if (kickerEl) kickerEl.textContent = "Mode B · jailbreak";
+        if (pageTitle) pageTitle.textContent = "Jailbreak deb packages";
+        if (ledeEl) {
+            ledeEl.innerHTML =
+                "Sileo / Zebra source <code>https://repo.wawona.io/</code>. Not for App Store or Play. Store <code>wpm</code> never sees this list.";
+        }
+        if (laneBanner) {
+            laneBanner.hidden = false;
+            laneBanner.className = "lane-banner lane-b";
+            laneBanner.textContent =
+                "Mode B. Jailbreak .deb only. Do not put these URLs in wasm/v1 or in a store binary.";
+        }
+        if (filterNote) {
+            filterNote.innerHTML =
+                "Add <code>https://repo.wawona.io/</code> in Sileo, then install. Not <code>wpm</code>.";
+        }
+        input.placeholder = "Search jailbreak debs";
+        if (navDeb) navDeb.setAttribute("aria-current", "page");
+    };
+
+    const applyControls = (state) => {
+        input.value = state.query;
+        document.body.dataset.channel = state.channel || "choose";
+        applyLaneCopy(state.channel);
+        syncChooserLinks(state.query);
+        const choosing = !state.channel;
+        if (chooserEl) chooserEl.hidden = !choosing;
+        if (catalogMain) catalogMain.hidden = choosing;
+        for (const el of channelInputs) el.checked = el.value === state.channel;
+        for (const el of wasiInputs) el.checked = el.value === state.wasi;
+        if (![...wasiInputs].some((el) => el.checked) && wasiInputs[0]) wasiInputs[0].checked = true;
+        for (const el of kindInputs) el.checked = el.value === state.kind;
+        if (![...kindInputs].some((el) => el.checked) && kindInputs[0]) kindInputs[0].checked = true;
+        for (const el of sortInputs) el.checked = el.value === state.sort;
+        if (![...sortInputs].some((el) => el.checked) && sortInputs[0]) sortInputs[0].checked = true;
+    };
+
+    const currentFilters = () => {
+        const live = readState();
+        return {
+            query: input.value.trim(),
+            show: live.show,
+            channel: live.channel || (channelInputs.find((el) => el.checked) || {}).value || "",
+            wasi: (wasiInputs.find((el) => el.checked) || {}).value || "",
+            kind: (kindInputs.find((el) => el.checked) || {}).value || "",
+            sort: (sortInputs.find((el) => el.checked) || {}).value || "relevance",
+        };
+    };
 
     const score = (group, query) => {
         if (!query) return 0;
@@ -325,7 +426,7 @@
       <div class="cmd"><code>${escapeHtml(run)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(run)}">Copy</button></div>
     </div>
     <table class="meta">
-      ${metaRow("Channel", "<code>wasm</code>")}
+      ${metaRow("Catalog", "<code>Mode A wasm</code> (App Store / Play, <code>wpm</code>)")}
       ${metaRow("Name", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}
       ${metaRow("WASI", escapeHtml(pkg.wasi || ""))}
@@ -359,7 +460,7 @@
       <div class="cmd"><code>${escapeHtml(apt)}</code><button type="button" class="copy-btn" data-copy="${escapeHtml(apt)}">Copy</button></div>
     </div>
     <table class="meta">
-      ${metaRow("Channel", "<code>deb</code>")}
+      ${metaRow("Catalog", "<code>Mode B deb</code> (jailbreak Sileo, not App Store)")}
       ${metaRow("Package", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}
       ${metaRow("Architecture", escapeHtml(pkg.architecture || ""))}
@@ -385,11 +486,13 @@
         const chips =
             pkg.channel === "wasm"
                 ? `
+      <span class="chip chip-mode-a">Mode A · store-safe</span>
       <span class="chip">wasm</span>
       <span class="chip">WASI ${(pkg.wasi || "?").toUpperCase()}</span>
       <span class="chip">${escapeHtml(kind)}</span>
       ${pkg.license ? `<span class="chip">${escapeHtml(pkg.license)}</span>` : ""}`
                 : `
+      <span class="chip chip-mode-b">Mode B · jailbreak</span>
       <span class="chip">deb</span>
       <span class="chip">${escapeHtml(pkg.architecture || "deb")}</span>
       ${pkg.section ? `<span class="chip">${escapeHtml(pkg.section)}</span>` : ""}`;
@@ -434,26 +537,30 @@
     const render = (state, replaceUrl) => {
         applyControls(state);
         if (replaceUrl) writeState(state, true);
+        if (!state.channel) {
+            packages = [];
+            loadedLane = "";
+            lastListSig = "";
+            if (statusEl) statusEl.textContent = "Pick a catalog. Wasm and jailbreak debs are never listed together.";
+            if (resultsEl) resultsEl.replaceChildren();
+            return;
+        }
         const groups = filtered(state);
         const total = groupByKey(packages).length;
-        const wasmCount = packages.filter((p) => p.channel === "wasm").length;
-        const debCount = groupByKey(packages.filter((p) => p.channel === "deb")).length;
         if (!packages.length) {
-            statusEl.textContent = "The catalog loaded, but it lists no packages yet.";
+            statusEl.textContent = "This catalog loaded, but it lists no packages yet.";
             resultsEl.replaceChildren();
             lastListSig = "";
             return;
         }
         if (!groups.length) {
             statusEl.textContent = `0 of ${total} packages match.`;
-            resultsEl.innerHTML = `<div class="empty">No packages match those filters. Clear the search or pick All.</div>`;
+            resultsEl.innerHTML = `<div class="empty">No packages match those filters in this catalog.</div>`;
             lastListSig = "";
             return;
         }
-        const channelNote = state.channel
-            ? ""
-            : ` (${wasmCount} wasm rows, ${debCount} deb packages)`;
-        statusEl.textContent = `${groups.length} of ${total} packages${state.query ? ` matching "${state.query}"` : ""}${channelNote}.`;
+        const lane = state.channel === "wasm" ? "Mode A wasm" : "Mode B jailbreak debs";
+        statusEl.textContent = `${groups.length} of ${total} ${lane}${state.query ? ` matching "${state.query}"` : ""}.`;
         const sig = listSignature(groups, state);
         if (sig === lastListSig && resultsEl.querySelector(".pkg")) {
             applyOpenOnly(state);
@@ -485,6 +592,12 @@
     form.addEventListener("submit", (event) => {
         event.preventDefault();
         const state = currentFilters();
+        if (!state.channel) {
+            syncChooserLinks(state.query);
+            writeState({ ...state, channel: "" }, false);
+            render(state, false);
+            return;
+        }
         writeState(state, false);
         render(state, false);
     });
@@ -494,17 +607,44 @@
         clearTimeout(typing);
         typing = setTimeout(() => {
             const state = currentFilters();
+            if (!state.channel) {
+                syncChooserLinks(state.query);
+                writeState({ ...state, channel: "" }, true);
+                return;
+            }
             render(state, true);
         }, 120);
     });
 
-    for (const el of [...channelInputs, ...wasiInputs, ...kindInputs, ...sortInputs]) {
+    const goLane = async (state) => {
+        writeState(state, true);
+        try {
+            await ensureLane(state.channel);
+            statusEl.classList.remove("error");
+            render(state, false);
+        } catch (err) {
+            statusEl.classList.add("error");
+            statusEl.textContent = `Could not load this catalog. (${err.message})`;
+            resultsEl.replaceChildren();
+        }
+    };
+
+    for (const el of channelInputs) {
         el.addEventListener("change", () => {
             const state = currentFilters();
+            state.channel = el.value;
             if (state.channel === "deb") {
                 state.wasi = "";
                 state.kind = "";
             }
+            state.show = "";
+            goLane(state);
+        });
+    }
+
+    for (const el of [...wasiInputs, ...kindInputs, ...sortInputs]) {
+        el.addEventListener("change", () => {
+            const state = currentFilters();
             writeState(state, true);
             render(state, false);
         });
@@ -537,8 +677,7 @@
     });
 
     window.addEventListener("popstate", () => {
-        const state = readState();
-        render(state, false);
+        goLane(readState());
     });
 
     const peopleFrom = (body) =>
@@ -546,33 +685,61 @@
             Object.entries(body || {}).filter(([key, value]) => !key.startsWith("_") && value && typeof value === "object")
         );
 
-    const boot = async () => {
-        const state = readState();
-        applyControls(state);
-        try {
-            const [wasmRes, packagesRes, peopleRes, rosterRes] = await Promise.all([
-                fetch(WASM_INDEX, { cache: "no-cache" }),
-                fetch(PACKAGES_URL, { cache: "no-cache" }),
-                fetch("../maintainers.resolved.json", { cache: "no-cache" }),
-                fetch("../maintainers.json", { cache: "no-cache" }),
-            ]);
+    const loadPeople = async () => {
+        if (Object.keys(resolvedMaintainers).length && Object.keys(roster).length) return;
+        const [peopleRes, rosterRes] = await Promise.all([
+            fetch("../maintainers.resolved.json", { cache: "no-cache" }),
+            fetch("../maintainers.json", { cache: "no-cache" }),
+        ]);
+        if (peopleRes.ok) resolvedMaintainers = peopleFrom(await peopleRes.json());
+        if (rosterRes.ok) roster = peopleFrom(await rosterRes.json());
+    };
+
+    const ensureLane = async (channel) => {
+        const lane = laneOf(channel);
+        if (!lane) {
+            packages = [];
+            loadedLane = "";
+            return;
+        }
+        if (loadedLane === lane && packages.length) return;
+        const token = (loadToken += 1);
+        await loadPeople();
+        if (lane === "wasm") {
+            const wasmRes = await fetch(WASM_INDEX, { cache: "no-cache" });
             if (!wasmRes.ok) throw new Error(`${WASM_INDEX} HTTP ${wasmRes.status}`);
             const index = await wasmRes.json();
-            const wasmPkgs = (Array.isArray(index.packages) ? index.packages : []).map((pkg) => ({
+            if (token !== loadToken) return;
+            packages = (Array.isArray(index.packages) ? index.packages : []).map((pkg) => ({
                 ...pkg,
                 channel: "wasm",
             }));
-            let debPkgs = [];
-            if (packagesRes.ok) {
-                debPkgs = parsePackages(await packagesRes.text());
-            }
-            packages = [...wasmPkgs, ...debPkgs];
-            if (peopleRes.ok) resolvedMaintainers = peopleFrom(await peopleRes.json());
-            if (rosterRes.ok) roster = peopleFrom(await rosterRes.json());
+        } else {
+            const packagesRes = await fetch(PACKAGES_URL, { cache: "no-cache" });
+            if (!packagesRes.ok) throw new Error(`${PACKAGES_URL} HTTP ${packagesRes.status}`);
+            if (token !== loadToken) return;
+            packages = parsePackages(await packagesRes.text());
+        }
+        loadedLane = lane;
+        lastListSig = "";
+    };
+
+    const boot = async () => {
+        const state = readState();
+        applyControls(state);
+        if (!state.channel) {
+            render(state, false);
+            return;
+        }
+        try {
+            await ensureLane(state.channel);
             render(state, false);
         } catch (err) {
             statusEl.classList.add("error");
-            statusEl.textContent = `Could not load the catalog. wpm still uses /wasm/v1/; Sileo still uses /Packages. (${err.message})`;
+            statusEl.textContent =
+                state.channel === "wasm"
+                    ? `Could not load /wasm/v1. wpm still uses that API. (${err.message})`
+                    : `Could not load /Packages. Sileo still uses the APT source. (${err.message})`;
         }
     };
 

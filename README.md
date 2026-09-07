@@ -6,7 +6,9 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 
 | Path / artifact | Audience | Contents |
 |-----------------|----------|----------|
-| **`/search/`** | Humans | Unified catalog. `?channel=wasm` or `?channel=deb`. Never a mixed machine index. |
+| **`/search/`** | Humans | Chooser. Wasm and debs are never one list. |
+| **`/search/?channel=wasm`** | Humans (Mode A) | App Store / Play wasm catalog for `wpm`. |
+| **`/search/?channel=deb`** | Humans (Mode B) | Jailbreak Sileo debs. Not for store binaries. |
 | **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. `index.json` plus blobs. Every package lists GitHub maintainers. Do not redirect this tree. |
 | **`/` APT** (`Packages`, `debs/`) | Sileo | Jailbreak **`.deb`** at the repo root. Source URL stays `https://repo.wawona.io/`. |
 | **`/jailbreak/`** | Jailbroken iOS (docs / extra APT) | Mode B channel. Store `wpm` never probes it. |

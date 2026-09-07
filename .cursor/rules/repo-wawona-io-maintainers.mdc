@@ -64,5 +64,6 @@ says the name is Alex Spaulding. CI re-queries GitHub and fails on drift.
 Canonical check: `python3 scripts/check-packages.py` (GitHub Actions
 `Gate: packages`). Flake / no-network: `--offline --root .`.
 
-Human catalog is `/search/`. `/wasm/` HTML redirects there. `wpm` stays on
-`/wasm/v1/`.
+Human catalogs are `/search/?channel=wasm` (Mode A) and `/search/?channel=deb`
+(Mode B). `/search/` is a chooser, not a mixed list. `/wasm/` HTML redirects to
+the wasm catalog. `wpm` stays on `/wasm/v1/`.

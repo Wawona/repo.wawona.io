@@ -471,7 +471,9 @@
     <div style="margin-bottom: 20px; font-size: 0.85rem; opacity: 0.6; animation: fadeIn 1s ease; text-align: center;">
         Looking for Wawona? Visit <a href="https://wawona.io" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">wawona.io</a>
         <br>
-        Looking for packages? <a href="search/" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Search wasm and debs</a>
+        Looking for App Store / Play Runtime packages? <a href="search/?channel=wasm" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Mode A wasm (wpm)</a>
+        <br>
+        Jailbreak debs are a different catalog: <a href="search/?channel=deb" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Mode B Sileo debs</a>
     </div>
     <div class="background-glow"></div>
 
@@ -573,9 +575,9 @@
             <div class="footer-column">
                 <h3>Distribution</h3>
                 <a href="https://repo.wawona.io">Sileo repo</a>
-                <a href="https://repo.wawona.io/search/">Package search</a>
-                <a href="https://repo.wawona.io/search/?channel=wasm">Wasm (wpm)</a>
-                <a href="https://repo.wawona.io/search/?channel=deb">Deb (Sileo)</a>
+                <a href="https://repo.wawona.io/search/">Choose catalog</a>
+                <a href="https://repo.wawona.io/search/?channel=wasm">Mode A wasm (wpm)</a>
+                <a href="https://repo.wawona.io/search/?channel=deb">Mode B debs (Sileo)</a>
                 <a href="https://github.com/Wawona/repo.wawona.io" target="_blank" style="font-size: 0.75rem; opacity: 0.8;">Visit Source Code</a>
             </div>
         </div>
@@ -584,9 +586,9 @@
             Designed for high-performance Wayland delivery.<br>
             <span style="font-size: 0.75rem; opacity: 0.85; display: inline-block; margin-top: 0.75rem;">
                 This page is the jailbreak Sileo source. App Store / Play Runtime packages
-                are WASI modules from <a href="wasm/v1/" style="color: var(--accent);">/wasm/v1</a>
-                via <strong>wpm</strong>. Humans search at
-                <a href="search/" style="color: var(--accent);">/search/</a>.
+                are WASI modules from <a href="search/?channel=wasm" style="color: var(--accent);">/search/?channel=wasm</a>
+                via <strong>wpm</strong> (<a href="wasm/v1/" style="color: var(--accent);">/wasm/v1</a>).
+                Jailbreak debs: <a href="search/?channel=deb" style="color: var(--accent);">/search/?channel=deb</a>.
                 Store binaries never use this APT tree.
             </span>
         </div>
