@@ -430,6 +430,34 @@ def check_search_pages() -> list[str]:
     return errors
 
 
+def check_agent_skills() -> list[str]:
+    errors: list[str] = []
+    skills = (
+        "repo-wawona-io-priors",
+        "repo-wawona-io-catalogs",
+        "repo-wawona-io-learn",
+    )
+    for name in skills:
+        cursor = ROOT / ".cursor" / "skills" / name / "SKILL.md"
+        docs = ROOT / "docs" / "agent-skills" / name / "SKILL.md"
+        if not cursor.is_file():
+            errors.append(f".cursor/skills/{name}/SKILL.md missing")
+        elif f"name: {name}" not in cursor.read_text(encoding="utf-8"):
+            errors.append(f".cursor/skills/{name}/SKILL.md must declare name: {name}")
+        if not docs.is_file():
+            errors.append(f"docs/agent-skills/{name}/SKILL.md missing (tracked mirror)")
+    rule = ROOT / ".cursor" / "rules" / "repo-wawona-io-agent-learn.mdc"
+    if not rule.is_file():
+        errors.append(".cursor/rules/repo-wawona-io-agent-learn.mdc missing")
+    else:
+        text = rule.read_text(encoding="utf-8")
+        if "alwaysApply: true" not in text:
+            errors.append("repo-wawona-io-agent-learn.mdc must be alwaysApply")
+        if "repo-wawona-io-priors" not in text:
+            errors.append("repo-wawona-io-agent-learn.mdc must tell agents to read priors")
+    return errors
+
+
 def check_debs(roster: dict, resolved: dict) -> list[str]:
     errors: list[str] = []
     debs = sorted(DEBS.glob("*.deb")) if DEBS.is_dir() else []
@@ -531,6 +559,7 @@ def package_errors(roster: dict, resolved: dict) -> list[str]:
     errors.extend(check_packages_index(roster, resolved))
     errors.extend(check_debs(roster, resolved))
     errors.extend(check_search_pages())
+    errors.extend(check_agent_skills())
     return errors
 
 

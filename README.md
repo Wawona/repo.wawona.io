@@ -31,6 +31,9 @@ Store / Play Wawona may download Wasm from `/wasm/` only. VMs/containers in the
 Plan: [mode-a-b.md](https://github.com/Wawona/Wawona/blob/development/docs/mode-a-b.md),
 [wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/development/docs/wasm-package-manager.md).
 
+Agents: read `.cursor/skills/repo-wawona-io-priors/SKILL.md` before editing.
+Write new catalog learnings into those skills (rule `repo-wawona-io-agent-learn`).
+
 ## Historical note
 
 Older docs said App Store builds must never touch this host. That was when the
