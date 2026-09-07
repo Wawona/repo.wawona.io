@@ -10,7 +10,22 @@
       "digest": "sha256:573f0e7f8d2c52a30646e791ae0213d479af80411900ee6a4f954bdc8c0a2c24",
       "url": "packages/hello-wasi/0.1.1/component.wasm",
       "wasi": "p1",
-      "summary": "Tiny WASI P1 hello (smoke test for wpm; default prints hello)"
+      "kind": "cli",
+      "summary": "Tiny WASI P1 hello (smoke test for wpm; default prints hello)",
+      "long_description": "Minimal WASI Preview 1 CLI used to smoke-test wpm install, search, and wasm <name>. Default invocation prints hello to stdout. Not a Wayland client.",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/rust",
+      "programs": ["hello-wasi"],
+      "maintainers": ["Wawona"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      }
     },
     {
       "name": "hello-wasi-gui",
@@ -18,7 +33,22 @@
       "digest": "sha256:7922af0bebbe3f3c2665d798be1a3c73877089c533169ac461daa81558d015a5",
       "url": "packages/hello-wasi-gui/0.1.0/component.wasm",
       "wasi": "p1",
-      "summary": "Hello window over wl_shm + xdg (WASI P1 Wayland smoke)"
+      "kind": "wayland",
+      "summary": "Hello window over wl_shm + xdg (WASI P1 Wayland smoke)",
+      "long_description": "Companion to hello-wasi: same smoke role, but paints one Hello from WASI frame over wl_shm + xdg_wm_base. Connects via Wawona host imports, binds compositor / shm / xdg, handles configure and close. Not the interactive wayland-shm-demo (no seat, checkbox, or typing).",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/hello-wasi-gui",
+      "programs": ["hello-wasi-gui"],
+      "maintainers": ["Wawona"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "capabilities": {
+        "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
     },
     {
       "name": "wayland-shm-demo",
@@ -26,7 +56,22 @@
       "digest": "sha256:f2f7aa691174d88ff7afc76097dc62c8999cdc7600dddaff8281b631fbe39b5a",
       "url": "packages/wayland-shm-demo/0.1.0/component.wasm",
       "wasi": "p1",
-      "summary": "Minimal wl_shm + xdg rectangle client for Wawona Runtime"
+      "kind": "wayland",
+      "summary": "Minimal wl_shm + xdg rectangle client for Wawona Runtime",
+      "long_description": "Real Wayland client for Wawona Runtime: wl_compositor + xdg_wm_base + wl_shm. The published blob is the Rust build (bitmap text, resize, pointer, checkbox, keyboard via wl_seat). Host ABI is unix connect plus SCM_RIGHTS. Prefer weston-simple-shm when a native port is available.",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/wayland-shm",
+      "programs": ["wayland-shm-demo"],
+      "maintainers": ["Wawona"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "capabilities": {
+        "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
     }
   ]
 }

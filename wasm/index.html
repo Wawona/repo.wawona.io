@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wawona Runtime packages</title>
+    <meta name="description" content="Search WASI packages for wpm. Mode A registry at repo.wawona.io/wasm. Same index.json the package manager queries.">
+    <link rel="canonical" href="https://repo.wawona.io/wasm/">
+    <meta property="og:title" content="Wawona Runtime packages">
+    <meta property="og:description" content="Search and inspect WASI modules for wpm. Store-safe Mode A catalog.">
+    <meta property="og:url" content="https://repo.wawona.io/wasm/">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" href="../CydiaIcon.png">
+    <link rel="search" type="application/opensearchdescription+xml" title="Wawona Runtime packages" href="opensearch.xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="catalog.css">
+</head>
+
+<body>
+    <div class="background-glow" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <nav class="top-nav" aria-label="Channels">
+            <a href="https://wawona.io">wawona.io</a>
+            <a href="../">Sileo repo</a>
+            <a href="./" aria-current="page">Wasm packages</a>
+            <a href="https://wawona.io/docs/wasm/">Runtime docs</a>
+        </nav>
+
+        <div class="hero">
+            <div class="brand">
+                <img src="../images/logo/wawona-light.png" alt="" class="logo-img logo-light" width="56" height="56">
+                <img src="../images/logo/wawona-dark.png" alt="" class="logo-img logo-dark" width="56" height="56">
+                <div>
+                    <p class="kicker">repo.wawona.io/wasm</p>
+                    <h1>Runtime packages</h1>
+                </div>
+            </div>
+            <p class="lede">
+                Search WASI modules for <strong>wpm</strong> and Wawona Runtime.
+                This page reads the same <a href="v1/index.json"><code>index.json</code></a>
+                the package manager uses. It is not jailbreak APT.
+            </p>
+        </div>
+
+        <form id="search-form" class="search-form" role="search" action="./" method="get">
+            <label class="sr-only" for="q">Search packages</label>
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+                <input id="q" name="query" type="search" placeholder="Search packages (name, summary, programs)" autocomplete="off" spellcheck="false">
+                <kbd class="slash-hint" title="Press / to focus">/</kbd>
+            </div>
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+    </header>
+
+    <main class="layout">
+        <aside class="filters" aria-label="Filters">
+            <h2>Filters</h2>
+
+            <fieldset>
+                <legend>WASI</legend>
+                <label><input type="radio" name="wasi" value="" checked> All</label>
+                <label><input type="radio" name="wasi" value="p1"> Preview 1</label>
+                <label><input type="radio" name="wasi" value="p2"> Preview 2</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Kind</legend>
+                <label><input type="radio" name="kind" value="" checked> All</label>
+                <label><input type="radio" name="kind" value="cli"> CLI</label>
+                <label><input type="radio" name="kind" value="wayland"> Wayland</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Sort</legend>
+                <label><input type="radio" name="sort" value="relevance" checked> Relevance</label>
+                <label><input type="radio" name="sort" value="name"> Name</label>
+                <label><input type="radio" name="sort" value="version"> Version</label>
+            </fieldset>
+
+            <p class="filter-note">
+                Install in the Wawona shell with <code>wpm install &lt;name&gt;</code>,
+                then run <code>wasm &lt;name&gt;</code>.
+            </p>
+        </aside>
+
+        <section class="results" aria-live="polite">
+            <div id="status" class="status">Loading catalog from <code>v1/index.json</code>…</div>
+            <div id="results"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>
+            Mode A WASI channel only. Jailbreak <code>.deb</code> packages are on the
+            <a href="../">Sileo repo</a>, never in this index.
+            Docs: <a href="https://wawona.io/docs/wasm/">WASM / WASI</a>.
+            Source: <a href="https://github.com/Wawona/repo.wawona.io">repo.wawona.io</a>.
+        </p>
+        <p class="copy">&copy; 2025-<span id="year"></span> Wawona Project. MIT.</p>
+    </footer>
+
+    <script src="catalog.js"></script>
+</body>
+
+</html>

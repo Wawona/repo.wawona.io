@@ -6,14 +6,14 @@ Hosted at [repo.wawona.io](https://repo.wawona.io)
 
 | Path / artifact | Audience | Contents |
 |-----------------|----------|----------|
-| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime** |
+| **`/wasm/`** | App Store, Play, macOS (Mode A) | WASI `.wasm` packages for **Wawona Runtime**. Human search catalog plus `v1/index.json` for `wpm`. |
 | **`/jailbreak/`** APT / Sileo | Jailbroken iOS | **`.deb` tweaks** (Desktop, LockScreen, Wawona Swinging Bridge Mode B, …) |
-| **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT — **never** submitted to App Store |
+| **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app: **JIT** VMs + containers, unsandboxed shell / host APT. **Never** submitted to App Store. |
 
 ### Mode A (store-safe)
 
 Store / Play Wawona may download Wasm from `/wasm/` only. VMs/containers in the
-**App Store IPA** use jitless UTM-SE–class engines only (see Wawona docs).
+**App Store IPA** use jitless UTM-SE-class engines only (see Wawona docs).
 
 ### Mode B (jailbreak)
 
@@ -27,6 +27,6 @@ Plan: [mode-a-b.md](https://github.com/Wawona/Wawona/blob/development/docs/mode-
 
 ## Historical note
 
-Older docs said App Store builds must never touch this host — that was when the
+Older docs said App Store builds must never touch this host. That was when the
 host was APT-only. **`/wasm/`** is the store-safe exception; jailbreak APT and
 Mode B IPA remain off-limits inside store binaries.
