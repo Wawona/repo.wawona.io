@@ -8,8 +8,10 @@ Play / macOS builds.
 - Index: [`v1/index.json`](v1/index.json) (machine API; do not redirect)
 - Default client base: `https://repo.wawona.io/wasm/v1`
 
-Jailbreak `.deb` APT and Mode B IPA live under `/jailbreak/` and the [Sileo
-landing page](../). Never listed here.
+Sileo `.deb` APT (jailbroken iOS, rootless/rootful) and Termux `.deb` APT
+(sideloaded Android, not jailbreak) live under the same repo-root source. Humans
+browse them at [`/search/?channel=deb`](https://repo.wawona.io/search/?channel=deb).
+Never listed in this wasm index. Store `wpm` never reads APT.
 
 See [Wawona wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/development/docs/wasm-package-manager.md).
 

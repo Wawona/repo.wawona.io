@@ -6,7 +6,7 @@
 set -e
 
 echo "[*] Wawona Repository Setup"
-echo "[!] Jailbreak / Termux APT only. App Store and Play Wawona use wpm and /wasm/v1. Do not run this in a store binary."
+echo "[!] APT for Sileo (jailbroken iOS, rootless/rootful) or Termux (sideloaded Android, not jailbreak). App Store and Play Wawona use wpm and /wasm/v1. Do not run this in a store binary."
 
 # Detect OS
 OS_TYPE=$(uname -o 2>/dev/null || echo "Unknown")

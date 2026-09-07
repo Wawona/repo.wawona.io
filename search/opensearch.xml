@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
   <ShortName>Wawona catalogs</ShortName>
-  <Description>Pick App Store-safe wasm or jailbreak debs, then search. Never one mixed list.</Description>
+  <Description>Pick App Store / Play wasm, or APT debs (Sileo iOS jailbreak vs Termux Android sideload). Never one mixed list.</Description>
   <InputEncoding>UTF-8</InputEncoding>
   <Url type="text/html" method="get" template="https://repo.wawona.io/search/?query={searchTerms}"/>
 </OpenSearchDescription>

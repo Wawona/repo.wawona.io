@@ -57,7 +57,9 @@ The Wawona repository automated scripts handle these fields for you, but for man
 Recipes must set `sileo.maintainers = [ "aspauldingcode" ];`. Run
 `python3 scripts/check-packages.py` before publishing. Humans browse debs at
 `/search/?channel=deb`. Sileo still uses `https://repo.wawona.io/` as the
-source URL. `/jailbreak/` is a bookmark that opens that same deb catalog.
+source URL. `/jailbreak/` is a bookmark onto that catalog for **jailbroken iOS**
+(rootless and rootful). Termux Android sideload debs use the same APT URL and
+are **not jailbreak**; bookmark `/termux/`. Store `wpm` stays on `/wasm/v1`.
 
 ## 5. Directory Structure Guidelines
 - **Data Storage**: Store all app/binary data in `/var/` within the jbroot.

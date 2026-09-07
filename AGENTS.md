@@ -11,8 +11,10 @@ New incident or "never do X": write it into a skill in the **same** change
 ## Product boundaries
 
 Dual channel `/wasm/v1` vs APT at repo root. Humans pick a catalog at `/search/`
-(Mode A wasm or Mode B debs, never one mixed list). `/jailbreak/` is a human
-landing onto the deb catalog. APT stays at `https://repo.wawona.io/`.
+(wasm for App Store / Play, or APT debs). Debs have two audiences: **Sileo** on
+jailbroken iOS (rootless and rootful), and **Termux** on sideloaded Android
+(not jailbreak, not Play). `/jailbreak/` is the Sileo bookmark. `/termux/` is
+the Termux bookmark. APT stays at `https://repo.wawona.io/`.
 See `.cursor/rules/repo-wawona-io-channels.mdc` and skill
 `repo-wawona-io-catalogs`.
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
   <ShortName>Wawona debs</ShortName>
-  <Description>Search jailbreak Sileo / Termux debs. Not App Store wasm.</Description>
+  <Description>Search Sileo iOS jailbreak debs (rootless/rootful) and Termux Android sideload debs. Termux is not jailbreak. Not App Store wasm.</Description>
   <InputEncoding>UTF-8</InputEncoding>
   <Url type="text/html" method="get" template="https://repo.wawona.io/search/?channel=deb&amp;query={searchTerms}"/>
 </OpenSearchDescription>

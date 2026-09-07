@@ -375,8 +375,14 @@ def check_search_pages() -> list[str]:
         text = search.read_text(encoding="utf-8")
         if 'id="door-wasm"' not in text or 'id="door-deb"' not in text:
             errors.append("search/index.html must offer separate Mode A wasm and Mode B deb doors")
-        if "Mode A" not in text or "Mode B" not in text:
-            errors.append("search/index.html must label Mode A (store-safe) and Mode B (jailbreak)")
+        if "Mode A" not in text:
+            errors.append("search/index.html must label Mode A wasm (App Store / Play)")
+        if "Sileo" not in text or "Termux" not in text:
+            errors.append("search/index.html must name Sileo iOS and Termux Android as separate deb audiences")
+        if "not jailbreak" not in text.lower():
+            errors.append("search/index.html must say Termux is not jailbreak")
+        if "Sileo / Termux" in text:
+            errors.append("search/index.html must not lump Sileo / Termux as one jailbreak product")
         if re.search(r'type="radio"[^>]*name="channel"[^>]*value=""', text):
             errors.append("search/index.html must not offer a mixed All channel")
     js_path = ROOT / "search" / "catalog.js"
@@ -384,6 +390,12 @@ def check_search_pages() -> list[str]:
         js = js_path.read_text(encoding="utf-8")
         if "wasmPkgs, ...deb" in js or "[...wasmPkgs, ...debPkgs]" in js:
             errors.append("search/catalog.js must not concatenate wasm and deb into one results list")
+        if "not jailbreak" not in js.lower():
+            errors.append("search/catalog.js must say Termux is not jailbreak")
+        if "rootless" not in js.lower() or "rootful" not in js.lower():
+            errors.append("search/catalog.js must label iOS Sileo rootless and rootful")
+        if "Sileo / Termux" in js:
+            errors.append("search/catalog.js must not lump Sileo / Termux as one jailbreak product")
     wasm_html = ROOT / "wasm" / "index.html"
     if not wasm_html.is_file():
         errors.append("wasm/index.html missing")
@@ -409,6 +421,21 @@ def check_search_pages() -> list[str]:
             errors.append("jailbreak/index.html must redirect humans to /search/?channel=deb")
         if "https://repo.wawona.io/" not in text:
             errors.append("jailbreak/index.html must say Sileo still uses https://repo.wawona.io/")
+        if "rootless" not in text.lower() or "rootful" not in text.lower():
+            errors.append("jailbreak/index.html must name iOS Sileo rootless and rootful")
+        if "Termux is not jailbreak" not in text and "not jailbreak" not in text.lower():
+            errors.append("jailbreak/index.html must say Termux is not jailbreak")
+    termux_html = ROOT / "termux" / "index.html"
+    if not termux_html.is_file():
+        errors.append("termux/index.html missing (sideloaded Android bookmark; not jailbreak)")
+    else:
+        text = termux_html.read_text(encoding="utf-8")
+        if "/search/" not in text or "channel=deb" not in text:
+            errors.append("termux/index.html must redirect humans to /search/?channel=deb")
+        if "not jailbreak" not in text.lower():
+            errors.append("termux/index.html must say Termux is not jailbreak")
+        if "not Play" not in text and "not Play Store" not in text:
+            errors.append("termux/index.html must say Termux debs are not Play Store")
     not_found = ROOT / "404.html"
     if not not_found.is_file():
         errors.append("404.html missing (GitHub Pages unknown-path landing)")
@@ -416,6 +443,8 @@ def check_search_pages() -> list[str]:
         text = not_found.read_text(encoding="utf-8")
         if "/search/?channel=wasm" not in text or "/search/?channel=deb" not in text:
             errors.append("404.html must link both catalog lanes")
+        if "/termux/" not in text:
+            errors.append("404.html must link Termux Android sideload debs")
     for name in ("opensearch.xml", "opensearch-wasm.xml", "opensearch-deb.xml"):
         path = ROOT / "search" / name
         if not path.is_file():

@@ -63,7 +63,17 @@
 
     const namedInputs = (name) => [...document.querySelectorAll(`input[name="${name}"]`)];
 
-    const fillChoices = (hostId, inputName, values, selected) => {
+    const ARCH_LABELS = {
+        "iphoneos-arm64": "iphoneos-arm64 · iOS Sileo rootless",
+        "iphoneos-arm": "iphoneos-arm · iOS Sileo rootful",
+        "iphoneos-arm64e": "iphoneos-arm64e · iOS RootHide",
+        aarch64: "aarch64 · Termux Android sideload",
+        arm: "arm · Termux Android sideload",
+    };
+
+    const isIosJailbreakArch = (arch) => String(arch || "").startsWith("iphoneos-");
+
+    const fillChoices = (hostId, inputName, values, selected, labels) => {
         const host = document.getElementById(hostId);
         if (!host) return;
         const unique = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -71,7 +81,8 @@
         const options = unique
             .map((value) => {
                 const checked = selected === value ? " checked" : "";
-                return `<label><input type="radio" name="${inputName}" value="${escapeHtml(value)}"${checked}> ${escapeHtml(value)}</label>`;
+                const label = (labels && labels[value]) || value;
+                return `<label><input type="radio" name="${inputName}" value="${escapeHtml(value)}"${checked}> ${escapeHtml(label)}</label>`;
             })
             .join("");
         host.innerHTML = `<label><input type="radio" name="${inputName}" value=""${allChecked}> All</label>${options}`;
@@ -80,7 +91,7 @@
     const fillDebFilters = (selectedArch, selectedSection) => {
         const archs = packages.filter((pkg) => pkg.channel === "deb").map((pkg) => pkg.architecture);
         const sections = packages.filter((pkg) => pkg.channel === "deb").map((pkg) => pkg.section);
-        fillChoices("arch-options", "arch", archs, selectedArch);
+        fillChoices("arch-options", "arch", archs, selectedArch, ARCH_LABELS);
         fillChoices("section-options", "section", sections, selectedSection);
     };
 
@@ -281,7 +292,7 @@
             if (pageTitle) pageTitle.textContent = "Two catalogs. Pick one.";
             if (ledeEl) {
                 ledeEl.textContent =
-                    "App Store / Play wasm and jailbreak debs are not the same product. They do not share an index. Choose a catalog before you search.";
+                    "App Store / Play wasm is not the same product as APT debs. Debs split: Sileo on jailbroken iOS (rootless and rootful), Termux on sideloaded Android (not jailbreak, not Play). They do not share an index with wasm. Choose a catalog before you search.";
             }
             if (laneBanner) {
                 laneBanner.hidden = true;
@@ -300,39 +311,39 @@
             if (pageTitle) pageTitle.textContent = "Wasm packages for wpm";
             if (ledeEl) {
                 ledeEl.innerHTML =
-                    "App Store, Play, and macOS Runtime packages. Install with <code>wpm</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. Jailbreak debs are a different catalog.";
+                    "App Store and Play compliance: WASI bytecode only. Install with <code>wpm</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. Sileo and Termux debs are a different catalog.";
             }
             if (laneBanner) {
                 laneBanner.hidden = false;
                 laneBanner.className = "lane-banner lane-a";
                 laneBanner.textContent =
-                    "Mode A. Store-safe WASI bytecode. Store binaries must never read the jailbreak APT list.";
+                    "Store-safe WASI bytecode. App Store and Play binaries must never read APT, /Packages, or .deb.";
             }
             if (filterNote) {
-                filterNote.innerHTML = "Install: <code>wpm install &lt;name&gt;</code>. Not Sileo. Not <code>/Packages</code>.";
+                filterNote.innerHTML = "Install: <code>wpm install &lt;name&gt;</code>. Not Sileo. Not Termux. Not <code>/Packages</code>.";
             }
             input.placeholder = "Search wasm packages";
             if (navWasm) navWasm.setAttribute("aria-current", "page");
             return;
         }
-        document.title = "Mode B jailbreak debs (Sileo)";
-        if (kickerEl) kickerEl.textContent = "Mode B · jailbreak";
-        if (pageTitle) pageTitle.textContent = "Jailbreak deb packages";
+        document.title = "Sileo iOS and Termux Android debs";
+        if (kickerEl) kickerEl.textContent = "APT debs";
+        if (pageTitle) pageTitle.textContent = "Sileo and Termux deb packages";
         if (ledeEl) {
             ledeEl.innerHTML =
-                "Sileo / Zebra source <code>https://repo.wawona.io/</code>. Not for App Store or Play. Store <code>wpm</code> never sees this list.";
+                "Same APT source <code>https://repo.wawona.io/</code>. <strong>Sileo</strong> is jailbroken iOS (rootless and rootful). <strong>Termux</strong> is sideloaded Android only (not jailbreak, not Play). Store <code>wpm</code> never sees this list.";
         }
         if (laneBanner) {
             laneBanner.hidden = false;
             laneBanner.className = "lane-banner lane-b";
             laneBanner.textContent =
-                "Mode B. Jailbreak .deb only. Do not put these URLs in wasm/v1 or in a store binary.";
+                "Filter architecture: iphoneos-* is Sileo iOS jailbreak. aarch64 is Termux Android sideload, not jailbreak. Never in App Store or Play.";
         }
         if (filterNote) {
             filterNote.innerHTML =
-                "Add <code>https://repo.wawona.io/</code> in Sileo, then install. Not <code>wpm</code>.";
+                "Sileo: add <code>https://repo.wawona.io/</code> then install. Termux: same URL in sideloaded Android <code>apt</code>. Not <code>wpm</code>.";
         }
-        input.placeholder = "Search jailbreak debs";
+        input.placeholder = "Search Sileo or Termux debs";
         if (navDeb) navDeb.setAttribute("aria-current", "page");
     };
 
@@ -514,14 +525,16 @@
       <div class="cmd"><code>permalink</code><button type="button" class="copy-btn" data-copy="${escapeHtml(link)}">Copy link</button></div>
     </div>
     <table class="meta">
-      ${metaRow("Catalog", "<code>Mode B deb</code> (jailbreak Sileo, not App Store)")}
+      ${metaRow("Catalog", isIosJailbreakArch(pkg.architecture)
+          ? "<code>deb</code> (Sileo iOS jailbreak, rootless/rootful. Not Termux. Not App Store.)"
+          : "<code>deb</code> (Termux Android sideload. Not jailbreak. Not Play.)")}
       ${metaRow("Package", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}
-      ${metaRow("Architecture", escapeHtml(pkg.architecture || ""))}
+      ${metaRow("Architecture", escapeHtml(ARCH_LABELS[pkg.architecture] || pkg.architecture || ""))}
       ${metaRow("Section", escapeHtml(pkg.section || ""))}
       ${metaRow("Size", escapeHtml(pkg.size || ""))}
       ${metaRow("Maintainers", renderMaintainers(pkg))}
-      ${metaRow("Sileo source", `<a href="${escapeHtml(source)}">${escapeHtml(source)}</a>`)}
+      ${metaRow(isIosJailbreakArch(pkg.architecture) ? "Sileo source" : "Termux apt source", `<a href="${escapeHtml(source)}">${escapeHtml(source)}</a>`)}
       ${metaRow("SHA256", `<span class="digest mono">${escapeHtml(pkg.digest || "")}</span>`)}
       ${metaRow("Filename", blob ? `<a href="${escapeHtml(blob)}">${escapeHtml(pkg.filename)}</a>` : escapeHtml(pkg.filename || ""))}
     </table>
@@ -546,7 +559,7 @@
       <span class="chip">${escapeHtml(kind)}</span>
       ${pkg.license ? `<span class="chip">${escapeHtml(pkg.license)}</span>` : ""}`
                 : `
-      <span class="chip chip-mode-b">Mode B · jailbreak</span>
+      <span class="chip chip-mode-b">${isIosJailbreakArch(pkg.architecture) ? "Sileo · iOS jailbreak" : "Termux · Android sideload"}</span>
       <span class="chip">deb</span>
       <span class="chip">${escapeHtml(pkg.architecture || "deb")}</span>
       ${pkg.section ? `<span class="chip">${escapeHtml(pkg.section)}</span>` : ""}`;
@@ -597,7 +610,7 @@
             packages = [];
             loadedLane = "";
             lastListSig = "";
-            if (statusEl) statusEl.textContent = "Pick a catalog. Wasm and jailbreak debs are never listed together.";
+            if (statusEl) statusEl.textContent = "Pick a catalog. Wasm and APT debs are never listed together.";
             if (resultsEl) resultsEl.replaceChildren();
             return;
         }
@@ -615,7 +628,7 @@
             lastListSig = "";
             return;
         }
-        const lane = state.channel === "wasm" ? "Mode A wasm" : "Mode B jailbreak debs";
+        const lane = state.channel === "wasm" ? "Mode A wasm" : "APT debs";
         statusEl.textContent = `${groups.length} of ${total} ${lane}${state.query ? ` matching "${state.query}"` : ""}.`;
         const sig = listSignature(groups, state);
         if (sig === lastListSig && resultsEl.querySelector(".pkg")) {

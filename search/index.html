@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose a Wawona package catalog</title>
-    <meta name="description" content="Two separate catalogs. Mode A: App Store and Play wasm for wpm. Mode B: jailbreak debs for Sileo. Never one mixed list.">
+    <meta name="description" content="Two separate catalogs. Wasm for App Store and Play (wpm). Debs for Sileo on jailbroken iOS (rootless/rootful) and Termux on sideloaded Android. Termux is not jailbreak. Never one mixed list.">
     <link rel="canonical" href="https://repo.wawona.io/search/">
     <meta property="og:title" content="Wawona package catalogs">
-    <meta property="og:description" content="App Store-safe wasm and jailbreak debs are separate catalogs. Pick one.">
+    <meta property="og:description" content="App Store / Play wasm is separate from Sileo iOS jailbreak debs and Termux Android sideload debs.">
     <meta property="og:url" content="https://repo.wawona.io/search/">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="../images/favicon.png">
@@ -22,7 +22,7 @@
             <a href="https://wawona.io">wawona.io</a>
             <a href="./" id="nav-choose">Choose catalog</a>
             <a href="./?channel=wasm" id="nav-wasm">Mode A wasm</a>
-            <a href="./?channel=deb" id="nav-deb">Mode B debs</a>
+            <a href="./?channel=deb" id="nav-deb">Debs</a>
             <a href="../">Sileo source</a>
             <a href="https://wawona.io/docs/wasm/">Runtime docs</a>
         </nav>
@@ -37,8 +37,10 @@
                 </div>
             </div>
             <p class="lede" id="lede">
-                App Store / Play wasm and jailbreak debs are not the same product.
-                They do not share an index. Choose a catalog before you search.
+                App Store / Play wasm is not the same product as APT debs.
+                Debs themselves split: Sileo on jailbroken iOS (rootless and
+                rootful), Termux on sideloaded Android (not jailbreak, not Play).
+                They do not share an index with wasm. Choose a catalog before you search.
             </p>
             <p class="lane-banner" id="lane-banner" hidden></p>
         </div>
@@ -62,14 +64,16 @@
         <a class="door door-wasm" id="door-wasm" href="./?channel=wasm">
             <p class="door-kicker">Mode A</p>
             <h2>App Store / Play wasm</h2>
-            <p>WASI packages for <code>wpm</code>. Store-safe bytecode. Machine API:
-            <code>/wasm/v1</code>. Jailbreak debs are not listed here.</p>
+            <p>WASI packages for <code>wpm</code>. Store-safe bytecode for App
+            Store and Play. Machine API: <code>/wasm/v1</code>. Debs are not listed here.</p>
         </a>
         <a class="door door-deb" id="door-deb" href="./?channel=deb">
-            <p class="door-kicker">Mode B</p>
-            <h2>Jailbreak debs</h2>
-            <p>Sileo / Zebra APT at <code>https://repo.wawona.io/</code>. Not for
-            App Store or Play binaries. Store <code>wpm</code> never sees this list.</p>
+            <p class="door-kicker">APT debs</p>
+            <h2>Sileo iOS and Termux Android</h2>
+            <p>Same APT at <code>https://repo.wawona.io/</code>.
+            <strong>Sileo</strong>: jailbroken iOS, rootless and rootful.
+            <strong>Termux</strong>: sideloaded Android only. Not jailbreak. Not Play.
+            Store <code>wpm</code> never sees this list.</p>
         </a>
     </section>
 
@@ -78,8 +82,8 @@
             <h2>This catalog</h2>
             <fieldset>
                 <legend>Lane</legend>
-                <label><input type="radio" name="channel" value="wasm"> Mode A wasm (store-safe)</label>
-                <label><input type="radio" name="channel" value="deb"> Mode B debs (jailbreak)</label>
+                <label><input type="radio" name="channel" value="wasm"> Mode A wasm (App Store / Play)</label>
+                <label><input type="radio" name="channel" value="deb"> Debs (Sileo iOS, Termux Android)</label>
             </fieldset>
             <fieldset class="wasm-only">
                 <legend>WASI</legend>
@@ -123,7 +127,7 @@
         <p>
             Two machine APIs, never mixed:
             <a href="../wasm/v1/index.json"><code>/wasm/v1</code></a> for store <code>wpm</code>,
-            <a href="../Packages"><code>/Packages</code></a> for Sileo.
+            <a href="../Packages"><code>/Packages</code></a> for Sileo and Termux.
             Source: <a href="https://github.com/Wawona/repo.wawona.io">repo.wawona.io</a>.
         </p>
         <p class="copy">&copy; 2025-<span id="year"></span> Wawona Project. MIT.</p>

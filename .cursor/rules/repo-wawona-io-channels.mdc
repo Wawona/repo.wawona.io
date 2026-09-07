@@ -9,28 +9,37 @@ One host, **two channels**. Mixing indexes or auto-discovery across channels is
 a compliance bug.
 
 ```text
-/search/                 → humans: choose Mode A wasm or Mode B debs. Never a mixed list.
-/search/?channel=wasm    → humans: App Store / Play wasm catalog
-/search/?channel=deb     → humans: jailbreak Sileo debs
+/search/                 → humans: choose wasm or debs. Never a mixed list.
+/search/?channel=wasm    → humans: App Store / Play wasm only (store compliance)
+/search/?channel=deb     → humans: APT debs. Two audiences, never call Termux jailbreak.
 /wasm/v1/                → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
-/                        → Sileo APT (Packages + debs). Do not move for the catalog.
-/jailbreak/              → human landing onto the deb catalog. Not a second APT tree.
+/                        → APT (Packages + debs). Sileo and Termux both use this URL.
+/jailbreak/              → iOS Sileo bookmark (rootless + rootful). Not Termux.
+/termux/                 → Android Termux sideload bookmark. Not jailbreak. Not Play.
 ```
 
-`/wasm/`, `/deb/`, and `/jailbreak/` HTML redirect to `/search/?channel=…`. Never
-redirect `/wasm/v1/` or `/Packages`. The website may link both catalogs. It must
-not show them as one results list. Store `wpm` must never see debs.
+`/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML redirect into `/search/`.
+Never redirect `/wasm/v1/` or `/Packages`. The website may link both catalogs.
+It must not show them as one results list. Store `wpm` must never see debs.
+
+Deb APT audiences (same `Packages` file, split by Architecture):
+
+| Audience | Client | Architecture | Jailbreak? |
+|----------|--------|--------------|------------|
+| Jailbroken iOS | Sileo / Zebra | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, optional `iphoneos-arm64e` RootHide | Yes |
+| Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** |
 
 ## Hard firewall
 
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |---|---|---|
 | App Store / Play / `wpm` in store builds | Yes | **Never** |
-| Sileo / jailbroken devices | Optional | Yes |
-| Website Mode B pages | Optional | Yes |
+| Sileo on jailbroken iOS | Optional | Yes |
+| Termux on sideloaded Android | Optional | Yes |
+| Website Mode B / sideload pages | Optional | Yes |
 
-`/jailbreak/` is a human landing onto `/search/?channel=deb`. It is **not** the
-APT tree. Store `wpm` must never fetch it.
+`/jailbreak/` is an iOS Sileo bookmark onto `/search/?channel=deb`. It is **not**
+the APT tree and **not** Termux. Store `wpm` must never fetch it.
 
 ## Also publish (Mode B)
 
@@ -41,7 +50,9 @@ APT tree. Store `wpm` must never fetch it.
 ## Never
 
 - One index listing both `.wasm` and `.deb`
-- Teach store `wpm` to probe `/jailbreak/`
+- Teach store `wpm` to probe `/jailbreak/`, `/termux/`, `/Packages`, or `.deb`
+- Call Termux debs jailbreak. Termux is sideloaded Android only. Not Play.
 - Claim Wawona Runtime needs Mode B to install packages (Runtime is Mode A only)
+- Lump Sileo and Termux as one jailbreak product
 
 See `wawona-product-map` and `Wawona/docs/wasm-package-manager.md`.
