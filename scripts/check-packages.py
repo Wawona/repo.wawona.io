@@ -292,6 +292,9 @@ def check_wasm(roster: dict) -> list[str]:
         digest = str(pkg.get("digest") or "")
         if digest and not digest.startswith("sha256:"):
             errors.append(f"wasm {name}: digest must be sha256:...")
+    names = {pkg.get("name") for pkg in packages}
+    if "hello-wasi" not in names:
+        errors.append("wasm/v1/index.json must keep hello-wasi as the wpm smoke package")
     return errors
 
 
