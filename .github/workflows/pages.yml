@@ -26,6 +26,16 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Provide GNU tar for the Pages archive
+        run: |
+          if command -v gtar >/dev/null 2>&1 || [[ "$(uname -s)" != Darwin ]]; then
+            exit 0
+          fi
+          found=$(find /nix/store -maxdepth 3 -type f -path '*/bin/gtar' 2>/dev/null | head -1)
+          test -n "$found"
+          mkdir -p "$RUNNER_TEMP/bin"
+          ln -sfn "$found" "$RUNNER_TEMP/bin/gtar"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: .
