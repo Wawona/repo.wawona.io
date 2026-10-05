@@ -1,0 +1,1 @@
+https://github.com/cube-one-ber/chess-for-linux/tree/cd308076abf666738ff1698966e3f94a9ac9129d/wasm
