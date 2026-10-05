@@ -90,4 +90,8 @@ mkWawonaPackage rec {
     ln -s $out${prefix}/usr/bin/arch $out${prefix}/usr/bin/machine
     ln -s $out${prefix}/sbin/reboot $out${prefix}/sbin/halt
   '';
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

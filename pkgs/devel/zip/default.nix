@@ -17,4 +17,8 @@ mkWawonaPackage rec {
   installPhase = ''
     make -f unix/Makefile install prefix=$out
   '';
+
+  sileo = {
+    maintainers = [ "aspauldingcode" ];
+  };
 }

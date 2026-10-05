@@ -33,5 +33,6 @@ mkWawonaPackage rec {
     package = "io.wawona.libiosexec";
     architecture = "iphoneos-arm64e"; # RootHide compatible
     description = "Library for iOS shebang execution and process management";
+    maintainers = [ "aspauldingcode" ];
   };
 }

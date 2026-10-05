@@ -15,5 +15,6 @@ mkWawonaPackage rec {
     package = "io.wawona.zsh";
     architecture = "iphoneos-arm64";
     description = "Powerful shell with lots of features for iOS";
+    maintainers = [ "aspauldingcode" ];
   };
 }

@@ -1,13 +1,20 @@
-# Test debs for vphone jb / Dopamine rootless
+# Sileo test debs (rootless and rootful)
 
-Publish under `/jailbreak/test/` while on `dma-buf-zero-copy`. Promote to live
-`/jailbreak/` only with the development merge.
+Both variants are rows in the root APT index (`Packages`, `debs/`). Sileo
+uses `https://repo.wawona.io/`. `/jailbreak/` is a bookmark onto
+`/search/?channel=deb`. It is not a second package tree.
+
+| Scheme | Architecture | Device |
+|---|---|---|
+| rootless | `iphoneos-arm64` | Dopamine, palera1n rootless |
+| rootful | `iphoneos-arm` | checkra1n, unc0ver, palera1n rootful |
+| RootHide | `iphoneos-arm64e` | RootHide |
 
 Packages:
-- `com.aspauldingcode.wawona` rootless (`Architecture: iphoneos-arm64`)
-- `com.aspauldingcode.wawona.desktop-tweak` (`Depends: ellekit`)
-- optional `wawona-vphone-smoke` log-only tweak
 
-Built from Wawona Mode B `.app` via `scripts/package-ios-mode-b.sh` and
-`mkWawonaPackage.nix` `jailbreakScheme = "rootless"`. Never under `/wasm/`.
-Never in store IPA.
+- `com.aspauldingcode.wawona` rootless and, as a separate build, rootful
+- `com.aspauldingcode.wawona.desktop-tweak` (`Depends: ellekit`, rootless)
+- optional log-only smoke tweak
+
+Build with `mkWawonaPackage` `jailbreakScheme = "rootless"` or `"rootful"`.
+Never under `/wasm/`. Never in a store IPA.

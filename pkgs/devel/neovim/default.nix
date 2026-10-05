@@ -18,5 +18,6 @@ mkWawonaPackage rec {
     package = "io.wawona.neovim";
     architecture = "iphoneos-arm64";
     description = "Hyperextensible Vim-based text editor for iOS";
+    maintainers = [ "aspauldingcode" ];
   };
 }

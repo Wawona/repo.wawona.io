@@ -3,11 +3,22 @@
 Static registry for **Wawona Runtime** packages. Consumed by `wpm` in store /
 Play / macOS builds.
 
-- Index: [`v1/index.json`](v1/index.json)
+- Human catalog: [`https://repo.wawona.io/search/?channel=wasm`](https://repo.wawona.io/search/?channel=wasm)
+  (`/wasm/` HTML redirects here; same data as the index)
+- Index: [`v1/index.json`](v1/index.json) (machine API; do not redirect)
 - Default client base: `https://repo.wawona.io/wasm/v1`
 
-Jailbreak `.deb` APT and Mode B IPA live under `/jailbreak/` — never listed here.
+Sileo `.deb` APT (jailbroken iOS, rootless/rootful) and Termux `.deb` APT
+(sideloaded Android, not jailbreak) live under the same repo-root source. Humans
+browse them at [`/search/?channel=deb`](https://repo.wawona.io/search/?channel=deb).
+Never listed in this wasm index. Store `wpm` never reads APT.
+
 See [Wawona wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/development/docs/wasm-package-manager.md).
 
 To publish a package, add a row to `index.json` and place the blob under
 `v1/packages/<name>/<version>/component.wasm` with matching `sha256:` digest.
+**`maintainers`** is required: a list of GitHub usernames from
+[`maintainers.json`](../maintainers.json). Names are resolved from GitHub, not
+typed. Optional catalog fields (`kind`, `long_description`, `license`,
+`homepage`, `source`, `programs`, `capabilities`, `platforms`) are ignored by
+`wpm` and shown on the search page.

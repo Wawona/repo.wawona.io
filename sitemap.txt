@@ -1,0 +1,8 @@
+https://repo.wawona.io/
+https://repo.wawona.io/search/
+https://repo.wawona.io/search/?channel=wasm
+https://repo.wawona.io/search/?channel=deb
+https://repo.wawona.io/wasm/
+https://repo.wawona.io/deb/
+https://repo.wawona.io/jailbreak/
+https://repo.wawona.io/wasm/v1/index.json

@@ -1,0 +1,28 @@
+name: "Gate: packages"
+
+on:
+  push:
+    branches: [ development, main, master ]
+  pull_request:
+    branches: [ development, main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-packages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  maintainers:
+    name: wasm + deb maintainers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Query GitHub and check packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/check-packages.py

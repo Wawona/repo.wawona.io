@@ -25,5 +25,6 @@ mkWawonaPackage rec {
   sileo = {
     package = "io.wawona.zsign";
     description = "A powerful tool for signing iOS apps";
+    maintainers = [ "aspauldingcode" ];
   };
 }

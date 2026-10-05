@@ -1,0 +1,32 @@
+---
+description: Always load this repo's Cursor skills; write new learnings back into skills. Software must improve on those priors.
+alwaysApply: true
+---
+
+# Agent learn loop (this repo)
+
+Knowledge for `repo.wawona.io` lives in **skills** plus the hard-gate rules.
+Do not re-derive catalogs from model priors. Software must **improve on**
+documented prior knowledge.
+
+## Before any change
+
+1. Read `.cursor/skills/repo-wawona-io-priors/SKILL.md`, then the matching
+   skill (`repo-wawona-io-catalogs` for search/indexes/APT).
+2. Query **wwn-mcp** (`where_to_edit`, `search_docs`). Trust citations.
+   `repo.wawona.io` is **not** the `wawona.io` website.
+3. Obey `.cursor/rules/repo-wawona-io-channels.mdc` and
+   `repo-wawona-io-maintainers.mdc`. Pointer + delta in skills. Do not paste
+   a whole rule into a skill.
+4. If a skill or rule already forbids the approach, stop.
+
+## After a durable finding
+
+Incident, hard reject, 404, mixed list, wrong APT path, or "never do X":
+
+1. Update or add a skill under `.cursor/skills/` and `docs/agent-skills/`.
+2. Hard gate: patch the matching `.cursor/rules/*.mdc` in the **same** change.
+3. If humans or machines can regress it, extend `scripts/check-packages.py`.
+4. Do not leave the learning only in chat. Skill `repo-wawona-io-learn`.
+
+Voice: `wawona-caveman` lite in chat. Never em dash (`wawona-no-em-dash`).

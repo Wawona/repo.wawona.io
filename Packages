@@ -1,28 +1,27 @@
 Package: com.aspauldingcode.hello
 Version: 0.1.0
 Architecture: iphoneos-arm64
-Maintainer: aspauldingcode
+Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
 Filename: debs/hello_0.1.0_iphoneos-arm64.deb
-Size: 1380
-MD5sum: 1b10d7913e5c3d6d1c734c788ee39fb6
-SHA1: 14fde887ed1886c2d5bc2bb8a9a01863f93e42fc
-SHA256: 227b3014c6c23200af191074d87fb07967655a9ba6331ecea854d92dc3179836
+Size: 1376
+MD5sum: 4b754fd13453d0880e3ee3f9dd79e3f2
+SHA1: e564529612aeb2b5c946d5a76254e9271d0d7521
+SHA256: 0077b2527209646d82157491c1b0498313ad3461231b4bd3f60ee12c8bd78e80
 Section: Utilities
 Priority: optional
 Description: Rootless Hello
-Author: aspauldingcode
+Author: Alex Spaulding <aspauldingcode@gmail.com>
 
 Package: com.aspauldingcode.hello
 Version: 0.1.0
 Architecture: aarch64
-Maintainer: aspauldingcode
+Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
 Filename: debs/hello_0.1.0_aarch64.deb
-Size: 840
-MD5sum: 6686afe3772290d2a248c5bbba54d1eb
-SHA1: 4cc4deaffe4779371e5c990917cd78c3b3fa2cfc
-SHA256: b43e9b4ec12144b5240b86396b7cbfba3fe8ea2247cba0a3cf7618a605160e90
+Size: 836
+MD5sum: 94cf54b45faf3beea5eed190fe1d855b
+SHA1: 573f74794521e863819f92da939d481ade7b072c
+SHA256: fed4805489dbe039ba1c4ddd42ba448d8784af416874475d9cdc2fd008166208
 Section: Utilities
 Priority: optional
 Description: Rootless Hello
-Author: aspauldingcode
-
+Author: Alex Spaulding <aspauldingcode@gmail.com>

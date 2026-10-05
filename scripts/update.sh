@@ -5,10 +5,11 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ROOT=$(dirname "$SCRIPT_DIR")
 REPO_ROOT="$ROOT"
+ARCH_IOS_ROOTFUL="iphoneos-arm"
 ARCH_IOS_64="iphoneos-arm64"
 ARCH_IOS_64E="iphoneos-arm64e"
 ARCH_ANDROID="aarch64"
-ALL_ARCHS="$ARCH_IOS_64 $ARCH_IOS_64E $ARCH_ANDROID"
+ALL_ARCHS="$ARCH_IOS_ROOTFUL $ARCH_IOS_64 $ARCH_IOS_64E $ARCH_ANDROID"
 
 # Helpers
 get_size() { stat -c %s "$1" 2>/dev/null || stat -f %z "$1"; }
@@ -67,9 +68,13 @@ EOF
     cp "Release" "Releases"
 }
 
-echo "Step 1: Building multi-platform aggregate..."
-nix build .#ios --out-link "$ROOT/result-ios" || echo "iOS build skipped"
-nix build .#android --out-link "$ROOT/result-android" || echo "Android build skipped"
+if [ "${WAWONA_BUILD_PACKAGES:-0}" = 1 ]; then
+    echo "Step 1: Building multi-platform aggregate (WAWONA_BUILD_PACKAGES=1)..."
+    nix build .#ios --out-link "$ROOT/result-ios" || echo "iOS build skipped"
+    nix build .#android --out-link "$ROOT/result-android" || echo "Android build skipped"
+else
+    echo "Step 1: Skipping nix aggregate. Set WAWONA_BUILD_PACKAGES=1 to build .#ios / .#android."
+fi
 
 echo "Step 2: Collecting binaries..."
 mkdir -p "$REPO_ROOT/debs"

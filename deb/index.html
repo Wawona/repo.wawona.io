@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wawona deb packages</title>
+    <meta http-equiv="refresh" content="0;url=/search/?channel=deb">
+    <link rel="canonical" href="https://repo.wawona.io/search/?channel=deb">
+    <meta name="robots" content="noindex">
+    <script>
+        (function () {
+            var params = new URLSearchParams(location.search);
+            params.set("channel", "deb");
+            location.replace("/search/" + (params.toString() ? "?" + params.toString() : "?channel=deb"));
+        })();
+    </script>
+</head>
+<body>
+    <p>The deb catalog is at <a href="/search/?channel=deb">/search/?channel=deb</a>.
+    APT source for both audiences: <a href="/">https://repo.wawona.io/</a>.</p>
+    <p><strong>Sileo</strong> on jailbroken iOS (rootless and rootful):
+    <a href="/jailbreak/">/jailbreak/</a>.</p>
+    <p><strong>Termux</strong> on sideloaded Android (not jailbreak, not Play):
+    <a href="/termux/">/termux/</a>.</p>
+</body>
+</html>
