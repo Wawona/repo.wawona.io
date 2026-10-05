@@ -2,7 +2,7 @@ Origin: Wawona
 Label: Wawona
 Suite: stable
 Codename: stable
-Architectures: iphoneos-arm64 iphoneos-arm64e aarch64
+Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e aarch64
 Components: main
 Description: Wawona System Utilities (iOS & Android)
 Date: Mon, 07 Sep 2026 19:40:58 +0000

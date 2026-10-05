@@ -530,7 +530,7 @@ def update_release_hashes() -> None:
 Label: Wawona
 Suite: stable
 Codename: stable
-Architectures: iphoneos-arm64 iphoneos-arm64e aarch64
+Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e aarch64
 Components: main
 Description: Wawona System Utilities (iOS & Android)
 Date: {date}
@@ -581,12 +581,39 @@ def fix_published_artifacts(roster: dict, resolved: dict) -> None:
     print("updated Packages, Packages.gz, Release")
 
 
+# Sileo selects by dpkg Architecture. iphoneos-arm must be its own token.
+# A substring check would treat it as present inside iphoneos-arm64.
+SILEO_RELEASE_ARCHES = ("iphoneos-arm", "iphoneos-arm64", "iphoneos-arm64e", "aarch64")
+
+
+def check_release_arches() -> list[str]:
+    errors: list[str] = []
+    for name in ("Release", "Releases"):
+        path = ROOT / name
+        if not path.is_file():
+            errors.append(f"{name} missing")
+            continue
+        match = re.search(r"^Architectures:\s*(.+)$", path.read_text(encoding="utf-8"), re.M)
+        if not match:
+            errors.append(f"{name}: Architectures field missing")
+            continue
+        have = match.group(1).split()
+        for arch in SILEO_RELEASE_ARCHES:
+            if arch not in have:
+                errors.append(
+                    f"{name}: Architectures must list {arch} "
+                    "(rootful Sileo is iphoneos-arm, not a suffix of iphoneos-arm64)"
+                )
+    return errors
+
+
 def package_errors(roster: dict, resolved: dict) -> list[str]:
     errors: list[str] = []
     errors.extend(check_wasm(roster))
     errors.extend(check_nix_recipes())
     errors.extend(check_packages_index(roster, resolved))
     errors.extend(check_debs(roster, resolved))
+    errors.extend(check_release_arches())
     errors.extend(check_search_pages())
     errors.extend(check_agent_skills())
     return errors

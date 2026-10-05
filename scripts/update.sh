@@ -5,10 +5,11 @@ set -e
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ROOT=$(dirname "$SCRIPT_DIR")
 REPO_ROOT="$ROOT"
+ARCH_IOS_ROOTFUL="iphoneos-arm"
 ARCH_IOS_64="iphoneos-arm64"
 ARCH_IOS_64E="iphoneos-arm64e"
 ARCH_ANDROID="aarch64"
-ALL_ARCHS="$ARCH_IOS_64 $ARCH_IOS_64E $ARCH_ANDROID"
+ALL_ARCHS="$ARCH_IOS_ROOTFUL $ARCH_IOS_64 $ARCH_IOS_64E $ARCH_ANDROID"
 
 # Helpers
 get_size() { stat -c %s "$1" 2>/dev/null || stat -f %z "$1"; }
