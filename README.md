@@ -12,12 +12,12 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 | **`/search/?channel=wasm`** | Humans (Mode A) | App Store / Play wasm catalog for `wpm`. Store compliance. |
 | **`/search/?channel=deb`** | Humans | APT debs. Two audiences on one `Packages` file. |
 | **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. Do not redirect this tree. |
-| **`/` APT** (`Packages`, `debs/`) | Sileo **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
-| **`/jailbreak/`** | Jailbroken iOS (Sileo) | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). **Not** Termux. **Not** a second APT tree. |
+| **`/` APT** (`Packages`, `debs/`) | Sileo, Zebra, Irisin, **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
+| **`/jailbreak/`** | Jailbroken iOS (Sileo, Zebra, Irisin) | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). Irisin is iOS 16 or later, rootless and roothide. **Not** Termux. **Not** a second APT tree. |
 | **`/termux/`** | Sideloaded Android (Termux) | Bookmark onto `aarch64` debs. **Not jailbreak.** **Not Play.** |
-| **Mode B IPA** (automated) | Jailbroken iOS via Sileo | Full **Wawona Mode B** app. **Never** submitted to App Store. |
+| **Mode B `.deb`** | Jailbroken iOS via Sileo | Full **Wawona Mode B** app for iOS 11+. **Never** submitted to App Store. |
 
-`/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Sileo and Termux still talk to `/`.
+`/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Sileo, Zebra, Irisin, and Termux still talk to `/`.
 
 ### Wasm (App Store / Play)
 
@@ -25,7 +25,7 @@ Store / Play Wawona may download Wasm from `/wasm/v1` only. Never APT, never `.d
 
 ### Sileo debs (jailbroken iOS)
 
-Rootless and rootful Procursus/Sileo packages ([docs/packaging.md](docs/packaging.md)). CI may also publish a Mode B Wawona iOS IPA for Sileo. That IPA is never an App Store binary.
+Rootless and rootful Procursus/Sileo packages ([docs/packaging.md](docs/packaging.md)). Wawona's Sileo Mode B `.deb` starts at iOS 11. The separate TrollStore `.tipa` starts at iOS 14 and is not a Sileo package. Neither is an App Store binary.
 
 ### Termux debs (sideloaded Android)
 

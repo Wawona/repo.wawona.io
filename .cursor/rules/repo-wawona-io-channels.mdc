@@ -13,8 +13,8 @@ a compliance bug.
 /search/?channel=wasm    → humans: App Store / Play wasm only (store compliance)
 /search/?channel=deb     → humans: APT debs. Two audiences, never call Termux jailbreak.
 /wasm/v1/                → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
-/                        → APT (Packages + debs). Sileo and Termux both use this URL.
-/jailbreak/              → iOS Sileo bookmark (rootless + rootful). Not Termux.
+/                        → APT (Packages + debs). Sileo, Zebra, Irisin, and Termux use this URL.
+/jailbreak/              → iOS Sileo, Zebra, and Irisin bookmark (rootless + rootful). Not Termux.
 /termux/                 → Android Termux sideload bookmark. Not jailbreak. Not Play.
 ```
 
@@ -26,7 +26,7 @@ Deb APT audiences (same `Packages` file, split by Architecture):
 
 | Audience | Client | Architecture | Jailbreak? |
 |----------|--------|--------------|------------|
-| Jailbroken iOS | Sileo / Zebra | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, optional `iphoneos-arm64e` RootHide | Yes |
+| Jailbroken iOS | Sileo, Zebra, Irisin | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo/Zebra), `iphoneos-arm64e` RootHide (Irisin and Sileo). Irisin is iOS 16+ and does not install rootful. | Yes |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** |
 
 ## Hard firewall
@@ -34,11 +34,11 @@ Deb APT audiences (same `Packages` file, split by Architecture):
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |---|---|---|
 | App Store / Play / `wpm` in store builds | Yes | **Never** |
-| Sileo on jailbroken iOS | Optional | Yes |
+| Sileo, Zebra, or Irisin on jailbroken iOS | Optional | Yes |
 | Termux on sideloaded Android | Optional | Yes |
 | Website Mode B / sideload pages | Optional | Yes |
 
-`/jailbreak/` is an iOS Sileo bookmark onto `/search/?channel=deb`. It is **not**
+`/jailbreak/` is an iOS Sileo, Zebra, and Irisin bookmark onto `/search/?channel=deb`. It is **not**
 the APT tree and **not** Termux. Store `wpm` must never fetch it.
 
 ## Also publish (Mode B)

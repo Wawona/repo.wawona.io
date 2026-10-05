@@ -423,6 +423,17 @@ def check_search_pages() -> list[str]:
             errors.append("jailbreak/index.html must say Sileo still uses https://repo.wawona.io/")
         if "rootless" not in text.lower() or "rootful" not in text.lower():
             errors.append("jailbreak/index.html must name iOS Sileo rootless and rootful")
+        if "Irisin" not in text or "irisin://repository/add" not in text:
+            errors.append("jailbreak/index.html must offer Irisin next to Sileo and Zebra")
+    home = ROOT / "index.html"
+    if home.is_file():
+        home_text = home.read_text(encoding="utf-8")
+        if "Add to Irisin" not in home_text or "irisin://repository/add" not in home_text:
+            errors.append("index.html must offer Add to Irisin beside Sileo and Zebra")
+        if "images/logo/irisin.png" not in home_text:
+            errors.append("index.html must show the Irisin logo on the source button")
+    if not (ROOT / "images" / "logo" / "irisin.png").is_file():
+        errors.append("images/logo/irisin.png missing")
         if "Termux is not jailbreak" not in text and "not jailbreak" not in text.lower():
             errors.append("jailbreak/index.html must say Termux is not jailbreak")
     termux_html = ROOT / "termux" / "index.html"

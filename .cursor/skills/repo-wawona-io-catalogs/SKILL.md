@@ -19,14 +19,14 @@ jailbreak.
 
 | Deb audience | Client | Architecture | Jailbreak? | Store/Play? |
 |--------------|--------|--------------|------------|-------------|
-| Jailbroken iOS / iPadOS | Sileo / Zebra | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, optional `iphoneos-arm64e` RootHide | Yes | No |
+| Jailbroken iOS / iPadOS | Sileo, Zebra, Irisin | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo/Zebra), `iphoneos-arm64e` RootHide. Irisin is iOS 16+ rootless and roothide, not rootful. | Yes | No |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** | **No** |
 
 `/search/` is a chooser, not a mixed All channel. HTML landings:
 
 - `/wasm/` → wasm catalog
 - `/deb/` → deb catalog (both APT audiences)
-- `/jailbreak/` → iOS Sileo bookmark. Not Termux. Not APT root.
+- `/jailbreak/` → iOS Sileo, Zebra, and Irisin bookmark. Not Termux. Not APT root.
 - `/termux/` → Termux Android sideload bookmark. Not jailbreak. Not Play.
 
 ## Firewall
@@ -34,7 +34,7 @@ jailbreak.
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |----------|------------|----------------------|
 | App Store / Play `wpm` | Yes | **Never** |
-| Sileo (jailbroken iOS) | Optional | Yes |
+| Sileo, Zebra, or Irisin (jailbroken iOS) | Optional | Yes |
 | Termux (sideloaded Android) | Optional | Yes |
 
 Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches

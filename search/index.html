@@ -38,8 +38,9 @@
             </div>
             <p class="lede" id="lede">
                 App Store / Play wasm is not the same product as APT debs.
-                Debs themselves split: Sileo on jailbroken iOS (rootless and
-                rootful), Termux on sideloaded Android (not jailbreak, not Play).
+                Debs themselves split: Sileo, Zebra, and Irisin on jailbroken iOS
+                (rootless and rootful; Irisin is rootless and roothide on iOS 16
+                or later), Termux on sideloaded Android (not jailbreak, not Play).
                 They do not share an index with wasm. Choose a catalog before you search.
             </p>
             <p class="lane-banner" id="lane-banner" hidden></p>
@@ -69,9 +70,10 @@
         </a>
         <a class="door door-deb" id="door-deb" href="./?channel=deb">
             <p class="door-kicker">APT debs</p>
-            <h2>Sileo iOS and Termux Android</h2>
+            <h2>Sileo, Zebra, Irisin, and Termux</h2>
             <p>Same APT at <code>https://repo.wawona.io/</code>.
-            <strong>Sileo</strong>: jailbroken iOS, rootless and rootful.
+            <strong>Sileo</strong>, <strong>Zebra</strong>, and <strong>Irisin</strong>: jailbroken iOS, rootless and rootful.
+            Irisin is iOS 16 or later, rootless and roothide.
             <strong>Termux</strong>: sideloaded Android only. Not jailbreak. Not Play.
             Store <code>wpm</code> never sees this list.</p>
         </a>
@@ -83,7 +85,7 @@
             <fieldset>
                 <legend>Lane</legend>
                 <label><input type="radio" name="channel" value="wasm"> Mode A wasm (App Store / Play)</label>
-                <label><input type="radio" name="channel" value="deb"> Debs (Sileo iOS, Termux Android)</label>
+                <label><input type="radio" name="channel" value="deb"> Debs (Sileo, Zebra, Irisin, Termux)</label>
             </fieldset>
             <fieldset class="wasm-only">
                 <legend>WASI</legend>
