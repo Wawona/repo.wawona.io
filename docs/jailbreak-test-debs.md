@@ -12,6 +12,10 @@ uses `https://repo.wawona.io/`. `/jailbreak/` is a bookmark onto
 
 Packages:
 
+- `com.aspauldingcode.wawona.modeb.demo` rootless and, as a separate build,
+  rootful. Framebuffer and JIT proof (IOMFB plasma, Hello text, fib HUD).
+  Built by `Wawona/scripts/build-modeb-demo-tipa.sh` next to the TrollStore
+  `.tipa`. Same signed binary. Not App Store.
 - `com.aspauldingcode.wawona` rootless and, as a separate build, rootful
 - `com.aspauldingcode.wawona.desktop-tweak` (`Depends: ellekit`, rootless)
 - optional log-only smoke tweak

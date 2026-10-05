@@ -5,10 +5,10 @@ Codename: stable
 Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e aarch64
 Components: main
 Description: Wawona System Utilities (iOS & Android)
-Date: Mon, 07 Sep 2026 19:40:58 +0000
+Date: Mon, 05 Oct 2026 23:45:54 +0000
 MD5Sum:
- 4c7406ebf66b332309c146b0f9c9cbbf 918 Packages
- e89e1a9705be62fe0b64e9c9c9aeac26 436 Packages.gz
+ 10fed73bc1b98389641f4af0d1d98fa6 2275 Packages
+ f7160c1dd73813f62689eb2032aacbb1 828 Packages.gz
 SHA256:
- 4f9ac6e3f1401aea49d6600ba3234ec25aa292d2a8dabf213cbac8629527d50e 918 Packages
- 550c3f152d291667f70b5da155a3847b204fb7ba8203c5f2424d9e49795add3f 436 Packages.gz
+ 6182fb01fc050d53ae5b15905921a7d9201ea1885e503b76d17550d4d6fe8033 2275 Packages
+ efde1ffa7bdc0d6ed7d001c4309b3d8b9bafde5e94f64dce72badb83c50b1078 828 Packages.gz
