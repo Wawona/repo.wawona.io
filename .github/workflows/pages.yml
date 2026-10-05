@@ -31,8 +31,8 @@ jobs:
           if command -v gtar >/dev/null 2>&1 || [[ "$(uname -s)" != Darwin ]]; then
             exit 0
           fi
-          found=$(find /nix/store -maxdepth 3 -type f -path '*/bin/gtar' 2>/dev/null | head -1)
-          test -n "$found"
+          found=$(find /nix/store -maxdepth 3 -type f -path '*/gnutar-*/bin/tar' 2>/dev/null | head -1)
+          test -x "$found"
           mkdir -p "$RUNNER_TEMP/bin"
           ln -sfn "$found" "$RUNNER_TEMP/bin/gtar"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
