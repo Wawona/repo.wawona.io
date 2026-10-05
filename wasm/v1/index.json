@@ -76,7 +76,7 @@
     {
       "name": "chess-wawona",
       "version": "0.1.0",
-      "digest": "sha256:ad56630bba646b695a18cb1b951732ed0eef1e3217bcfa550de6a3a213dccac6",
+      "digest": "sha256:b7b008a45e01d7d14f2cdd28d03c3b9680a9fe3193db99202758d16f17deec0a",
       "url": "packages/chess-wawona/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "wayland",
@@ -86,7 +86,7 @@
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://github.com/cube-one-ber/chess-for-linux",
-      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/e3f01f7e2ac3b33ce440f05fe7b2e368e8d8f71b/wasm",
+      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/cd308076abf666738ff1698966e3f94a9ac9129d/wasm",
       "programs": [
         "chess-wawona"
       ],

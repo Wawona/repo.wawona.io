@@ -9,9 +9,9 @@ then `wasm chess-wawona`. Games are in memory only; no persistence, network,
 speech, recording or 3D board in this frontend. Keyboard text assumes US evdev
 keycodes. The package requests Wayland, with no filesystem or network access.
 
-Source and build instructions: https://github.com/cube-one-ber/chess-for-linux/tree/e3f01f7e2ac3b33ce440f05fe7b2e368e8d8f71b/wasm
+Source and build instructions: https://github.com/cube-one-ber/chess-for-linux/tree/cd308076abf666738ff1698966e3f94a9ac9129d/wasm
 
-Built with Rust 1.95.0 for `wasm32-wasip1`, reusing the native application's
+Built by GitHub Actions with Rust 1.95.0 for `wasm32-wasip1`, reusing the native application's
 Rust rules and engine. The transport/font adapt Wawona's MIT example.
 See LICENSE, LICENSE.wawona and licenses/ for notices.
 
@@ -19,4 +19,4 @@ Validation: compiled-wasm pointer, touch, keyboard and computer-reply checks,
 resize, ping/pong, SHM cleanup and a real buffer commit to headless Weston.
 Apple/Android Wawona device validation is still pending.
 
-Digest: sha256:ad56630bba646b695a18cb1b951732ed0eef1e3217bcfa550de6a3a213dccac6
+Digest: sha256:b7b008a45e01d7d14f2cdd28d03c3b9680a9fe3193db99202758d16f17deec0a
