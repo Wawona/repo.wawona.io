@@ -18,21 +18,9 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/rust",
-      "programs": [
-        "hello-wasi"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
+      "programs": ["hello-wasi"],
+      "maintainers": ["aspauldingcode"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": false,
         "filesystem": [],
@@ -53,21 +41,9 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/hello-wasi-gui",
-      "programs": [
-        "hello-wasi-gui"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
+      "programs": ["hello-wasi-gui"],
+      "maintainers": ["aspauldingcode"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": true,
         "filesystem": [],
@@ -88,21 +64,9 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/wayland-shm",
-      "programs": [
-        "wayland-shm-demo"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
+      "programs": ["wayland-shm-demo"],
+      "maintainers": ["aspauldingcode"],
+      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
       "capabilities": {
         "wayland": true,
         "filesystem": [],
@@ -122,7 +86,7 @@
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://github.com/cube-one-ber/chess-for-linux",
-      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/e3f01f7/wasm",
+      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/e3f01f7e2ac3b33ce440f05fe7b2e368e8d8f71b/wasm",
       "programs": [
         "chess-wawona"
       ],
