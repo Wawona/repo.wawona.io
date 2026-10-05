@@ -15,7 +15,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: [self-hosted, wawona-local]
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
