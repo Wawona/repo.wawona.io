@@ -72,6 +72,41 @@
         "filesystem": [],
         "network": false
       }
+    },
+    {
+      "name": "chess-wawona",
+      "version": "0.1.0",
+      "digest": "sha256:b7b008a45e01d7d14f2cdd28d03c3b9680a9fe3193db99202758d16f17deec0a",
+      "url": "packages/chess-wawona/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "wayland",
+      "summary": "Chess and four variants with a 2D Wayland board and Rust engine",
+      "long_description": "WASI Preview 1 Wayland client using wl_shm and xdg-shell. Play locally or against the Rust engine; Standard, Crazyhouse, Suicide and Losers. Pointer board input, typed UCI/SAN moves and drops, undo/redo and promotion choices. Software-rendered 2D frontend; no Qt, Vulkan, native executables or external assets. No file persistence, network play, speech or recording in this build.",
+      "license": "GPL-3.0-or-later",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://github.com/cube-one-ber/chess-for-linux",
+      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/cd308076abf666738ff1698966e3f94a9ac9129d/wasm",
+      "programs": [
+        "chess-wawona"
+      ],
+      "maintainers": [
+        "cube-one-ber"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
     }
   ]
 }

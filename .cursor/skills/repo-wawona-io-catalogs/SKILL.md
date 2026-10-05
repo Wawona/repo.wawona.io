@@ -72,3 +72,13 @@ python3 scripts/check-packages.py --offline --root .
 ## Out of scope unless asked
 
 Mode B IPA auto-publish to Sileo. In-app Packages GUI. OCI `/wasm/v2`.
+
+## Third-party wasm submissions
+
+- A generated upstream `index.json` may be a single-package fragment. Merge
+  its rows into the existing `packages` array; preserve the current catalog.
+- Match the shipped blob's SHA-256 against the submitted `digest`. Pin the
+  source URL to the commit used to build it, and include dependency licenses.
+- `wasi: p1` packages can use the conventional filename `component.wasm`
+  while remaining core modules. Do not relabel them as WASI P2 components.
+- Host ABI tests on Linux are not Apple/Android Wawona device validation.
