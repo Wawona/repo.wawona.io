@@ -18,9 +18,21 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/rust",
-      "programs": ["hello-wasi"],
-      "maintainers": ["aspauldingcode"],
-      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "programs": [
+        "hello-wasi"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
       "capabilities": {
         "wayland": false,
         "filesystem": [],
@@ -41,9 +53,21 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/hello-wasi-gui",
-      "programs": ["hello-wasi-gui"],
-      "maintainers": ["aspauldingcode"],
-      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "programs": [
+        "hello-wasi-gui"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
       "capabilities": {
         "wayland": true,
         "filesystem": [],
@@ -64,9 +88,56 @@
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wwn-wasm/tree/development/examples/wayland-shm",
-      "programs": ["wayland-shm-demo"],
-      "maintainers": ["aspauldingcode"],
-      "platforms": ["macos", "ios", "ipados", "tvos", "visionos", "android", "linux"],
+      "programs": [
+        "wayland-shm-demo"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
+      "name": "chess-wawona",
+      "version": "0.1.0",
+      "digest": "sha256:ad56630bba646b695a18cb1b951732ed0eef1e3217bcfa550de6a3a213dccac6",
+      "url": "packages/chess-wawona/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "wayland",
+      "summary": "Chess and four variants with a 2D Wayland board and Rust engine",
+      "long_description": "WASI Preview 1 Wayland client using wl_shm and xdg-shell. Play locally or against the Rust engine; Standard, Crazyhouse, Suicide and Losers. Pointer board input, typed UCI/SAN moves and drops, undo/redo and promotion choices. Software-rendered 2D frontend; no Qt, Vulkan, native executables or external assets. No file persistence, network play, speech or recording in this build.",
+      "license": "GPL-3.0-or-later",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://github.com/cube-one-ber/chess-for-linux",
+      "source": "https://github.com/cube-one-ber/chess-for-linux/tree/e3f01f7/wasm",
+      "programs": [
+        "chess-wawona"
+      ],
+      "maintainers": [
+        "cube-one-ber"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
       "capabilities": {
         "wayland": true,
         "filesystem": [],
