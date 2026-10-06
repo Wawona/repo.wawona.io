@@ -12,12 +12,12 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 | **`/search/?channel=wasm`** | Humans (Mode A) | App Store / Play wasm catalog for `wpm`. Store compliance. |
 | **`/search/?channel=deb`** | Humans | APT debs. Two audiences on one `Packages` file. |
 | **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. Do not redirect this tree. |
-| **`/` APT** (`Packages`, `debs/`) | Sileo, Zebra, Irisin, **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
-| **`/jailbreak/`** | Jailbroken iOS (Sileo, Zebra, Irisin) | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). Irisin is iOS 16 or later, rootless and roothide. **Not** Termux. **Not** a second APT tree. |
+| **`/` APT** (`Packages`, `debs/`) | Sileo, Irisin, Zebra, Cydia, **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
+| **`/jailbreak/`** | Jailbroken iOS (Sileo, then Irisin, then Zebra, then Cydia) | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). Irisin is iOS 16 or later, rootless and roothide. Cydia is last, for older jailbreaks such as iOS 13. **Not** Termux. **Not** a second APT tree. |
 | **`/termux/`** | Sideloaded Android (Termux) | Bookmark onto `aarch64` debs. **Not jailbreak.** **Not Play.** |
 | **Mode B `.deb`** | Jailbroken iOS via Sileo | Full **Wawona Mode B** app for iOS 11+. **Never** submitted to App Store. |
 
-`/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Sileo, Zebra, Irisin, and Termux still talk to `/`.
+`/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Sileo, Irisin, Zebra, Cydia, and Termux still talk to `/`.
 
 ### Wasm (App Store / Play)
 

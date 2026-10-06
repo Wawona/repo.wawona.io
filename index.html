@@ -495,8 +495,9 @@
                     <div class="summary-content">
                         <div class="summary-icons">
                             <img src="images/logo/sileo.png" alt="Sileo">
-                            <img src="images/logo/zebra.png" alt="Zebra">
                             <img src="images/logo/irisin.png" alt="Irisin">
+                            <img src="images/logo/zebra.png" alt="Zebra">
+                            <img src="images/logo/cydia.png" alt="Cydia">
                         </div>
                         <span id="ios-gui-title">iOS Setup</span>
                     </div>
@@ -506,17 +507,20 @@
                         <a href="sileo://source/https://repo.wawona.io/" class="btn btn-primary">
                             <img src="images/logo/sileo.png" alt="Sileo"> Add to Sileo
                         </a>
+                        <a href="irisin://repository/add?url=https%3A%2F%2Frepo.wawona.io%2F" class="btn btn-secondary">
+                            <img src="images/logo/irisin.png" alt="Irisin"> Add to Irisin
+                        </a>
                         <a href="zbra://sources/add/https://repo.wawona.io/" class="btn btn-secondary">
                             <img src="images/logo/zebra.png" alt="Zebra" style="width: 24px; height: 24px;"> Add to Zebra
                         </a>
-                        <a href="irisin://repository/add?url=https%3A%2F%2Frepo.wawona.io%2F" class="btn btn-secondary">
-                            <img src="images/logo/irisin.png" alt="Irisin"> Add to Irisin
+                        <a href="cydia://url/https://cydia.saurik.com/api/share#?source=https://repo.wawona.io/" class="btn btn-secondary">
+                            <img src="images/logo/cydia.png" alt="Cydia"> Add to Cydia
                         </a>
                     </div>
 
                     <div class="method-box">
-                        <p><strong>Option A: Sileo, Zebra, or Irisin</strong></p>
-                        <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 12px;">Open <strong>Sileo</strong>, <strong>Zebra</strong>, or <strong>Irisin</strong>, add a source, and enter the URL. Irisin is for iOS and iPadOS 16 or later, rootless (<code>iphoneos-arm64</code>) and roothide (<code>iphoneos-arm64e</code>). Rootful (<code>iphoneos-arm</code>) stays on Sileo or Zebra.</p>
+                        <p><strong>Option A: Sileo, then Irisin, then Zebra, then Cydia</strong></p>
+                        <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 12px;">Recommended order: <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>. <strong>Cydia</strong> is last, for older jailbreaks such as iOS 13. Irisin is for iOS and iPadOS 16 or later, rootless (<code>iphoneos-arm64</code>) and roothide (<code>iphoneos-arm64e</code>). Cydia installs the rootful packages (<code>iphoneos-arm</code>).</p>
                         <div class="url-box">
                             <span id="repo-url">https://repo.wawona.io/</span>
                             <button class="copy-btn" onclick="copyText('repo-url', 0)">COPY</button>
@@ -590,7 +594,7 @@
             &copy; 2025-<span id="current-year"></span> Wawona Project. Licensed under MIT.<br>
             Designed for high-performance Wayland delivery.<br>
             <span style="font-size: 0.75rem; opacity: 0.85; display: inline-block; margin-top: 0.75rem;">
-                This page is the jailbreak source for <strong>Sileo</strong>, <strong>Zebra</strong>, and <strong>Irisin</strong> (iOS rootless/rootful; Irisin is rootless and roothide on iOS 16 or later).
+                This page is the jailbreak source for <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>, then <strong>Cydia</strong> (Cydia is for older jailbreaks such as iOS 13).
                 Sideloaded Android uses <strong>Termux</strong> apt (not jailbreak, not Play):
                 <a href="termux/" style="color: var(--accent);">/termux/</a>.
                 App Store / Play Runtime packages

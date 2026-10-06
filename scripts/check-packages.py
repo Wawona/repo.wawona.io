@@ -425,6 +425,8 @@ def check_search_pages() -> list[str]:
             errors.append("jailbreak/index.html must name iOS Sileo rootless and rootful")
         if "Irisin" not in text or "irisin://repository/add" not in text:
             errors.append("jailbreak/index.html must offer Irisin next to Sileo and Zebra")
+        if "Termux is not jailbreak" not in text and "not jailbreak" not in text.lower():
+            errors.append("jailbreak/index.html must say Termux is not jailbreak")
     home = ROOT / "index.html"
     if home.is_file():
         home_text = home.read_text(encoding="utf-8")
@@ -432,10 +434,20 @@ def check_search_pages() -> list[str]:
             errors.append("index.html must offer Add to Irisin beside Sileo and Zebra")
         if "images/logo/irisin.png" not in home_text:
             errors.append("index.html must show the Irisin logo on the source button")
+        if "Add to Cydia" not in home_text or "cydia://url/" not in home_text:
+            errors.append("index.html must offer Add to Cydia for older jailbreaks")
+        if "images/logo/cydia.png" not in home_text:
+            errors.append("index.html must show the Cydia logo on the source button")
+        sileo_at = home_text.find("sileo://source/")
+        irisin_at = home_text.find("irisin://repository/add")
+        zebra_at = home_text.find("zbra://sources/add")
+        cydia_at = home_text.find("cydia://url/")
+        if not (0 <= sileo_at < irisin_at < zebra_at < cydia_at):
+            errors.append("index.html source buttons must be Sileo, Irisin, Zebra, then Cydia")
+    if not (ROOT / "images" / "logo" / "cydia.png").is_file():
+        errors.append("images/logo/cydia.png missing")
     if not (ROOT / "images" / "logo" / "irisin.png").is_file():
         errors.append("images/logo/irisin.png missing")
-        if "Termux is not jailbreak" not in text and "not jailbreak" not in text.lower():
-            errors.append("jailbreak/index.html must say Termux is not jailbreak")
     termux_html = ROOT / "termux" / "index.html"
     if not termux_html.is_file():
         errors.append("termux/index.html missing (sideloaded Android bookmark; not jailbreak)")

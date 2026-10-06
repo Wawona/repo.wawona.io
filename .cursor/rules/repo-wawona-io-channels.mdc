@@ -13,8 +13,8 @@ a compliance bug.
 /search/?channel=wasm    → humans: App Store / Play wasm only (store compliance)
 /search/?channel=deb     → humans: APT debs. Two audiences, never call Termux jailbreak.
 /wasm/v1/                → Mode A: WASI packages for Wawona Runtime (store-safe CDN data)
-/                        → APT (Packages + debs). Sileo, Zebra, Irisin, and Termux use this URL.
-/jailbreak/              → iOS Sileo, Zebra, and Irisin bookmark (rootless + rootful). Not Termux.
+/                        → APT (Packages + debs). Sileo, Irisin, Zebra, Cydia, and Termux use this URL.
+/jailbreak/              → iOS bookmark. Order: Sileo, Irisin, Zebra, Cydia. Not Termux.
 /termux/                 → Android Termux sideload bookmark. Not jailbreak. Not Play.
 ```
 
@@ -26,7 +26,7 @@ Deb APT audiences (same `Packages` file, split by Architecture):
 
 | Audience | Client | Architecture | Jailbreak? |
 |----------|--------|--------------|------------|
-| Jailbroken iOS | Sileo, Zebra, Irisin | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo/Zebra), `iphoneos-arm64e` RootHide (Irisin and Sileo). Irisin is iOS 16+ and does not install rootful. | Yes |
+| Jailbroken iOS | Sileo, then Irisin, then Zebra, then Cydia | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo, Zebra, Cydia), `iphoneos-arm64e` RootHide (Irisin and Sileo). Irisin is iOS 16+ rootless and roothide. Cydia is last, for older jailbreaks such as iOS 13. | Yes |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** |
 
 ## Hard firewall
@@ -34,11 +34,11 @@ Deb APT audiences (same `Packages` file, split by Architecture):
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |---|---|---|
 | App Store / Play / `wpm` in store builds | Yes | **Never** |
-| Sileo, Zebra, or Irisin on jailbroken iOS | Optional | Yes |
+| Sileo, Irisin, Zebra, or Cydia on jailbroken iOS | Optional | Yes |
 | Termux on sideloaded Android | Optional | Yes |
 | Website Mode B / sideload pages | Optional | Yes |
 
-`/jailbreak/` is an iOS Sileo, Zebra, and Irisin bookmark onto `/search/?channel=deb`. It is **not**
+`/jailbreak/` is an iOS Sileo, Irisin, Zebra, and Cydia bookmark onto `/search/?channel=deb`. It is **not**
 the APT tree and **not** Termux. Store `wpm` must never fetch it.
 
 ## Also publish (Mode B)

@@ -64,8 +64,8 @@
     const namedInputs = (name) => [...document.querySelectorAll(`input[name="${name}"]`)];
 
     const ARCH_LABELS = {
-        "iphoneos-arm64": "iphoneos-arm64 · iOS rootless (Sileo, Zebra, Irisin)",
-        "iphoneos-arm": "iphoneos-arm · iOS rootful (Sileo, Zebra)",
+        "iphoneos-arm64": "iphoneos-arm64 · iOS rootless (Sileo, Irisin, Zebra)",
+        "iphoneos-arm": "iphoneos-arm · iOS rootful (Sileo, Zebra, Cydia)",
         "iphoneos-arm64e": "iphoneos-arm64e · iOS RootHide (Irisin, Sileo)",
         aarch64: "aarch64 · Termux Android sideload",
         arm: "arm · Termux Android sideload",
@@ -326,22 +326,22 @@
             if (navWasm) navWasm.setAttribute("aria-current", "page");
             return;
         }
-        document.title = "Sileo, Zebra, Irisin, and Termux debs";
+        document.title = "Sileo, Irisin, Zebra, Cydia, and Termux debs";
         if (kickerEl) kickerEl.textContent = "APT debs";
-        if (pageTitle) pageTitle.textContent = "Sileo, Zebra, Irisin, and Termux debs";
+        if (pageTitle) pageTitle.textContent = "Sileo, Irisin, Zebra, Cydia, and Termux debs";
         if (ledeEl) {
             ledeEl.innerHTML =
-                "Same APT source <code>https://repo.wawona.io/</code>. <strong>Sileo</strong>, <strong>Zebra</strong>, and <strong>Irisin</strong> are jailbroken iOS (rootless and rootful; Irisin is rootless and roothide on iOS 16 or later). <strong>Termux</strong> is sideloaded Android only (not jailbreak, not Play). Store <code>wpm</code> never sees this list.";
+                "Same APT source <code>https://repo.wawona.io/</code>. Recommended order: <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>, then <strong>Cydia</strong> (older jailbreaks such as iOS 13). Irisin is rootless and roothide on iOS 16 or later. <strong>Termux</strong> is sideloaded Android only (not jailbreak, not Play). Store <code>wpm</code> never sees this list.";
         }
         if (laneBanner) {
             laneBanner.hidden = false;
             laneBanner.className = "lane-banner lane-b";
             laneBanner.textContent =
-                "Filter architecture: iphoneos-* is Sileo, Zebra, and Irisin jailbreak. aarch64 is Termux Android sideload, not jailbreak. Never in App Store or Play.";
+                "Filter architecture: iphoneos-* is Sileo, Irisin, Zebra, and Cydia jailbreak. aarch64 is Termux Android sideload, not jailbreak. Never in App Store or Play.";
         }
         if (filterNote) {
             filterNote.innerHTML =
-                "Sileo, Zebra, or Irisin: add <code>https://repo.wawona.io/</code> then install. Irisin link: <code>irisin://repository/add?url=https://repo.wawona.io/</code>. Termux: same URL in sideloaded Android <code>apt</code>. Not <code>wpm</code>.";
+                "Add <code>https://repo.wawona.io/</code> in Sileo, then Irisin, then Zebra. Cydia is last, for older jailbreaks such as iOS 13. Irisin link: <code>irisin://repository/add?url=https://repo.wawona.io/</code>. Termux: same URL in sideloaded Android <code>apt</code>. Not <code>wpm</code>.";
         }
         input.placeholder = "Search Sileo or Termux debs";
         if (navDeb) navDeb.setAttribute("aria-current", "page");

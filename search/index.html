@@ -38,9 +38,10 @@
             </div>
             <p class="lede" id="lede">
                 App Store / Play wasm is not the same product as APT debs.
-                Debs themselves split: Sileo, Zebra, and Irisin on jailbroken iOS
-                (rootless and rootful; Irisin is rootless and roothide on iOS 16
-                or later), Termux on sideloaded Android (not jailbreak, not Play).
+                Debs themselves split: Sileo, then Irisin, then Zebra, then Cydia
+                on jailbroken iOS (rootless and rootful; Irisin is rootless and
+                roothide on iOS 16 or later; Cydia is for older jailbreaks such
+                as iOS 13), Termux on sideloaded Android (not jailbreak, not Play).
                 They do not share an index with wasm. Choose a catalog before you search.
             </p>
             <p class="lane-banner" id="lane-banner" hidden></p>
@@ -70,10 +71,12 @@
         </a>
         <a class="door door-deb" id="door-deb" href="./?channel=deb">
             <p class="door-kicker">APT debs</p>
-            <h2>Sileo, Zebra, Irisin, and Termux</h2>
+            <h2>Sileo, Irisin, Zebra, Cydia, and Termux</h2>
             <p>Same APT at <code>https://repo.wawona.io/</code>.
-            <strong>Sileo</strong>, <strong>Zebra</strong>, and <strong>Irisin</strong>: jailbroken iOS, rootless and rootful.
+            Recommended order: <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>, then <strong>Cydia</strong>.
+            Jailbroken iOS, rootless and rootful.
             Irisin is iOS 16 or later, rootless and roothide.
+            Cydia is for older jailbreaks such as iOS 13.
             <strong>Termux</strong>: sideloaded Android only. Not jailbreak. Not Play.
             Store <code>wpm</code> never sees this list.</p>
         </a>
@@ -85,7 +88,7 @@
             <fieldset>
                 <legend>Lane</legend>
                 <label><input type="radio" name="channel" value="wasm"> Mode A wasm (App Store / Play)</label>
-                <label><input type="radio" name="channel" value="deb"> Debs (Sileo, Zebra, Irisin, Termux)</label>
+                <label><input type="radio" name="channel" value="deb"> Debs (Sileo, Irisin, Zebra, Cydia, Termux)</label>
             </fieldset>
             <fieldset class="wasm-only">
                 <legend>WASI</legend>
