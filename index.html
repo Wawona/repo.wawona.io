@@ -238,10 +238,30 @@
             transform: translateY(-50%);
         }
 
-        #gui-actions .btn-label {
+        #gui-actions .btn-label,
+        .card-search .btn-label {
             display: block;
             width: 100%;
             text-align: center;
+        }
+
+        .card-search {
+            margin: 4px 0 18px;
+            padding: 0 21px;
+        }
+
+        .card-search .btn {
+            width: 100%;
+            min-height: 48px;
+            margin: 0;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0;
+            line-height: 1;
+            justify-content: center;
         }
 
         .manual-section {
@@ -519,10 +539,6 @@
 <body style="padding-top: 15px;">
     <div style="margin-bottom: 20px; font-size: 0.85rem; opacity: 0.6; animation: fadeIn 1s ease; text-align: center;">
         Looking for Wawona? Visit <a href="https://wawona.io" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">wawona.io</a>
-        <br>
-        Looking for App Store / Play Runtime packages? <a href="search/?channel=wasm" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Mode A wasm (wpm)</a>
-        <br>
-        Jailbreak Sileo debs (iOS rootless/rootful) and Termux sideload debs (Android, not jailbreak) are a different catalog: <a href="search/?channel=deb" style="color: var(--accent); text-decoration: none; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">APT debs</a>
     </div>
     <div class="background-glow"></div>
 
@@ -536,6 +552,12 @@
         <p>Wawona is a high-performance Wayland compositor for iOS, macOS, and Android. This repository supports <b>iOS
                 13.0 - 26.0+</b> (Rootless/RootHide) and <b>Android (Termux)</b>, providing specialized software and
             native Wayland utilities.</p>
+
+        <div class="card-search">
+            <a class="btn btn-secondary" href="search/">
+                <span class="btn-label">Search packages</span>
+            </a>
+        </div>
 
         <div class="setup-container">
             <!-- iOS GUI -->
