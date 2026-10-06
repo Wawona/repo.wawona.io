@@ -18,6 +18,11 @@ a compliance bug.
 /termux/                 → Android Termux sideload bookmark. Not jailbreak. Not Play.
 ```
 
+Wasm ABI labels and the later Wasmer/WebC/wasinix registry are documented in
+`docs/wasm-abi.md`. WebC/wasinix is **planned**. `/wasm/v1` remains the live
+`wpm` machine API until that work lands. Do not claim WASIX ships or revive
+`nixpkgs2wasi`.
+
 `/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML redirect into `/search/`.
 Never redirect `/wasm/v1/` or `/Packages`. The website may link both catalogs.
 It must not show them as one results list. Store `wpm` must never see debs.

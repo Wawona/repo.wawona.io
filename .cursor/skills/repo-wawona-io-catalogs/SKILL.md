@@ -40,7 +40,10 @@ jailbreak.
 Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
 `/index.json`). Never fetch `/jailbreak/`, `/termux/`, `/Packages`, or `.deb`.
 
-This host only publishes `/wasm/v1`. Do not auto-mirror nixpkgs here.
+This host publishes `/wasm/v1` today. Do not auto-mirror nixpkgs here.
+Later Wasmer/WebC publish (wasinix, ABI P1/P2/WASIX): `docs/wasm-abi.md`.
+Not shipping yet. Do not claim wasinix/WebC is live. Do not revive
+`nixpkgs2wasi` / `n2w`.
 
 ## Never
 
@@ -51,6 +54,9 @@ This host only publishes `/wasm/v1`. Do not auto-mirror nixpkgs here.
 - Call Termux debs jailbreak, or lump "Sileo / Termux" as one jailbreak product
 - Put `.deb` install paths in App Store / Play binaries (wasm only for stores)
 - Claim this host is jailbreak-only. `/wasm/v1` is the store-safe exception.
+- Claim WASIX / WebC / wasinix packages are shipping before `docs/wasm-abi.md`
+  phase work lands
+- Revive `nixpkgs2wasi` / `n2w` as the wasm producer
 - Route `where_to_edit("repo.wawona.io …")` to the `wawona.io` website
 - Mention retired `wwn-apt` in `setup.sh`
 - Drop `hello-wasi` from `wasm/v1/index.json`

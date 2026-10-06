@@ -32,10 +32,14 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 
+Wasm ABI / later Wasmer WebC (planned): `docs/wasm-abi.md`. Not shipping.
+Do not revive `nixpkgs2wasi`.
+
 ## Hard-won (do not re-learn)
 
 See `repo-wawona-io-catalogs`. Canonical RAG:
-`wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md`.
+`wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md` and
+`wasm-abi-registry.md`.
 
 Procursus launchctl: XPC client to host launchd, not a second launchd.
 `nix build .#launchctl` uses host stdenv + xcrun, never ios-cross stdenv.
