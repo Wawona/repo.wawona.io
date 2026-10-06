@@ -526,7 +526,7 @@
     </div>
     <table class="meta">
       ${metaRow("Catalog", isIosJailbreakArch(pkg.architecture)
-          ? "<code>deb</code> (Sileo iOS jailbreak, rootless/rootful. Not Termux. Not App Store.)"
+          ? "<code>deb</code> (iOS jailbreak APT, rootless/rootful. Sileo, Irisin, Zebra, and Cydia. Not Termux. Not App Store.)"
           : "<code>deb</code> (Termux Android sideload. Not jailbreak. Not Play.)")}
       ${metaRow("Package", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}
@@ -534,7 +534,7 @@
       ${metaRow("Section", escapeHtml(pkg.section || ""))}
       ${metaRow("Size", escapeHtml(pkg.size || ""))}
       ${metaRow("Maintainers", renderMaintainers(pkg))}
-      ${metaRow(isIosJailbreakArch(pkg.architecture) ? "Sileo source" : "Termux apt source", `<a href="${escapeHtml(source)}">${escapeHtml(source)}</a>`)}
+      ${metaRow(isIosJailbreakArch(pkg.architecture) ? "Jailbreak APT" : "Termux apt source", `<a href="${escapeHtml(source)}">${escapeHtml(source)}</a>`)}
       ${metaRow("SHA256", `<span class="digest mono">${escapeHtml(pkg.digest || "")}</span>`)}
       ${metaRow("Filename", blob ? `<a href="${escapeHtml(blob)}">${escapeHtml(pkg.filename)}</a>` : escapeHtml(pkg.filename || ""))}
     </table>
@@ -559,7 +559,7 @@
       <span class="chip">${escapeHtml(kind)}</span>
       ${pkg.license ? `<span class="chip">${escapeHtml(pkg.license)}</span>` : ""}`
                 : `
-      <span class="chip chip-mode-b">${isIosJailbreakArch(pkg.architecture) ? "Sileo · iOS jailbreak" : "Termux · Android sideload"}</span>
+      <span class="chip chip-mode-b">${isIosJailbreakArch(pkg.architecture) ? "iOS jailbreak" : "Termux · Android sideload"}</span>
       <span class="chip">deb</span>
       <span class="chip">${escapeHtml(pkg.architecture || "deb")}</span>
       ${pkg.section ? `<span class="chip">${escapeHtml(pkg.section)}</span>` : ""}`;
@@ -822,7 +822,7 @@
             statusEl.textContent =
                 state.channel === "wasm"
                     ? `Could not load /wasm/v1. wpm still uses that API. (${err.message})`
-                    : `Could not load /Packages. Sileo still uses the APT source. (${err.message})`;
+                    : `Could not load /Packages. Jailbreak package managers still use the APT source. (${err.message})`;
         }
     };
 

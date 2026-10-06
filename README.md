@@ -15,7 +15,7 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 | **`/` APT** (`Packages`, `debs/`) | Sileo, Irisin, Zebra, Cydia, **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
 | **`/jailbreak/`** | Jailbroken iOS (Sileo, then Irisin, then Zebra, then Cydia) | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). Irisin is iOS 16 or later, rootless and roothide. Cydia is last, for older jailbreaks such as iOS 13. **Not** Termux. **Not** a second APT tree. |
 | **`/termux/`** | Sideloaded Android (Termux) | Bookmark onto `aarch64` debs. **Not jailbreak.** **Not Play.** |
-| **Mode B `.deb`** | Jailbroken iOS via Sileo | Full **Wawona Mode B** app for iOS 11+. **Never** submitted to App Store. |
+| **Mode B `.deb`** | Jailbroken iOS (Sileo, Irisin, Zebra, Cydia) | Full **Wawona Mode B** app for iOS 11+. **Never** submitted to App Store. |
 
 `/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Sileo, Irisin, Zebra, Cydia, and Termux still talk to `/`.
 
@@ -23,9 +23,9 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 
 Store / Play Wawona may download Wasm from `/wasm/v1` only. Never APT, never `.deb`.
 
-### Sileo debs (jailbroken iOS)
+### Jailbreak debs (iOS)
 
-Rootless and rootful Procursus/Sileo packages ([docs/packaging.md](docs/packaging.md)). Wawona's Sileo Mode B `.deb` starts at iOS 11. The separate TrollStore `.tipa` starts at iOS 14 and is not a Sileo package. Neither is an App Store binary.
+Rootless and rootful packages for Sileo, Irisin, Zebra, and Cydia ([docs/packaging.md](docs/packaging.md)). Wawona's Mode B `.deb` starts at iOS 11. The separate TrollStore `.tipa` starts at iOS 14 and is not one of these debs. Neither is an App Store binary.
 
 ### Termux debs (sideloaded Android)
 

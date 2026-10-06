@@ -1,7 +1,7 @@
-# Sileo test debs (rootless and rootful)
+# Jailbreak test debs (rootless and rootful)
 
-Both variants are rows in the root APT index (`Packages`, `debs/`). Sileo
-uses `https://repo.wawona.io/`. `/jailbreak/` is a bookmark onto
+Both variants are rows in the root APT index (`Packages`, `debs/`). Sileo,
+Irisin, Zebra, and Cydia use `https://repo.wawona.io/`. `/jailbreak/` is a bookmark onto
 `/search/?channel=deb`. It is not a second package tree.
 
 | Scheme | Architecture | Device |
