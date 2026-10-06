@@ -40,7 +40,6 @@ jailbreak.
 Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
 `/index.json`). Never fetch `/jailbreak/`, `/termux/`, `/Packages`, or `.deb`.
 
-Curated package **builds** live in `github.com/Wawona/nixpkgs2wasi` (`n2w`).
 This host only publishes `/wasm/v1`. Do not auto-mirror nixpkgs here.
 
 ## Never
@@ -89,6 +88,10 @@ nixpkgs `DEVELOPER_DIR` before `xcrun`. Sign with `ldid-procursus` (AGPL
 nativeBuildInput, never linked into the App Store app). Never ship this
 binary in Mode A / TestFlight IPA. `dpkg-deb -b` must not nest `$out/deb`
 inside `data.tar`.
+
+vphone lab writes this source for you:
+`/var/jb/etc/apt/sources.list.d/wawona.list` plus the Irisin add URL.
+Do not HID-type `https://repo.wawona.io/` into Irisin Search.
 
 ## Third-party wasm submissions
 

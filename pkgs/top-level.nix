@@ -19,7 +19,6 @@ let
     bash = import ./shells/bash/default.nix { inherit pkgs mkWawonaPackage target; };
     fish = import ./shells/fish/default.nix { inherit pkgs mkWawonaPackage target; };
     zsh = import ./shells/zsh/default.nix { inherit pkgs mkWawonaPackage target; };
-    neovim = import ./devel/neovim/default.nix { inherit pkgs mkWawonaPackage target; };
     curl = import ./systems/curl/default.nix { inherit pkgs mkWawonaPackage target; };
     neofetch = import ./systems/neofetch/default.nix { inherit pkgs mkWawonaPackage target; };
     system-cmds = import ./systems/system-cmds/default.nix { 
