@@ -73,6 +73,23 @@ python3 scripts/check-packages.py --offline --root .
 
 Mode B IPA auto-publish to Sileo. In-app Packages GUI. OCI `/wasm/v2`.
 
+## Procursus launchctl (Mode B APT)
+
+Procursus did **not** port `launchd`. Apple's daemon still owns LaunchAgents
+and LaunchDaemons plists. `ProcursusTeam/launchctl` `v1.2.0` is an XPC client
+(`bootstrap` / `bootout` / `load` / `unload` / `list` / `kickstart`).
+
+Recipe: `pkgs/systems/launchctl`. Flake: `nix build .#launchctl` (rootless
+`iphoneos-arm64`) and `.#launchctl-rootful` (`iphoneos-arm`). Package id
+`wawona-launch-tools` Provides/Conflicts/Replaces `launchctl`.
+
+Build on **host Darwin stdenv + Xcode `xcrun` iphoneos**, not the iOS-cross
+stdenv (that rebuilds a Darwin bootstrap for a clang you replace). Unset
+nixpkgs `DEVELOPER_DIR` before `xcrun`. Sign with `ldid-procursus` (AGPL
+nativeBuildInput, never linked into the App Store app). Never ship this
+binary in Mode A / TestFlight IPA. `dpkg-deb -b` must not nest `$out/deb`
+inside `data.tar`.
+
 ## Third-party wasm submissions
 
 - A generated upstream `index.json` may be a single-package fragment. Merge

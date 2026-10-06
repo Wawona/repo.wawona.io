@@ -105,6 +105,15 @@ EOF
     ${lib.optionalString ((sileo.depends or "") != "") ''
       echo "Depends: ${sileo.depends}" >> $out/DEBIAN/control
     ''}
+    ${lib.optionalString ((sileo.provides or "") != "") ''
+      echo "Provides: ${sileo.provides}" >> $out/DEBIAN/control
+    ''}
+    ${lib.optionalString ((sileo.conflicts or "") != "") ''
+      echo "Conflicts: ${sileo.conflicts}" >> $out/DEBIAN/control
+    ''}
+    ${lib.optionalString ((sileo.replaces or "") != "") ''
+      echo "Replaces: ${sileo.replaces}" >> $out/DEBIAN/control
+    ''}
     ${lib.optionalString rootHideControl ''
       echo "RootHide: true" >> $out/DEBIAN/control
       echo "Tag: role::tweak, roothide::compatible" >> $out/DEBIAN/control
@@ -113,9 +122,21 @@ EOF
       echo "Tag: role::developer" >> $out/DEBIAN/control
     ''}
 
-    # Pack the debian package into the output
-    mkdir -p $out/deb
-    dpkg-deb -Zxz -b $out $out/deb/${pname}_${version}_${arch}.deb
+    # Pack the debian package into the output. Do not nest $out/deb in data.tar.
+    packdir=$(mktemp -d)
+    shopt -s dotglob
+    for item in "$out"/*; do
+      case "$(basename "$item")" in
+        deb) continue ;;
+        *) cp -a "$item" "$packdir/" ;;
+      esac
+    done
+    mkdir -p "$out/deb"
+    dpkg-deb -Zxz --root-owner-group -b "$packdir" "$out/deb/${pname}_${version}_${arch}.deb"
+    rm -rf "$packdir"
   '';
 
-} // (lib.filterAttrs (n: v: ! lib.elem n [ "sileo" "postInstall" "prefix" "target" "jailbreakScheme" ]) args))
+} // (lib.filterAttrs (n: v: ! lib.elem n [
+    "sileo" "postInstall" "prefix" "target" "jailbreakScheme"
+    "nativeBuildInputs" "buildInputs" "patches" "configureFlags"
+  ]) args))

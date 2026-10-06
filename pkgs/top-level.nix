@@ -6,6 +6,12 @@ let
     inherit (nativePkgs) dpkg coreutils;
   };
 
+  # Xcode iphoneos compile (xcrun). Do not use the iOS-cross stdenv: it
+  # rebuilds a Darwin bootstrap just to run clang that we already replace.
+  mkHostWawonaPackage = import ../lib/mkWawonaPackage.nix {
+    inherit (nativePkgs) lib stdenv dpkg coreutils;
+  };
+
   # Common packages
   packages = rec {
     hello = import ./devel/hello/default.nix { inherit pkgs mkWawonaPackage target; };
@@ -23,6 +29,19 @@ let
     zip = import ./devel/zip/default.nix { inherit pkgs mkWawonaPackage target; };
     zsign = import ./devel/zsign/default.nix { inherit pkgs mkWawonaPackage target; };
     xorg-server = import ./x11/xorg-server/default.nix { inherit pkgs mkWawonaPackage target; };
+  } // pkgs.lib.optionalAttrs (target == "ios") {
+    launchctl = import ./systems/launchctl/default.nix {
+      inherit target;
+      pkgs = nativePkgs;
+      mkWawonaPackage = mkHostWawonaPackage;
+      jailbreakScheme = "rootless";
+    };
+    launchctl-rootful = import ./systems/launchctl/default.nix {
+      inherit target;
+      pkgs = nativePkgs;
+      mkWawonaPackage = mkHostWawonaPackage;
+      jailbreakScheme = "rootful";
+    };
   };
 
   # Aggregate all packages into a single derivation for easy "build everything"

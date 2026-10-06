@@ -36,3 +36,6 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 
 See `repo-wawona-io-catalogs`. Canonical RAG:
 `wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md`.
+
+Procursus launchctl: XPC client to host launchd, not a second launchd.
+`nix build .#launchctl` uses host stdenv + xcrun, never ios-cross stdenv.

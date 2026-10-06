@@ -57,6 +57,8 @@
         ios-pkgs = iosPackages;
         android-pkgs = androidPackages;
         hello = iosPackages.hello;
+        launchctl = iosPackages.launchctl;
+        launchctl-rootful = iosPackages.launchctl-rootful;
       };
   in {
     packages.${darwinHost} = mkDarwinPackages darwinHost;

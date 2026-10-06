@@ -27,10 +27,10 @@ Description: Rootless Hello
 Author: Alex Spaulding <aspauldingcode@gmail.com>
 
 Package: com.aspauldingcode.wawona.modeb.demo
-Name: Wawona Mode B Demo
 Version: 26.9.2-36
 Architecture: iphoneos-arm64
 Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
+Depends: firmware (>= 15.0)
 Filename: debs/wawona-modeb-demo_26.9.2-36_iphoneos-arm64.deb
 Size: 21312
 MD5sum: ee01b3e0c7a0949b3d4a55ad1c1adba1
@@ -38,17 +38,17 @@ SHA1: 3ed86fbb5b99d14037eaaa884f4974d4c478f7b3
 SHA256: 8b6536970bcb5273950413a909d3f9287da67c606f01549a1f87057f70015fee
 Section: Utilities
 Priority: optional
-Depends: firmware (>= 15.0)
-Description: Mode B framebuffer and JIT demo (rootless). IOMFB plasma, Hello text, fib HUD. Not App Store.
-Author: Alex Spaulding <aspauldingcode@gmail.com>
 Homepage: https://wawona.io
+Description: Mode B framebuffer and JIT demo (rootless). IOMFB plasma, Hello text, fib HUD. Not App Store.
 Tag: role::developer
+Author: Alex Spaulding <aspauldingcode@gmail.com>
+Name: Wawona Mode B Demo
 
 Package: com.aspauldingcode.wawona.modeb.demo
-Name: Wawona Mode B Demo
 Version: 26.9.2-36
 Architecture: iphoneos-arm
 Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
+Depends: firmware (>= 15.0)
 Filename: debs/wawona-modeb-demo_26.9.2-36_iphoneos-arm.deb
 Size: 21268
 MD5sum: 8b815ece6b05fac64709eb05065d4f27
@@ -56,8 +56,46 @@ SHA1: 90ace256da9a811b13e394d124cfb22285a38bca
 SHA256: d483a4de108cd205bae21c219311cc9bbce1211d8f25be1937c2be69f5edc5d4
 Section: Utilities
 Priority: optional
-Depends: firmware (>= 15.0)
-Description: Mode B framebuffer and JIT demo (rootful). IOMFB plasma, Hello text, fib HUD. Not App Store.
-Author: Alex Spaulding <aspauldingcode@gmail.com>
 Homepage: https://wawona.io
+Description: Mode B framebuffer and JIT demo (rootful). IOMFB plasma, Hello text, fib HUD. Not App Store.
 Tag: role::developer
+Author: Alex Spaulding <aspauldingcode@gmail.com>
+Name: Wawona Mode B Demo
+
+Package: wawona-launch-tools
+Version: 1.2.0
+Architecture: iphoneos-arm64
+Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
+Conflicts: launchctl
+Replaces: launchctl
+Provides: launchctl
+Filename: debs/wawona-launch-tools_1.2.0_iphoneos-arm64.deb
+Size: 23756
+MD5sum: 0b16884c9c419626dd18d4ca4ca3f80a
+SHA1: 212625536f3e6b8e708fafcabc1472e58ac28ea3
+SHA256: a1ec9c123824a3f979f7974d745b28aa1f72ceeae8580ef30dcd7db270a434d1
+Section: System
+Priority: optional
+Homepage: https://github.com/ProcursusTeam/launchctl
+Description: Procursus launchctl. Talks to host launchd. Mode B only.
+Tag: role::developer
+Author: Alex Spaulding <aspauldingcode@gmail.com>
+
+Package: wawona-launch-tools
+Version: 1.2.0
+Architecture: iphoneos-arm
+Maintainer: Alex Spaulding <aspauldingcode@gmail.com>
+Conflicts: launchctl
+Replaces: launchctl
+Provides: launchctl
+Filename: debs/wawona-launch-tools_1.2.0_iphoneos-arm.deb
+Size: 23712
+MD5sum: 20f49f65a411e75a19d3663a4abad7c7
+SHA1: b5b424dcce6d59011ca89ac928613ccb8300aca8
+SHA256: 747c910803df1d7a5dc7371024c59bed37cf8f275d91fe90a51303f8d3740218
+Section: System
+Priority: optional
+Homepage: https://github.com/ProcursusTeam/launchctl
+Description: Procursus launchctl. Talks to host launchd. Mode B only.
+Tag: role::developer
+Author: Alex Spaulding <aspauldingcode@gmail.com>
