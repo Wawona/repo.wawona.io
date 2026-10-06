@@ -195,6 +195,55 @@
             background: rgba(0, 0, 0, 0.1);
         }
 
+        #gui-actions {
+            width: 100%;
+            align-items: stretch;
+        }
+
+        #gui-actions .btn {
+            position: relative;
+            width: 100%;
+            min-height: 48px;
+            margin: 0;
+            padding: 12px 16px;
+            border: 1px solid transparent;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0;
+            line-height: 1;
+            justify-content: center;
+        }
+
+        #gui-actions .btn-primary {
+            box-shadow: none;
+        }
+
+        #gui-actions .btn-primary:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        #gui-actions .btn-secondary {
+            border-color: var(--border);
+        }
+
+        #gui-actions .btn img {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            width: 24px;
+            height: 24px;
+            margin: 0;
+            transform: translateY(-50%);
+        }
+
+        #gui-actions .btn-label {
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
         .manual-section {
             text-align: left;
             margin-top: 12px;
@@ -505,16 +554,20 @@
                 <div class="manual-section">
                     <div id="gui-actions" class="actions" style="margin-bottom: 25px;">
                         <a href="sileo://source/https://repo.wawona.io/" class="btn btn-primary">
-                            <img src="images/logo/sileo.png" alt="Sileo"> Add to Sileo
+                            <img src="images/logo/sileo.png" alt="">
+                            <span class="btn-label">Add to Sileo</span>
                         </a>
                         <a href="irisin://repository/add?url=https%3A%2F%2Frepo.wawona.io%2F" class="btn btn-secondary">
-                            <img src="images/logo/irisin.png" alt="Irisin"> Add to Irisin
+                            <img src="images/logo/irisin.png" alt="">
+                            <span class="btn-label">Add to Irisin</span>
                         </a>
                         <a href="zbra://sources/add/https://repo.wawona.io/" class="btn btn-secondary">
-                            <img src="images/logo/zebra.png" alt="Zebra" style="width: 24px; height: 24px;"> Add to Zebra
+                            <img src="images/logo/zebra.png" alt="">
+                            <span class="btn-label">Add to Zebra</span>
                         </a>
                         <a href="cydia://url/https://cydia.saurik.com/api/share#?source=https://repo.wawona.io/" class="btn btn-secondary">
-                            <img src="images/logo/cydia.png" alt="Cydia"> Add to Cydia
+                            <img src="images/logo/cydia.png" alt="">
+                            <span class="btn-label">Add to Cydia</span>
                         </a>
                     </div>
 
