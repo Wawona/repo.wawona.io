@@ -71,8 +71,10 @@ through the wawona profile).
 ## Phase order
 
 1. **P1 CLI allowlist on GHA (in progress).** `Wawona/wasm-packages`
-   `allowlist.toml` + `cli-kit` (cat/head/wc/sort/… ) plus grep/sed/awk/gzip/jq.
-   Nightly + auto-publish grow `/wasm/v1`. Not a nixpkgs scrape.
+   `allowlist.toml`. Native-first: never wasm-package names in
+   `native-all-targets.txt` (uutils safe subset). Remaining P1 extras:
+   grep/sed/awk/gzip/jq plus non-native cli-kit leftovers. Nightly grows
+   `/wasm/v1`. Not a nixpkgs scrape.
 2. **Wasinix fork (started).** `github.com/Wawona/wasinix` (from
    `xtyxtyx/wasinix`). Default Wasmer package owner `wawona`. Publish profile
    docs: `wasinix/docs/wawona-publish.md` → `repo.wawona.io/wasm`. Do not
