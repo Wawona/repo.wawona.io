@@ -5,6 +5,40 @@
   "description": "Wawona Runtime WASI packages (Mode A). Not jailbreak APT.",
   "packages": [
     {
+      "name": "awk",
+      "version": "0.1.0",
+      "digest": "sha256:b8961a80af868f1189403c1770e14dca760426e0914c1f39482e4f5ee9171d51",
+      "url": "packages/awk/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Minimal WASI P1 awk ({print $1} on stdin)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/awk",
+      "programs": [
+        "awk"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
       "name": "chess-wawona",
       "version": "0.1.0",
       "digest": "sha256:b7b008a45e01d7d14f2cdd28d03c3b9680a9fe3193db99202758d16f17deec0a",
@@ -35,6 +69,74 @@
       ],
       "capabilities": {
         "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
+      "name": "grep",
+      "version": "0.1.0",
+      "digest": "sha256:d5ff1d3d7489108bab872bdafe3ef4a8394846d03f1e2a6a48de13443bc81c7c",
+      "url": "packages/grep/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Minimal WASI P1 grep (fixed-string, stdin)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/grep",
+      "programs": [
+        "grep"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
+      "name": "gzip",
+      "version": "0.1.0",
+      "digest": "sha256:e771ef7cf81df9a4db1c3900f630c4ae113bcdb3f510f08b2c89d65f475ba197",
+      "url": "packages/gzip/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Minimal WASI P1 gzip (flate2) self-check",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/gzip",
+      "programs": [
+        "gzip"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
         "filesystem": [],
         "network": false
       }
@@ -104,6 +206,74 @@
       ],
       "capabilities": {
         "wayland": true,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
+      "name": "jq",
+      "version": "0.1.0",
+      "digest": "sha256:6796ae8431e544ff8d220ce07dd4011166ea22e70c2c8a81387bd9633098697e",
+      "url": "packages/jq/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Minimal WASI P1 jq: -n EXPR for JSON literals",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/jq",
+      "programs": [
+        "jq"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      }
+    },
+    {
+      "name": "sed",
+      "version": "0.1.0",
+      "digest": "sha256:8a2a7345423a345d4150045798a8fe56a0ba76dd7e4da98b6224196a81d1ea06",
+      "url": "packages/sed/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Minimal WASI P1 sed (s/// on stdin)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/sed",
+      "programs": [
+        "sed"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
         "filesystem": [],
         "network": false
       }
