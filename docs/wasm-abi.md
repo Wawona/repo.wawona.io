@@ -113,6 +113,17 @@ claim WASIX runs on store Pulley.
 | macOS / Linux | Wasmtime Cranelift; `wawona-relay-wasm` forbids a second Wasmer engine beside it | WASIX-as-Wasmer-only **changes** that rule. Do not land Wasmer link without updating `wawona-relay-wasm` and product docs |
 | `wpm install` | Wasm bytecode / registry blobs | Stays bytecode (or WebC as Wasm package data). **Never** `docker pull`. Containers stay Machines kind `container` |
 
+## Runtime test matrix
+
+| ABI | CI smoke runtime | Producer |
+|-----|------------------|----------|
+| WASI P1 / P2 | **Wasmtime** | `Wawona/wasm-packages` (`smoke-package.sh`) |
+| WASIX | **Wasmer** | `Wawona/wasinix` (`smokes.toml` + `smoke-wasix-package.sh`) |
+
+Every active package must pass or fail under that runtime (JSON result per
+package). Do not smoke WASIX with Wasmtime. Do not use Wasmer as the store
+P1/P2 gate.
+
 Hard rejects until the gate lands:
 
 - Claim WASIX runs on store Pulley or on iOS / iPadOS ≤ 26 Mode A
@@ -120,6 +131,7 @@ Hard rejects until the gate lands:
 - Treat `wpm` as a container or OCI runtime
 - Auto-mirror all of nixpkgs into `/wasm/`
 - Revive `nixpkgs2wasi` / `n2w` as the producer
+- Publish without a Wasmtime (P1/P2) or Wasmer (WASIX) smoke for that package
 
 ## Today vs later (firewall)
 
