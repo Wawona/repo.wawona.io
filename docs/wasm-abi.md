@@ -7,6 +7,10 @@ packaging stays in [`packaging.md`](./packaging.md). Do not mix catalogs.
 **Status today:** `/wasm/v1` serves Mode A `wpm` via `index.json` and
 `.wasm` blobs. That path stays live.
 
+**Builds:** Production package builds run on **GitHub Actions**
+(`Wawona/wasm-packages`, `ubuntu-24.04`). Local `cargo` is optional recipe
+debug only. Do not publish laptop-built blobs as the source of truth.
+
 **Status later (planned):** `repo.wawona.io/wasm` becomes a curated
 Wasmer-compatible registry. Distribution unit is WebC (`.webc`) via
 `wasmer publish`. Orchestration is upstream
