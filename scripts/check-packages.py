@@ -42,6 +42,33 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEBIAN_MAINT = re.compile(r"^(.+?) <([^>]+)>$")
 AR_MAGIC = b"!<arch>\n"
 AR_HEADER = 60
+# Wawona Ports: never brand package names; ports use upstream versions.
+BRAND_NAME_RE = re.compile(r"^(?:wwn-|wawona-)|(?:-wwn|-wawona)$", re.IGNORECASE)
+FORGED_SCRATCH_NAMES = frozenset(
+    {
+        "jq",
+        "gzip",
+        "grep",
+        "sed",
+        "awk",
+        "curl",
+        "git",
+        "tar",
+        "find",
+        "bash",
+        "make",
+        "cmake",
+        "python3",
+        "openssl",
+        "base64",
+        "cksum",
+        "false",
+        "uniq",
+        "rev",
+        "true",
+    }
+)
+BOOTSTRAP_VERSIONS = frozenset({"0.0.0", "0.0.1", "0.1.0", "v0.0.0", "v0.0.1", "v0.1.0"})
 
 
 def bind_root(root: Path) -> None:
@@ -265,6 +292,57 @@ def query_github(roster: dict) -> tuple[dict, list[str]]:
     return resolved, errors
 
 
+def check_wasm_ports(pkg: dict) -> list[str]:
+    """Wawona Ports naming, upstream versions, website + source links."""
+    errors: list[str] = []
+    name = pkg.get("name") or "<unnamed>"
+    if BRAND_NAME_RE.search(str(name)):
+        errors.append(
+            f"wasm {name}: never brand with wwn-/wawona- prefix or "
+            f"-wwn/-wawona suffix (repo-wawona-io-ports)"
+        )
+    origin = pkg.get("origin")
+    if origin not in ("port", "scratch"):
+        errors.append(f"wasm {name}: origin must be port or scratch")
+    website = str(pkg.get("website") or pkg.get("homepage") or "").strip()
+    source = str(pkg.get("source") or "").strip()
+    if not website:
+        errors.append(f"wasm {name}: website (or homepage) is required")
+    if not source:
+        errors.append(f"wasm {name}: source is required (port / packaging tree)")
+    version = str(pkg.get("version") or "").strip()
+    if origin == "port":
+        upstream_ver = str(pkg.get("upstream_version") or "").strip()
+        if not upstream_ver:
+            errors.append(
+                f"wasm {name}: origin=port requires upstream_version "
+                f"(must be the upstream software version, not a fake 0.1.0)"
+            )
+        elif version != upstream_ver:
+            errors.append(
+                f"wasm {name}: version {version!r} must equal "
+                f"upstream_version {upstream_ver!r}"
+            )
+        if version in BOOTSTRAP_VERSIONS and not pkg.get("upstream_is_bootstrap"):
+            errors.append(
+                f"wasm {name}: port version {version!r} looks invented for "
+                f"'just ported'; set upstream_is_bootstrap only when upstream "
+                f"itself publishes that version"
+            )
+        if website and "wawona.io" in website and "github.com" not in website:
+            # Ports need the upstream project homepage, not only Wawona docs.
+            errors.append(
+                f"wasm {name}: website must be the upstream project homepage "
+                f"(not only a wawona.io docs URL)"
+            )
+    if origin == "scratch" and name in FORGED_SCRATCH_NAMES:
+        errors.append(
+            f"wasm {name}: forged upstream name with origin=scratch; "
+            f"use a distinct unbranded name"
+        )
+    return errors
+
+
 def check_wasm(roster: dict) -> list[str]:
     errors: list[str] = []
     index = load_json(WASM_INDEX)
@@ -292,6 +370,7 @@ def check_wasm(roster: dict) -> list[str]:
         digest = str(pkg.get("digest") or "")
         if digest and not digest.startswith("sha256:"):
             errors.append(f"wasm {name}: digest must be sha256:...")
+        errors.extend(check_wasm_ports(pkg))
     names = {pkg.get("name") for pkg in packages}
     if "hello-wasi" not in names:
         errors.append("wasm/v1/index.json must keep hello-wasi as the wpm smoke package")
@@ -491,6 +570,16 @@ def check_agent_skills() -> list[str]:
         "repo-wawona-io-catalogs",
         "repo-wawona-io-learn",
     )
+    ports_rule = ROOT / ".cursor" / "rules" / "repo-wawona-io-ports.mdc"
+    if not ports_rule.is_file():
+        errors.append(".cursor/rules/repo-wawona-io-ports.mdc missing")
+    else:
+        ports_text = ports_rule.read_text(encoding="utf-8")
+        if "alwaysApply: true" not in ports_text:
+            errors.append("repo-wawona-io-ports.mdc must be alwaysApply")
+        if "upstream" not in ports_text.lower():
+            errors.append("repo-wawona-io-ports.mdc must require upstream versions")
+
     for name in skills:
         cursor = ROOT / ".cursor" / "skills" / name / "SKILL.md"
         docs = ROOT / "docs" / "agent-skills" / name / "SKILL.md"

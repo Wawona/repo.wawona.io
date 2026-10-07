@@ -29,6 +29,7 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `repo-wawona-io-agent-learn` | Always. Read skills. Write new learnings back. |
 | `repo-wawona-io-channels` | Two catalogs. Never one list. |
 | `repo-wawona-io-maintainers` | GitHub-queryable maintainers on every package |
+| `repo-wawona-io-ports` | Port names = upstream; versions = upstream; website + source |
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 
@@ -39,7 +40,8 @@ Do not revive `nixpkgs2wasi`. Do not publish laptop blobs.
 ## Hard-won (do not re-learn)
 
 - Do not rank iOS APT clients in `/search/` copy (no "Sileo, then Irisin…"). They are interchangeable package managers.
-See `repo-wawona-io-catalogs`. Canonical RAG:
+- Ports use the upstream software version, not a fake `0.1.0` for "just ported". Never brand names with `wawona-` / `wwn-`.
+See `repo-wawona-io-catalogs` and `repo-wawona-io-ports`. Canonical RAG:
 `wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md` and
 `wasm-abi-registry.md`.
 

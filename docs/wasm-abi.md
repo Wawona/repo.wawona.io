@@ -21,7 +21,7 @@ nightly stale builds; green runs auto-publish into this repo's `development`
 the source of truth. Never auto-mirror nixpkgs.
 
 **Versions:** Catalog `version` is the **package** version (upstream release for
-ports, Wawona-owned for `wawona-*` scratch). ABI (`wasi-p1` / `wasix`) is a
+ports; scratch uses distinct unbranded names). ABI (`wasi-p1` / `wasix`) is a
 separate field. Never put P1/P2/X into `version`. Do not forge upstream names
 (`jq`, `gzip`) for from-scratch stubs.
 

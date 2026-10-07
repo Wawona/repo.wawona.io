@@ -67,6 +67,22 @@ gh workflow run build-wasm.yml --repo Wawona/wasm-packages
 First-wave P1: grep, sed, awk, gzip, jq (curl blocked). Local `cargo` is debug only.
 Do not claim WASIX/WebC shipping. Do not revive `nixpkgs2wasi` / `n2w`.
 
+## Wawona Ports (names, versions, links)
+
+Hard gate: `.cursor/rules/repo-wawona-io-ports.mdc`. Almost every catalog row
+is a port of existing software.
+
+- Package `name`: upstream name for ports; distinct unbranded name for scratch.
+  Never `wawona-` / `wwn-` prefix or `-wawona` / `-wwn` suffix.
+- Port `version`: the upstream release/tag you ported. Never invent `0.1.0`
+  because the port just landed. Require `upstream_version` (equal to `version`).
+  Set `upstream_is_bootstrap` only when upstream itself is that bootstrap.
+- Links: `website` = upstream homepage; `source` = port / packaging tree.
+  Search UI labels them website and source (`homepage` is an alias).
+
+`scripts/check-packages.py` enforces this on `wasm/v1/index.json`. Build
+allowlist: `Wawona/wasm-packages` `docs/package-versioning.md`.
+
 ## Never
 
 - Concatenate wasm + deb into one search list
@@ -84,6 +100,8 @@ Do not claim WASIX/WebC shipping. Do not revive `nixpkgs2wasi` / `n2w`.
 - Route wasm **build** recipes to this repo (builds live in `Wawona/wasm-packages`)
 - Mention retired `wwn-apt` in `setup.sh`
 - Drop `hello-wasi` from `wasm/v1/index.json`
+- Brand package names with `wawona-` / `wwn-` (or `-wawona` / `-wwn`)
+- Publish a port at invented `0.1.0` instead of the upstream version
 
 ## Humans
 

@@ -22,4 +22,7 @@ Every wasm package and every `.deb` needs GitHub-queryable maintainers.
 See `.cursor/rules/repo-wawona-io-maintainers.mdc` and
 `python3 scripts/check-packages.py` (add `--offline` for flake checks).
 
+Ports: `.cursor/rules/repo-wawona-io-ports.mdc`. Upstream name and version;
+`website` + `source` on every package. Never invent `0.1.0` for a new port.
+
 Canonical Wawona docs: https://github.com/Wawona/Wawona/blob/development/docs/mode-a-b.md

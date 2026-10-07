@@ -480,8 +480,9 @@
     const wasmBody = (group, pkg, q) => {
         const programs = (pkg.programs || []).map((p) => `<code>${escapeHtml(p)}</code>`).join(" ");
         const platforms = Array.isArray(pkg.platforms) ? pkg.platforms.join(", ") : "";
-        const homepage = pkg.homepage
-            ? `<a href="${escapeHtml(pkg.homepage)}" rel="noopener">homepage</a>`
+        const websiteUrl = pkg.website || pkg.homepage;
+        const website = websiteUrl
+            ? `<a href="${escapeHtml(websiteUrl)}" rel="noopener">website</a>`
             : "";
         const source = pkg.source
             ? `<a href="${escapeHtml(pkg.source)}" rel="noopener">source</a>`
@@ -512,7 +513,7 @@
       ${metaRow("Capabilities", capabilityBits(pkg.capabilities))}
       ${metaRow("Platforms", escapeHtml(platforms))}
       ${metaRow("Maintainers", renderMaintainers(pkg))}
-      ${metaRow("Links", [homepage, source].filter(Boolean).join(" · "))}
+      ${metaRow("Links", [website, source].filter(Boolean).join(" · "))}
       ${metaRow("Digest", `<span class="digest mono">${escapeHtml(pkg.digest || "")}</span>`)}
       ${metaRow("Blob", blob ? `<a href="${escapeHtml(blob)}">${escapeHtml(pkg.url)}</a>` : "")}
     </table>

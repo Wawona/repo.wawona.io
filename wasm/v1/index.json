@@ -5,20 +5,20 @@
   "description": "Wawona Runtime WASI packages (Mode A). Not jailbreak APT.",
   "packages": [
     {
-      "name": "base64",
+      "name": "b64enc",
       "version": "0.1.0",
-      "digest": "sha256:b386d5bd92605331618aceb6a93a155eba8a12f687566e952a447e1d54c24d37",
-      "url": "packages/base64/0.1.0/component.wasm",
+      "digest": "sha256:5ff9277d5a9b152e71092626199ec224ed419d80b323de6ac27803eefbd7eafd",
+      "url": "packages/b64enc/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Minimal WASI P1 base64 (cli-kit)",
+      "summary": "Wawona scratch base64 encode (not GNU/uutils)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/base64",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
       "programs": [
-        "base64"
+        "b64enc"
       ],
       "maintainers": [
         "aspauldingcode"
@@ -36,13 +36,51 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
-      "name": "chess-wawona",
+      "name": "bytesum",
+      "version": "0.1.0",
+      "digest": "sha256:9c6aabf090fbb1291447dd50197b4141b1c5d1f78a5883d0f9c072571aefc2db",
+      "url": "packages/bytesum/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Wawona scratch byte-sum cksum (not GNU cksum)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
+      "programs": [
+        "bytesum"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
+    },
+    {
+      "name": "chess",
       "version": "0.1.0",
       "digest": "sha256:b7b008a45e01d7d14f2cdd28d03c3b9680a9fe3193db99202758d16f17deec0a",
-      "url": "packages/chess-wawona/0.1.0/component.wasm",
+      "url": "packages/chess/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "wayland",
       "summary": "Chess and four variants with a 2D Wayland board and Rust engine",
@@ -53,7 +91,7 @@
       "homepage": "https://github.com/cube-one-ber/chess-for-linux",
       "source": "https://github.com/cube-one-ber/chess-for-linux/tree/cd308076abf666738ff1698966e3f94a9ac9129d/wasm",
       "programs": [
-        "chess-wawona"
+        "chess"
       ],
       "maintainers": [
         "cube-one-ber"
@@ -71,23 +109,27 @@
         "wayland": true,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "port",
+      "upstream_version": "0.1.0",
+      "upstream_is_bootstrap": true,
+      "website": "https://github.com/cube-one-ber/chess-for-linux"
     },
     {
-      "name": "cksum",
+      "name": "col1",
       "version": "0.1.0",
-      "digest": "sha256:9c6aabf090fbb1291447dd50197b4141b1c5d1f78a5883d0f9c072571aefc2db",
-      "url": "packages/cksum/0.1.0/component.wasm",
+      "digest": "sha256:b8961a80af868f1189403c1770e14dca760426e0914c1f39482e4f5ee9171d51",
+      "url": "packages/col1/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Minimal WASI P1 cksum (cli-kit)",
+      "summary": "Wawona scratch {print $1} (not awk)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cksum",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/col1",
       "programs": [
-        "cksum"
+        "col1"
       ],
       "maintainers": [
         "aspauldingcode"
@@ -105,23 +147,25 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
-      "name": "false",
+      "name": "flate-selftest",
       "version": "0.1.0",
-      "digest": "sha256:5c80d7d53919d33c7824a22e26092379b2e75e8eee1edd2bb532f419c63bbd2d",
-      "url": "packages/false/0.1.0/component.wasm",
+      "digest": "sha256:e771ef7cf81df9a4db1c3900f630c4ae113bcdb3f510f08b2c89d65f475ba197",
+      "url": "packages/flate-selftest/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Minimal WASI P1 false (cli-kit)",
+      "summary": "Wawona flate2 self-test (not GNU gzip)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/false",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/flate-selftest",
       "programs": [
-        "false"
+        "flate-selftest"
       ],
       "maintainers": [
         "aspauldingcode"
@@ -139,7 +183,45 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
+    },
+    {
+      "name": "fstrmatch",
+      "version": "0.1.0",
+      "digest": "sha256:d5ff1d3d7489108bab872bdafe3ef4a8394846d03f1e2a6a48de13443bc81c7c",
+      "url": "packages/fstrmatch/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Wawona scratch fixed-string grep (not GNU grep)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/fstrmatch",
+      "programs": [
+        "fstrmatch"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
       "name": "hello-wasi",
@@ -173,7 +255,9 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
       "name": "hello-wasi-gui",
@@ -208,23 +292,25 @@
         "wayland": true,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
-      "name": "rev",
+      "name": "jsonlit",
       "version": "0.1.0",
-      "digest": "sha256:1a2677dfd381bc6d33e40a98174827c3e5bfabe5b3dbba2ee2122e29ce033c90",
-      "url": "packages/rev/0.1.0/component.wasm",
+      "digest": "sha256:6796ae8431e544ff8d220ce07dd4011166ea22e70c2c8a81387bd9633098697e",
+      "url": "packages/jsonlit/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Minimal WASI P1 rev (cli-kit)",
+      "summary": "Wawona scratch JSON -n literal (not jq)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/rev",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/jsonlit",
       "programs": [
-        "rev"
+        "jsonlit"
       ],
       "maintainers": [
         "aspauldingcode"
@@ -242,23 +328,25 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
-      "name": "uniq",
+      "name": "linededupe",
       "version": "0.1.0",
-      "digest": "sha256:9473cf06fbec1eab16786a222326a60d444c82d8e761759cfbd4140c4278a682",
-      "url": "packages/uniq/0.1.0/component.wasm",
+      "digest": "sha256:462bd4e3fee5f5fdb6a0ce5b3f01361ff48e79f3082c82f6ac2805300a5b129b",
+      "url": "packages/linededupe/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Minimal WASI P1 uniq (cli-kit)",
+      "summary": "Wawona scratch uniq (not GNU/uutils uniq)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
       "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/uniq",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
       "programs": [
-        "uniq"
+        "linededupe"
       ],
       "maintainers": [
         "aspauldingcode"
@@ -276,7 +364,117 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
+    },
+    {
+      "name": "linerev",
+      "version": "0.1.0",
+      "digest": "sha256:a38672cfd19efb0cd3343c78ffe919ece91f5081c9266375d8d9c585f35041e7",
+      "url": "packages/linerev/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Wawona scratch rev (not GNU/uutils)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
+      "programs": [
+        "linerev"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
+    },
+    {
+      "name": "ssub",
+      "version": "0.1.0",
+      "digest": "sha256:8a2a7345423a345d4150045798a8fe56a0ba76dd7e4da98b6224196a81d1ea06",
+      "url": "packages/ssub/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Wawona scratch s/// (not GNU sed)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/ssub",
+      "programs": [
+        "ssub"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
+    },
+    {
+      "name": "wasi-false",
+      "version": "0.1.0",
+      "digest": "sha256:5c80d7d53919d33c7824a22e26092379b2e75e8eee1edd2bb532f419c63bbd2d",
+      "url": "packages/wasi-false/0.1.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "summary": "Wawona scratch false(1)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://wawona.io/docs/wasm/",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
+      "programs": [
+        "wasi-false"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
       "name": "wasi-true",
@@ -310,347 +508,9 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      }
-    },
-    {
-      "name": "wawona-awk",
-      "version": "0.1.0",
-      "digest": "sha256:b8961a80af868f1189403c1770e14dca760426e0914c1f39482e4f5ee9171d51",
-      "url": "packages/wawona-awk/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch {print $1} (not awk)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-awk",
-      "programs": [
-        "wawona-awk"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-base64",
-      "version": "0.1.0",
-      "digest": "sha256:5ff9277d5a9b152e71092626199ec224ed419d80b323de6ac27803eefbd7eafd",
-      "url": "packages/wawona-base64/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch base64 encode (not GNU/uutils)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-base64",
-      "programs": [
-        "wawona-base64"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-cksum",
-      "version": "0.1.0",
-      "digest": "sha256:9c6aabf090fbb1291447dd50197b4141b1c5d1f78a5883d0f9c072571aefc2db",
-      "url": "packages/wawona-cksum/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch byte-sum cksum (not GNU cksum)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-cksum",
-      "programs": [
-        "wawona-cksum"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-false",
-      "version": "0.1.0",
-      "digest": "sha256:5c80d7d53919d33c7824a22e26092379b2e75e8eee1edd2bb532f419c63bbd2d",
-      "url": "packages/wawona-false/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch false(1)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-false",
-      "programs": [
-        "wawona-false"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-flate-selftest",
-      "version": "0.1.0",
-      "digest": "sha256:e771ef7cf81df9a4db1c3900f630c4ae113bcdb3f510f08b2c89d65f475ba197",
-      "url": "packages/wawona-flate-selftest/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona flate2 self-test (not GNU gzip)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-flate-selftest",
-      "programs": [
-        "wawona-flate-selftest"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-grep",
-      "version": "0.1.0",
-      "digest": "sha256:d5ff1d3d7489108bab872bdafe3ef4a8394846d03f1e2a6a48de13443bc81c7c",
-      "url": "packages/wawona-grep/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch fixed-string grep (not GNU grep)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-grep",
-      "programs": [
-        "wawona-grep"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-jsonlit",
-      "version": "0.1.0",
-      "digest": "sha256:6796ae8431e544ff8d220ce07dd4011166ea22e70c2c8a81387bd9633098697e",
-      "url": "packages/wawona-jsonlit/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch JSON -n literal (not jq)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-jsonlit",
-      "programs": [
-        "wawona-jsonlit"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-rev",
-      "version": "0.1.0",
-      "digest": "sha256:a38672cfd19efb0cd3343c78ffe919ece91f5081c9266375d8d9c585f35041e7",
-      "url": "packages/wawona-rev/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch rev (not GNU/uutils)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-rev",
-      "programs": [
-        "wawona-rev"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-sed",
-      "version": "0.1.0",
-      "digest": "sha256:8a2a7345423a345d4150045798a8fe56a0ba76dd7e4da98b6224196a81d1ea06",
-      "url": "packages/wawona-sed/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch s/// (not GNU sed)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-sed",
-      "programs": [
-        "wawona-sed"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
-    },
-    {
-      "name": "wawona-uniq",
-      "version": "0.1.0",
-      "digest": "sha256:462bd4e3fee5f5fdb6a0ce5b3f01361ff48e79f3082c82f6ac2805300a5b129b",
-      "url": "packages/wawona-uniq/0.1.0/component.wasm",
-      "wasi": "p1",
-      "kind": "cli",
-      "summary": "Wawona scratch uniq (not GNU/uutils uniq)",
-      "license": "MIT",
-      "runtime": "wawona-1",
-      "entry": "component.wasm",
-      "homepage": "https://wawona.io/docs/wasm/",
-      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/wawona-uniq",
-      "programs": [
-        "wawona-uniq"
-      ],
-      "maintainers": [
-        "aspauldingcode"
-      ],
-      "platforms": [
-        "macos",
-        "ios",
-        "ipados",
-        "tvos",
-        "visionos",
-        "android",
-        "linux"
-      ],
-      "capabilities": {
-        "wayland": false,
-        "filesystem": [],
-        "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     },
     {
       "name": "wayland-shm-demo",
@@ -685,7 +545,9 @@
         "wayland": true,
         "filesystem": [],
         "network": false
-      }
+      },
+      "origin": "scratch",
+      "website": "https://wawona.io/docs/wasm/"
     }
   ]
 }

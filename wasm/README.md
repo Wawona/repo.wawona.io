@@ -31,8 +31,10 @@ Manual fallback (debug only): add a row to `index.json` and place the blob under
 **`maintainers`** is required: a list of GitHub usernames from
 [`maintainers.json`](../maintainers.json). Names are resolved from GitHub, not
 typed. Optional catalog fields (`kind`, `long_description`, `license`,
-`homepage`, `source`, `programs`, `capabilities`, `platforms`) are ignored by
-`wpm` and shown on the search page. Do not treat a laptop build as production.
+`origin`, `website` (alias `homepage`), `source`, `upstream_version`,
+`programs`, `capabilities`, `platforms`) are ignored by `wpm` and shown on the
+search page. Ports must use the upstream software version (rule
+`repo-wawona-io-ports`). Do not treat a laptop build as production.
 
 ## Later registry (planned)
 
