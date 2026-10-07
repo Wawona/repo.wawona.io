@@ -124,6 +124,40 @@
         return "cli";
     };
 
+    /** Hydra-style CI smoke status from index `ci` (pass|fail|unknown). */
+    const ciStatus = (pkg) => {
+        const raw = pkg && pkg.ci && pkg.ci.status;
+        if (raw === "pass" || raw === "fail") return raw;
+        return "unknown";
+    };
+
+    const ciLabel = (pkg) => {
+        const status = ciStatus(pkg);
+        const runtime = (pkg.ci && pkg.ci.runtime) || (pkg.wasi === "wasix" ? "wasmer" : "wasmtime");
+        const when = pkg.ci && pkg.ci.checked_at ? ` · ${pkg.ci.checked_at}` : "";
+        if (status === "pass") return `Verified working (${runtime} smoke)${when}`;
+        if (status === "fail") return `CI failed (${runtime} smoke)${when}`;
+        return `Not verified yet (${runtime})${when}`;
+    };
+
+    const ciDotHtml = (pkg) => {
+        const status = ciStatus(pkg);
+        const label = ciLabel(pkg);
+        return `<span class="ci-dot ${status}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" role="img"></span>`;
+    };
+
+    const ciSuitesHtml = (pkg) => {
+        const suites = (pkg.ci && pkg.ci.suites) || {};
+        const order = ["smoke", "terminal", "socket", "wayland"];
+        const bits = order.map((name) => {
+            const st = suites[name] || "unknown";
+            return `<span class="ci-suite"><span class="ci-dot ${st}" aria-hidden="true"></span> ${escapeHtml(name)}</span>`;
+        });
+        const runtime = (pkg.ci && pkg.ci.runtime) || "";
+        const overall = ciStatus(pkg);
+        return `${ciDotHtml(pkg)} <strong>${escapeHtml(overall)}</strong>${runtime ? ` · ${escapeHtml(runtime)}` : ""} · ${bits.join(" · ")}`;
+    };
+
     const pkgKey = (pkg) =>
         pkg.channel === "deb"
             ? `deb:${pkg.name}:${pkg.architecture || ""}`
@@ -328,7 +362,7 @@
             if (aboutLane) aboutLane.hidden = false;
             if (aboutLaneBody) {
                 aboutLaneBody.innerHTML =
-                    "Store-safe WASI bytecode. Install with <code>wpm install &lt;name&gt;</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. App Store and Play binaries must never read APT, <code>/Packages</code>, or <code>.deb</code>. Sileo and Termux are a different catalog.";
+                    "Store-safe WASI bytecode. Install with <code>wpm install &lt;name&gt;</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. Green/red dots are Hydra-style CI smokes (Wasmtime for P1/P2; Wasmer for WASIX). Summary: <a href=\"../wasm/v1/ci.json\"><code>/wasm/v1/ci.json</code></a>. App Store and Play binaries must never read APT, <code>/Packages</code>, or <code>.deb</code>. Sileo and Termux are a different catalog.";
             }
             if (filterNote) {
                 filterNote.innerHTML = "<code>wpm install &lt;name&gt;</code> · not APT";
@@ -503,6 +537,7 @@
       ${metaRow("Catalog", "<code>Mode A wasm</code> (App Store / Play, <code>wpm</code>)")}
       ${metaRow("Name", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}
+      ${metaRow("CI", ciSuitesHtml(pkg))}
       ${metaRow("WASI", escapeHtml(pkg.wasi || ""))}
       ${metaRow("Kind", escapeHtml(kind))}
       ${metaRow("License", escapeHtml(pkg.license || ""))}
@@ -577,13 +612,20 @@
         const maintChips = handlesFor(pkg)
             .map((h) => `<span class="chip">@${escapeHtml(h)}</span>`)
             .join("");
+        const statusChip =
+            pkg.channel === "wasm"
+                ? `<span class="chip chip-ci-${ciStatus(pkg)}">${ciStatus(pkg) === "pass" ? "verified" : ciStatus(pkg) === "fail" ? "failed" : "unverified"}</span>`
+                : "";
         return `
-<article class="pkg${open ? " open" : ""}" id="pkg-${escapeHtml(key)}" data-key="${escapeHtml(key)}" data-name="${escapeHtml(pkg.name)}">
+<article class="pkg${open ? " open" : ""}" id="pkg-${escapeHtml(key)}" data-key="${escapeHtml(key)}" data-name="${escapeHtml(pkg.name)}" data-ci="${pkg.channel === "wasm" ? ciStatus(pkg) : ""}">
   <button class="pkg-head" type="button" aria-expanded="${open ? "true" : "false"}">
     <span class="pkg-name">${highlight(pkg.name, q)}</span>
-    <span class="pkg-version">${escapeHtml(pkg.version)}</span>
+    <span class="pkg-status">
+      ${pkg.channel === "wasm" ? ciDotHtml(pkg) : ""}
+      <span class="pkg-version">${escapeHtml(pkg.version)}</span>
+    </span>
     <p class="pkg-summary">${highlight(pkg.summary || "", q)}</p>
-    <div class="chips">${chips}${maintChips}</div>
+    <div class="chips">${chips}${statusChip}${maintChips}</div>
   </button>
   <div class="pkg-body">
     ${pkg.channel === "deb" ? debBody(group, pkg, q) : wasmBody(group, pkg, q)}

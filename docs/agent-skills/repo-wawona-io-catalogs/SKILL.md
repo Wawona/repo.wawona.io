@@ -56,6 +56,10 @@ own the Nix→WASIX converter.
 | Store P1 | `Wawona/wasm-packages` GHA | `wasm32-wasip1` | `/wasm/v1` for `wpm` / Pulley |
 | Nixpkgs → WASIX | `Wawona/wasinix` | `wasm32-wasix` | Wasmer/WebC under `/wasm` (not Pulley P1 rows) |
 
+Hydra-style verified dots: index `ci.status` + `/wasm/v1/ci.json`. Green =
+Wasmtime (P1/P2) or Wasmer (WASIX) smoke pass. Gray = not verified. Red =
+fail. Suites `terminal` / `socket` / `wayland` are planned Wawona ABI checks.
+
 Store P1 loop:
 
 | Piece | Where |

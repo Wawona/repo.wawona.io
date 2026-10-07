@@ -352,6 +352,26 @@ def check_wasm_ports(pkg: dict) -> list[str]:
             f"wasm {name}: forged upstream name with origin=scratch; "
             f"use a distinct unbranded name, or origin=port of the real tree"
         )
+    ci = pkg.get("ci")
+    if ci is not None:
+        if not isinstance(ci, dict):
+            errors.append(f"wasm {name}: ci must be an object")
+        else:
+            status = ci.get("status")
+            if status not in ("pass", "fail", "unknown"):
+                errors.append(
+                    f"wasm {name}: ci.status must be pass|fail|unknown (got {status!r})"
+                )
+            suites = ci.get("suites")
+            if suites is not None:
+                if not isinstance(suites, dict):
+                    errors.append(f"wasm {name}: ci.suites must be an object")
+                else:
+                    for suite, sstatus in suites.items():
+                        if sstatus not in ("pass", "fail", "unknown", "skip"):
+                            errors.append(
+                                f"wasm {name}: ci.suites.{suite} invalid status {sstatus!r}"
+                            )
     return errors
 
 

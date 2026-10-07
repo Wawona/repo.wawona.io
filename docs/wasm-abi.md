@@ -124,6 +124,38 @@ Every active package must pass or fail under that runtime (JSON result per
 package). Do not smoke WASIX with Wasmtime. Do not use Wasmer as the store
 P1/P2 gate.
 
+### Hydra-style status on `/search/?channel=wasm`
+
+Each index row may carry a `ci` object. Humans see a green / red / gray dot
+next to the package version. Machines read
+[`/wasm/v1/ci.json`](../wasm/v1/ci.json).
+
+```json
+"ci": {
+  "status": "pass",
+  "runtime": "wasmtime",
+  "checked_at": "2026-10-07T15:00:00Z",
+  "suites": {
+    "smoke": "pass",
+    "terminal": "unknown",
+    "socket": "unknown",
+    "wayland": "unknown"
+  }
+}
+```
+
+| `ci.status` | Dot | Meaning |
+|-------------|-----|---------|
+| `pass` | green | Latest smoke passed |
+| `fail` | red | Latest smoke failed |
+| `unknown` | gray | Not smoked yet (or skipped) |
+
+**Suites (roadmap).** `smoke` is required today. Later Wawona ABI suites can
+prove `terminal`, `socket`, and `wayland` against the host Runtime (same
+`/wasm/v1` bytecode). Overall `ci.status` stays red if any required suite
+fails. Publish path: `wasm-packages` `stage-for-repo.py` merges
+`smoke-result.json` into the catalog on every green build.
+
 Hard rejects until the gate lands:
 
 - Claim WASIX runs on store Pulley or on iOS / iPadOS ≤ 26 Mode A

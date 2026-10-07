@@ -40,7 +40,18 @@
       },
       "origin": "port",
       "upstream_version": "0.1.0",
-      "upstream_is_bootstrap": true
+      "upstream_is_bootstrap": true,
+      "ci": {
+        "status": "unknown",
+        "runtime": "wasmtime",
+        "checked_at": null,
+        "suites": {
+          "smoke": "unknown",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        }
+      }
     },
     {
       "name": "hello-wasi",
@@ -75,7 +86,19 @@
         "filesystem": [],
         "network": false
       },
-      "origin": "scratch"
+      "origin": "scratch",
+      "ci": {
+        "status": "pass",
+        "runtime": "wasmtime",
+        "checked_at": "2026-10-07T15:14:15Z",
+        "suites": {
+          "smoke": "pass",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        },
+        "detail": "Wasmtime smoke on wasm-packages GHA"
+      }
     },
     {
       "name": "hello-wasi-gui",
@@ -111,7 +134,18 @@
         "filesystem": [],
         "network": false
       },
-      "origin": "scratch"
+      "origin": "scratch",
+      "ci": {
+        "status": "unknown",
+        "runtime": "wasmtime",
+        "checked_at": null,
+        "suites": {
+          "smoke": "unknown",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        }
+      }
     },
     {
       "name": "wasi-false",
@@ -146,7 +180,19 @@
         "filesystem": [],
         "network": false
       },
-      "origin": "scratch"
+      "origin": "scratch",
+      "ci": {
+        "status": "pass",
+        "runtime": "wasmtime",
+        "checked_at": "2026-10-07T15:14:15Z",
+        "suites": {
+          "smoke": "pass",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        },
+        "detail": "Wasmtime smoke on wasm-packages GHA"
+      }
     },
     {
       "name": "wasi-true",
@@ -181,7 +227,19 @@
         "filesystem": [],
         "network": false
       },
-      "origin": "scratch"
+      "origin": "scratch",
+      "ci": {
+        "status": "pass",
+        "runtime": "wasmtime",
+        "checked_at": "2026-10-07T15:14:15Z",
+        "suites": {
+          "smoke": "pass",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        },
+        "detail": "Wasmtime smoke on wasm-packages GHA"
+      }
     },
     {
       "name": "wayland-shm-demo",
@@ -217,7 +275,18 @@
         "filesystem": [],
         "network": false
       },
-      "origin": "scratch"
+      "origin": "scratch",
+      "ci": {
+        "status": "unknown",
+        "runtime": "wasmtime",
+        "checked_at": null,
+        "suites": {
+          "smoke": "unknown",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        }
+      }
     }
   ]
 }

@@ -658,12 +658,76 @@ mark {
     word-break: break-word;
 }
 
-.pkg-version {
+.pkg-status {
     grid-area: ver;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.pkg-version {
     font-family: var(--mono);
     font-size: 0.78rem;
     color: var(--ink-muted);
+}
+
+/* Hydra-style verified / failed / unverified (Wasmtime P1/P2, Wasmer WASIX). */
+.ci-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.ci-dot.pass {
+    background: #1b9a4c;
+}
+
+.ci-dot.fail {
+    background: #c0392b;
+}
+
+.ci-dot.unknown,
+.ci-dot.skip {
+    background: #8b929e;
+}
+
+@media (prefers-color-scheme: dark) {
+    .ci-dot.pass { background: #3dce72; }
+    .ci-dot.fail { background: #f07167; }
+    .ci-dot.unknown,
+    .ci-dot.skip { background: #6b7280; }
+}
+
+.ci-suite {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     white-space: nowrap;
+}
+
+.chip-ci-pass {
+    background: color-mix(in srgb, #1b9a4c 18%, var(--bg-elevated));
+    color: #146c36;
+}
+
+.chip-ci-fail {
+    background: color-mix(in srgb, #c0392b 16%, var(--bg-elevated));
+    color: #8e2a20;
+}
+
+.chip-ci-unknown {
+    background: color-mix(in srgb, var(--ink-faint) 20%, var(--bg-elevated));
+    color: var(--ink-muted);
+}
+
+@media (prefers-color-scheme: dark) {
+    .chip-ci-pass { color: #7ddea0; }
+    .chip-ci-fail { color: #f5a8a2; }
 }
 
 .pkg-summary {
