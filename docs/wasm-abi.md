@@ -4,6 +4,12 @@ Authority for how packages on the **wasm channel** are classified and how the
 **later** Wasmer-compatible registry will publish them. Deb / Sileo / Termux
 packaging stays in [`packaging.md`](./packaging.md). Do not mix catalogs.
 
+**Runtime host imports** (sockets, Wayland fd bridge, terminal) are documented
+on the website, not here:
+
+- https://wawona.io/docs/contributor/wasm-host-abi/
+- https://wawona.io/docs/contributor/wayland-wasm/
+
 **Status today:** `/wasm/v1` serves Mode A `wpm` via `index.json` and
 `.wasm` blobs. That path stays live.
 
