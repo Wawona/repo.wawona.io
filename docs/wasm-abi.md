@@ -71,18 +71,17 @@ through the wawona profile).
 ## Phase order
 
 1. **P1 CLI allowlist on GHA (in progress).** `Wawona/wasm-packages`
-   `allowlist.toml` + recipes. First wave: grep, sed, awk, gzip, jq
-   (minimal WASI ports); curl blocked until a store-safe sockets recipe
-   exists. Nightly + auto-publish grow `/wasm/v1`. Expand the curated list
-   as each recipe goes green. Not a nixpkgs scrape.
-2. **Fork wasinix.** Point the `wawona` publication profile at
-   `repo.wawona.io/wasm` for later WebC.
-3. **Broader P1 set** (still curated; wasinix when available, not a Wawona
-   converter): coreutils, busybox, wget, git, make, cmake, CPython core,
-   lua, sqlite3, openssl CLI.
-4. **Five WASIX tools**, including bash and nix. wasinix already ships some
-   WASIX packages (zlib, git). New recipes follow wasinix
-   `docs/packaging.md`.
+   `allowlist.toml` + `cli-kit` (cat/head/wc/sort/… ) plus grep/sed/awk/gzip/jq.
+   Nightly + auto-publish grow `/wasm/v1`. Not a nixpkgs scrape.
+2. **Wasinix fork (started).** `github.com/Wawona/wasinix` (from
+   `xtyxtyx/wasinix`). Default Wasmer package owner `wawona`. Publish profile
+   docs: `wasinix/docs/wawona-publish.md` → `repo.wawona.io/wasm`. Do not
+   revive `n2w`.
+3. **Broader CLI set via wasinix** (WASIX / WebC): curl, wget, git, tar, find,
+   less, nano, bash, make, cmake, python3, openssl, … Queued as `blocked`
+   rows in the wasm-packages allowlist until the WASIX publish lane lands.
+4. **Five WASIX tools**, including bash and nix. Upstream wasinix already
+   ships some recipes. Expand on the Wawona fork.
 5. **One Wayland proof** (Weston terminal client), then a small GTK client.
    Open questions: libwayland-client and Mesa on `wasm32-wasix`, and how the
    WASIX socket reaches Wawona.
