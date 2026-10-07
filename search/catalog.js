@@ -14,10 +14,14 @@
     const doorWasm = document.getElementById("door-wasm");
     const doorDeb = document.getElementById("door-deb");
     const pageTitle = document.getElementById("page-title");
+    const resultsTitle = document.getElementById("results-title");
     const ledeEl = document.getElementById("lede");
     const kickerEl = document.getElementById("kicker");
     const laneBanner = document.getElementById("lane-banner");
+    const aboutLane = document.getElementById("about-lane");
+    const aboutLaneBody = document.getElementById("about-lane-body");
     const filterNote = document.getElementById("filter-note");
+    const filtersHint = document.getElementById("filters-hint");
     const navChoose = document.getElementById("nav-choose");
     const navWasm = document.getElementById("nav-wasm");
     const navDeb = document.getElementById("nav-deb");
@@ -26,6 +30,10 @@
     const kindInputs = [...document.querySelectorAll('input[name="kind"]')];
     const sortInputs = [...document.querySelectorAll('input[name="sort"]')];
     const filtersEl = document.querySelector(".filters");
+    const filtersDrawer = document.getElementById("filters-drawer");
+    if (filtersDrawer && window.matchMedia("(min-width: 860px)").matches) {
+        filtersDrawer.open = true;
+    }
 
     let packages = [];
     let loadedLane = "";
@@ -288,62 +296,65 @@
         if (navDeb) navDeb.removeAttribute("aria-current");
         if (!channel) {
             document.title = "Choose a Wawona package catalog";
-            if (kickerEl) kickerEl.textContent = "repo.wawona.io/search";
+            if (kickerEl) kickerEl.textContent = "Package catalogs";
             if (pageTitle) pageTitle.textContent = "Two catalogs. Pick one.";
             if (ledeEl) {
-                ledeEl.textContent =
-                    "App Store / Play wasm is not the same product as APT debs. Debs split: Sileo on jailbroken iOS (rootless and rootful), Termux on sideloaded Android (not jailbreak, not Play). They do not share an index with wasm. Choose a catalog before you search.";
+                ledeEl.innerHTML =
+                    "Wasm for App Store / Play (<code>wpm</code>). Debs for Sileo and Termux. Separate indexes. Never mixed.";
             }
             if (laneBanner) {
                 laneBanner.hidden = true;
                 laneBanner.textContent = "";
             }
+            if (aboutLane) aboutLane.hidden = true;
+            if (aboutLaneBody) aboutLaneBody.textContent = "";
             if (filterNote) filterNote.textContent = "";
-            input.placeholder = "Type a name, then pick a catalog";
+            if (filtersHint) filtersHint.textContent = "Lane, sort, architecture";
+            if (resultsTitle) resultsTitle.textContent = "Packages";
+            input.placeholder = "Search packages";
             if (channelHidden) channelHidden.value = "";
             if (navChoose) navChoose.setAttribute("aria-current", "page");
             return;
         }
         if (channelHidden) channelHidden.value = channel;
         if (channel === "wasm") {
-            document.title = "Mode A wasm packages (App Store / Play)";
-            if (kickerEl) kickerEl.textContent = "Mode A · store-safe";
-            if (pageTitle) pageTitle.textContent = "Wasm packages for wpm";
-            if (ledeEl) {
-                ledeEl.innerHTML =
-                    "App Store and Play compliance: WASI bytecode only. Install with <code>wpm</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. Sileo and Termux debs are a different catalog.";
-            }
+            document.title = "Wasm packages · repo.wawona.io";
+            if (resultsTitle) resultsTitle.textContent = "Wasm packages";
             if (laneBanner) {
                 laneBanner.hidden = false;
                 laneBanner.className = "lane-banner lane-a";
-                laneBanner.textContent =
-                    "Store-safe WASI bytecode. App Store and Play binaries must never read APT, /Packages, or .deb.";
+                laneBanner.textContent = "Mode A · WASI for wpm · App Store / Play";
+            }
+            if (aboutLane) aboutLane.hidden = false;
+            if (aboutLaneBody) {
+                aboutLaneBody.innerHTML =
+                    "Store-safe WASI bytecode. Install with <code>wpm install &lt;name&gt;</code>. Machine API: <a href=\"../wasm/v1/index.json\"><code>/wasm/v1</code></a>. App Store and Play binaries must never read APT, <code>/Packages</code>, or <code>.deb</code>. Sileo and Termux are a different catalog.";
             }
             if (filterNote) {
-                filterNote.innerHTML = "Install: <code>wpm install &lt;name&gt;</code>. Not Sileo. Not Termux. Not <code>/Packages</code>.";
+                filterNote.innerHTML = "<code>wpm install &lt;name&gt;</code> · not APT";
             }
-            input.placeholder = "Search wasm packages";
+            if (filtersHint) filtersHint.textContent = "WASI · kind · sort";
+            input.placeholder = "Filter wasm packages";
             if (navWasm) navWasm.setAttribute("aria-current", "page");
             return;
         }
-        document.title = "Sileo, Irisin, Zebra, Cydia, and Termux debs";
-        if (kickerEl) kickerEl.textContent = "APT debs";
-        if (pageTitle) pageTitle.textContent = "Sileo, Irisin, Zebra, Cydia, and Termux debs";
-        if (ledeEl) {
-            ledeEl.innerHTML =
-                "Same APT source <code>https://repo.wawona.io/</code>. Recommended order: <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>, then <strong>Cydia</strong> (older jailbreaks such as iOS 13). Irisin is rootless and roothide on iOS 16 or later. <strong>Termux</strong> is sideloaded Android only (not jailbreak, not Play). Store <code>wpm</code> never sees this list.";
-        }
+        document.title = "Deb packages · repo.wawona.io";
+        if (resultsTitle) resultsTitle.textContent = "Deb packages";
         if (laneBanner) {
             laneBanner.hidden = false;
             laneBanner.className = "lane-banner lane-b";
-            laneBanner.textContent =
-                "Filter architecture: iphoneos-* is Sileo, Irisin, Zebra, and Cydia jailbreak. aarch64 is Termux Android sideload, not jailbreak. Never in App Store or Play.";
+            laneBanner.textContent = "APT · Sileo / Irisin / Zebra / Cydia · Termux";
+        }
+        if (aboutLane) aboutLane.hidden = false;
+        if (aboutLaneBody) {
+            aboutLaneBody.innerHTML =
+                "Source: <code>https://repo.wawona.io/</code>. Jailbroken iOS: Sileo, then Irisin, then Zebra, then Cydia (older jailbreaks). Irisin: <code>irisin://repository/add?url=https://repo.wawona.io/</code>. Termux is sideloaded Android only (not jailbreak, not Play). Filter <code>iphoneos-*</code> vs <code>aarch64</code>. Not <code>wpm</code>.";
         }
         if (filterNote) {
-            filterNote.innerHTML =
-                "Add <code>https://repo.wawona.io/</code> in Sileo, then Irisin, then Zebra. Cydia is last, for older jailbreaks such as iOS 13. Irisin link: <code>irisin://repository/add?url=https://repo.wawona.io/</code>. Termux: same URL in sideloaded Android <code>apt</code>. Not <code>wpm</code>.";
+            filterNote.innerHTML = "APT root · not <code>wpm</code>";
         }
-        input.placeholder = "Search Sileo or Termux debs";
+        if (filtersHint) filtersHint.textContent = "Arch · section · sort";
+        input.placeholder = "Filter deb packages";
         if (navDeb) navDeb.setAttribute("aria-current", "page");
     };
 

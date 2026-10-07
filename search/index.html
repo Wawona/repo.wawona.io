@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose a Wawona package catalog</title>
-    <meta name="description" content="Two separate catalogs. Wasm for App Store and Play (wpm). Jailbreak debs for Sileo, Irisin, Zebra, and Cydia (rootless/rootful) and Termux on sideloaded Android. Termux is not jailbreak. Never one mixed list.">
+    <meta name="description" content="Two separate catalogs. Wasm for App Store and Play (wpm). Jailbreak debs for Sileo, Irisin, Zebra, and Cydia and Termux on sideloaded Android. Never one mixed list.">
     <link rel="canonical" href="https://repo.wawona.io/search/">
     <meta property="og:title" content="Wawona package catalogs">
     <meta property="og:description" content="App Store / Play wasm is separate from jailbreak APT debs and Termux Android sideload debs.">
@@ -14,128 +14,146 @@
     <link rel="search" type="application/opensearchdescription+xml" title="Wawona catalogs" href="opensearch.xml">
     <link rel="search" type="application/opensearchdescription+xml" title="Wawona wasm" href="opensearch-wasm.xml">
     <link rel="search" type="application/opensearchdescription+xml" title="Wawona debs" href="opensearch-deb.xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="catalog.css">
 </head>
 <body data-channel="choose">
-    <header class="site-header">
-        <nav class="top-nav" aria-label="Catalogs">
-            <a href="https://wawona.io">wawona.io</a>
-            <a href="./" id="nav-choose">Choose catalog</a>
-            <a href="./?channel=wasm" id="nav-wasm">Mode A wasm</a>
-            <a href="./?channel=deb" id="nav-deb">Debs</a>
-            <a href="../">APT source</a>
-            <a href="https://wawona.io/docs/wasm/">Runtime docs</a>
-        </nav>
+    <header class="chrome" id="chrome">
+        <div class="chrome-inner">
+            <div class="chrome-brand">
+                <a class="brand-link" href="./" aria-label="Wawona catalogs home">
+                    <img src="../images/logo/wawona-mark-light.png" alt="" class="logo-img logo-light" width="28" height="28">
+                    <img src="../images/logo/wawona-mark-dark.png" alt="" class="logo-img logo-dark" width="28" height="28">
+                    <span class="brand-text">repo<span class="brand-dim">.wawona.io</span></span>
+                </a>
+                <nav class="top-nav" aria-label="Catalogs">
+                    <a href="./" id="nav-choose">Catalogs</a>
+                    <a href="./?channel=wasm" id="nav-wasm">Wasm</a>
+                    <a href="./?channel=deb" id="nav-deb">Debs</a>
+                    <a class="nav-extra" href="../">APT</a>
+                    <a class="nav-extra" href="https://wawona.io">wawona.io</a>
+                </nav>
+            </div>
 
-        <div class="hero">
-            <div class="brand">
-                <img src="../images/logo/wawona-mark-light.png" alt="" class="logo-img logo-light" width="56" height="56">
-                <img src="../images/logo/wawona-mark-dark.png" alt="" class="logo-img logo-dark" width="56" height="56">
-                <div>
-                    <p class="kicker" id="kicker">repo.wawona.io/search</p>
-                    <h1 id="page-title">Two catalogs. Pick one.</h1>
+            <form id="search-form" class="search-form" role="search" action="./" method="get">
+                <input type="hidden" name="channel" id="channel-hidden" value="">
+                <label class="sr-only" for="q">Search packages</label>
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle>
+                        <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                    <input id="q" name="query" type="search" placeholder="Search packages" autocomplete="off" spellcheck="false" enterkeyhint="search">
                 </div>
-            </div>
-            <p class="lede" id="lede">
-                App Store / Play wasm is not the same product as APT debs.
-                Debs themselves split: Sileo, then Irisin, then Zebra, then Cydia
-                on jailbroken iOS (rootless and rootful; Irisin is rootless and
-                roothide on iOS 16 or later; Cydia is for older jailbreaks such
-                as iOS 13), Termux on sideloaded Android (not jailbreak, not Play).
-                They do not share an index with wasm. Choose a catalog before you search.
-            </p>
-            <p class="lane-banner" id="lane-banner" hidden></p>
+                <button type="submit" class="btn-search">Search</button>
+            </form>
         </div>
-
-        <form id="search-form" class="search-form" role="search" action="./" method="get">
-            <input type="hidden" name="channel" id="channel-hidden" value="">
-            <label class="sr-only" for="q">Search packages</label>
-            <div class="search-box">
-                <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                </svg>
-                <input id="q" name="query" type="search" placeholder="Search after you pick a catalog" autocomplete="off" spellcheck="false">
-                <kbd class="slash-hint" title="Press / to focus">/</kbd>
-            </div>
-            <button type="submit" class="btn-search">Search</button>
-        </form>
     </header>
 
-    <section id="chooser" class="chooser" aria-label="Pick a catalog">
-        <a class="door door-wasm" id="door-wasm" href="./?channel=wasm">
-            <p class="door-kicker">Mode A</p>
-            <h2>App Store / Play wasm</h2>
-            <p>WASI packages for <code>wpm</code>. Store-safe bytecode for App
-            Store and Play. Machine API: <code>/wasm/v1</code>. Debs are not listed here.</p>
-        </a>
-        <a class="door door-deb" id="door-deb" href="./?channel=deb">
-            <p class="door-kicker">APT debs</p>
-            <h2>Sileo, Irisin, Zebra, Cydia, and Termux</h2>
-            <p>Same APT at <code>https://repo.wawona.io/</code>.
-            Recommended order: <strong>Sileo</strong>, then <strong>Irisin</strong>, then <strong>Zebra</strong>, then <strong>Cydia</strong>.
-            Jailbroken iOS, rootless and rootful.
-            Irisin is iOS 16 or later, rootless and roothide.
-            Cydia is for older jailbreaks such as iOS 13.
-            <strong>Termux</strong>: sideloaded Android only. Not jailbreak. Not Play.
-            Store <code>wpm</code> never sees this list.</p>
-        </a>
+    <section id="chooser" class="chooser-page" aria-label="Pick a catalog">
+        <div class="chooser-intro">
+            <p class="kicker" id="kicker">Package catalogs</p>
+            <h1 id="page-title">Two catalogs. Pick one.</h1>
+            <p class="lede" id="lede">
+                Wasm for App Store / Play (<code>wpm</code>). Debs for Sileo and Termux.
+                Separate indexes. Never mixed.
+            </p>
+        </div>
+        <div class="chooser-doors">
+            <a class="door door-wasm" id="door-wasm" href="./?channel=wasm">
+                <p class="door-kicker">Mode A</p>
+                <h2>Wasm</h2>
+                <p>WASI packages for <code>wpm</code>. Store-safe. API: <code>/wasm/v1</code>.</p>
+            </a>
+            <a class="door door-deb" id="door-deb" href="./?channel=deb">
+                <p class="door-kicker">APT</p>
+                <h2>Debs</h2>
+                <p>Sileo / Irisin / Zebra / Cydia, and Termux. Same APT root. Not <code>wpm</code>.</p>
+            </a>
+        </div>
+        <details class="chooser-more">
+            <summary>Audience notes</summary>
+            <p>
+                Jailbroken iOS: Sileo, then Irisin, then Zebra, then Cydia (older jailbreaks).
+                Termux is sideloaded Android only (not jailbreak, not Play).
+                Store binaries must never read APT or <code>.deb</code>.
+            </p>
+        </details>
     </section>
 
+    <p class="lane-banner" id="lane-banner" hidden></p>
+
     <main class="layout" id="catalog-main" hidden>
-        <aside class="filters" aria-label="Filters">
-            <h2>This catalog</h2>
-            <fieldset>
-                <legend>Lane</legend>
-                <label><input type="radio" name="channel" value="wasm"> Mode A wasm (App Store / Play)</label>
-                <label><input type="radio" name="channel" value="deb"> Debs (Sileo, Irisin, Zebra, Cydia, Termux)</label>
-            </fieldset>
-            <fieldset class="wasm-only">
-                <legend>WASI</legend>
-                <label><input type="radio" name="wasi" value="" checked> All</label>
-                <label><input type="radio" name="wasi" value="p1"> Preview 1</label>
-                <label><input type="radio" name="wasi" value="p2"> Preview 2</label>
-            </fieldset>
-            <fieldset class="wasm-only">
-                <legend>Kind</legend>
-                <label><input type="radio" name="kind" value="" checked> All</label>
-                <label><input type="radio" name="kind" value="cli"> CLI</label>
-                <label><input type="radio" name="kind" value="wayland"> Wayland</label>
-            </fieldset>
-            <fieldset class="deb-only">
-                <legend>Architecture</legend>
-                <div id="arch-options">
-                    <label><input type="radio" name="arch" value="" checked> All</label>
-                </div>
-            </fieldset>
-            <fieldset class="deb-only">
-                <legend>Section</legend>
-                <div id="section-options">
-                    <label><input type="radio" name="section" value="" checked> All</label>
-                </div>
-            </fieldset>
-            <fieldset>
-                <legend>Sort</legend>
-                <label><input type="radio" name="sort" value="relevance" checked> Relevance</label>
-                <label><input type="radio" name="sort" value="name"> Name</label>
-                <label><input type="radio" name="sort" value="version"> Version</label>
-            </fieldset>
-            <p class="filter-note" id="filter-note"></p>
-        </aside>
+        <details class="filters-drawer" id="filters-drawer">
+            <summary class="filters-summary">
+                <span>Filters</span>
+                <span class="filters-summary-hint" id="filters-hint">Lane, sort, architecture</span>
+            </summary>
+            <aside class="filters" aria-label="Filters">
+                <fieldset>
+                    <legend>Lane</legend>
+                    <label><input type="radio" name="channel" value="wasm"> Wasm (App Store / Play)</label>
+                    <label><input type="radio" name="channel" value="deb"> Debs (Sileo / Termux)</label>
+                </fieldset>
+                <fieldset class="wasm-only">
+                    <legend>WASI</legend>
+                    <label><input type="radio" name="wasi" value="" checked> All</label>
+                    <label><input type="radio" name="wasi" value="p1"> Preview 1</label>
+                    <label><input type="radio" name="wasi" value="p2"> Preview 2</label>
+                </fieldset>
+                <fieldset class="wasm-only">
+                    <legend>Kind</legend>
+                    <label><input type="radio" name="kind" value="" checked> All</label>
+                    <label><input type="radio" name="kind" value="cli"> CLI</label>
+                    <label><input type="radio" name="kind" value="wayland"> Wayland</label>
+                </fieldset>
+                <fieldset class="deb-only">
+                    <legend>Architecture</legend>
+                    <div id="arch-options">
+                        <label><input type="radio" name="arch" value="" checked> All</label>
+                    </div>
+                </fieldset>
+                <fieldset class="deb-only">
+                    <legend>Section</legend>
+                    <div id="section-options">
+                        <label><input type="radio" name="section" value="" checked> All</label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Sort</legend>
+                    <label><input type="radio" name="sort" value="relevance" checked> Relevance</label>
+                    <label><input type="radio" name="sort" value="name"> Name</label>
+                    <label><input type="radio" name="sort" value="version"> Version</label>
+                </fieldset>
+                <p class="filter-note" id="filter-note"></p>
+            </aside>
+        </details>
+
         <section class="results" aria-live="polite">
-            <div id="status" class="status">Pick a catalog.</div>
+            <div class="results-toolbar">
+                <h1 class="results-title" id="results-title">Packages</h1>
+                <div id="status" class="status">Loading…</div>
+            </div>
             <div id="results"></div>
         </section>
     </main>
 
+    <details class="about-lane" id="about-lane" hidden>
+        <summary>About this catalog</summary>
+        <div class="about-lane-body" id="about-lane-body"></div>
+    </details>
+
     <footer class="site-footer">
         <p>
-            Two machine APIs, never mixed:
-            <a href="../wasm/v1/index.json"><code>/wasm/v1</code></a> for store <code>wpm</code>,
-            <a href="../Packages"><code>/Packages</code></a> for jailbreak package managers and Termux.
-            Source: <a href="https://github.com/Wawona/repo.wawona.io">repo.wawona.io</a>.
+            <a href="../wasm/v1/index.json"><code>/wasm/v1</code></a>
+            ·
+            <a href="../Packages"><code>/Packages</code></a>
+            ·
+            <a href="https://github.com/Wawona/repo.wawona.io">source</a>
         </p>
-        <p class="copy">&copy; 2025-<span id="year"></span> Wawona Project. MIT.</p>
+        <p class="copy">&copy; 2025-<span id="year"></span> Wawona Project</p>
     </footer>
     <script src="catalog.js"></script>
 </body>
