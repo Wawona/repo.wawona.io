@@ -25,5 +25,7 @@ See `.cursor/rules/repo-wawona-io-maintainers.mdc` and
 Ports: `.cursor/rules/repo-wawona-io-ports.mdc`. Upstream name and version;
 `homepage` + `source` on every package. Never invent `0.1.0` for a new port.
 Never blanket-link to `wawona.io/docs/wasm/`. Stubs are not ports.
+Build lanes: skill/rule `wawona-wasm-cli-ports` (store P1 =
+`wasm-packages`; nixpkgs→WASIX = `wasinix`). Never revive `nixpkgs2wasi`.
 
 Canonical Wawona docs: https://github.com/Wawona/Wawona/blob/development/docs/mode-a-b.md

@@ -46,26 +46,35 @@ Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
 This host publishes `/wasm/v1` today. Do not auto-mirror nixpkgs here.
 ABI labels and later Wasmer/WebC (wasinix): `docs/wasm-abi.md`.
 
-## Wasm package builds (GHA auto-growth)
+## Wasm package builds (two lanes)
 
-Production builds: **`Wawona/wasm-packages`** on `ubuntu-24.04` (not a laptop).
+Hard law: skill/rule `wawona-wasm-cli-ports`. This host catalogs; it does not
+own the Nix→WASIX converter.
+
+| Lane | Repo | ABI | Lands here as |
+|------|------|-----|---------------|
+| Store P1 | `Wawona/wasm-packages` GHA | `wasm32-wasip1` | `/wasm/v1` for `wpm` / Pulley |
+| Nixpkgs → WASIX | `Wawona/wasinix` | `wasm32-wasix` | Wasmer/WebC under `/wasm` (not Pulley P1 rows) |
+
+Store P1 loop:
 
 | Piece | Where |
 |-------|--------|
 | Allowlist | `wasm-packages` `allowlist.toml` (curated; no nixpkgs mirror) |
-| Recipes | `recipes.json` + `packages/<name>/` (sync from allowlist) |
-| Build CI | `build-wasm.yml` (cron stale select, matrix, smoke, `wasm-out`) |
-| Publish CI | `publish-to-repo.yml` (`workflow_run` → push `development`; `WAWONA_REPO_TOKEN`) |
-| Pages | this repo `pages.yml` on **development** and `main` |
+| Recipes | `recipes.json` + `packages/<name>/` (real upstream only) |
+| Build CI | `build-wasm.yml` |
+| Publish CI | `publish-to-repo.yml` → this repo `development` |
 | Catalog | this repo `wasm/v1/` |
 
 ```bash
 gh secret set WAWONA_REPO_TOKEN --repo Wawona/wasm-packages
 gh workflow run build-wasm.yml --repo Wawona/wasm-packages
+# WASIX (separate lane):
+nix build github:Wawona/wasinix#wasix.grep
 ```
 
-First-wave P1: grep, sed, awk, gzip, jq (curl blocked). Local `cargo` is debug only.
-Do not claim WASIX/WebC shipping. Do not revive `nixpkgs2wasi` / `n2w`.
+Stub `jq`/`grep`/`sed` stay blocked until real upstream trees ship. Do not
+claim WASIX on store Pulley. Do not revive `nixpkgs2wasi` / `n2w`.
 
 ## Wawona Ports (names, versions, links)
 

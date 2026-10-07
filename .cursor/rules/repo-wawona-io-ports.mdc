@@ -69,9 +69,21 @@ UI shows **homepage** and **source**.
 - Claiming a port (or publishing under `sed` / `jq` / `grep`) while shipping
   an unrelated stub
 
+## How to build (two lanes)
+
+Do not scrape nixpkgs. Do not revive `nixpkgs2wasi`. Full law:
+`wawona-wasm-cli-ports`.
+
+| Need | Repo |
+|------|------|
+| Store WASI P1 / Pulley | `Wawona/wasm-packages` GHA allowlist + real upstream recipe |
+| Nixpkgs → WASIX / WebC | `Wawona/wasinix` (`nix build .#wasix.*` / `.#wasmer.*`) |
+
 ## Related
 
+- Build law: `wawona-wasm-cli-ports` (skill + rule)
 - Build allowlist / GHA: `Wawona/wasm-packages` (`docs/package-versioning.md`)
+- WASIX: `wasinix/docs/wawona-publish.md`
 - Dual catalogs: `repo-wawona-io-channels`
 - Maintainers: `repo-wawona-io-maintainers`
 - Skill: `repo-wawona-io-catalogs`

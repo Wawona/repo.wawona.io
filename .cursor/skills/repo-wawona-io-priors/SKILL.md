@@ -17,6 +17,7 @@ Tracked copies: `.cursor/skills/` and `docs/agent-skills/`. Rule:
 |-------|------|
 | `repo-wawona-io-priors` | Task start. Pick the row. |
 | `repo-wawona-io-catalogs` | Search UI, indexes, landings, `wpm`, APT, firewall, GHA wasm builds |
+| `wawona-wasm-cli-ports` | Port a CLI to WASI P1 vs WASIX (wasm-packages vs wasinix) |
 | `repo-wawona-io-learn` | Durable finding this session |
 
 Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
@@ -30,6 +31,7 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `repo-wawona-io-channels` | Two catalogs. Never one list. |
 | `repo-wawona-io-maintainers` | GitHub-queryable maintainers on every package |
 | `repo-wawona-io-ports` | Port names = upstream; versions = upstream; homepage + source |
+| `wawona-wasm-cli-ports` | Two build lanes: P1 GHA vs wasinix WASIX. No nixpkgs scrape. |
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 

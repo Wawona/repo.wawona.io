@@ -81,20 +81,20 @@ through the wawona profile).
 
 ## Phase order
 
-1. **P1 CLI allowlist on GHA (in progress).** `Wawona/wasm-packages`
-   `allowlist.toml`. Native-first: never wasm-package names in
-   `native-all-targets.txt` (uutils safe subset). Remaining P1 extras:
-   grep/sed/awk/gzip/jq plus non-native cli-kit leftovers. Nightly grows
-   `/wasm/v1`. Not a nixpkgs scrape.
-2. **Wasinix fork (started).** `github.com/Wawona/wasinix` (from
-   `xtyxtyx/wasinix`). Default Wasmer package owner `wawona`. Publish profile
-   docs: `wasinix/docs/wawona-publish.md` → `repo.wawona.io/wasm`. Do not
-   revive `n2w`.
-3. **Broader CLI set via wasinix** (WASIX / WebC): curl, wget, git, tar, find,
-   less, nano, bash, make, cmake, python3, openssl, … Queued as `blocked`
-   rows in the wasm-packages allowlist until the WASIX publish lane lands.
-4. **Five WASIX tools**, including bash and nix. Upstream wasinix already
-   ships some recipes. Expand on the Wawona fork.
+Two build lanes (rule/skill `wawona-wasm-cli-ports`):
+
+1. **Store P1 on GHA.** `Wawona/wasm-packages` `allowlist.toml`. Real upstream
+   recipes only. Native-first: never wasm-package names in
+   `native-all-targets.txt`. Stub `jq`/`grep`/`sed` stay blocked. Nightly
+   grows `/wasm/v1`. Not a nixpkgs scrape.
+2. **Nixpkgs → WASIX.** `github.com/Wawona/wasinix`: override nixpkgs packages
+   with wasixcc, `makeWasmerPackage`, owner `wawona`. Docs:
+   `wasinix/docs/wawona-publish.md`. Do not revive `n2w`. Do not dump WASIX
+   into Mode A `/wasm/v1` P1 rows.
+3. **Broader WASIX CLI set** (WebC): curl, wget, git, tar, find, less, nano,
+   bash, make, cmake, python3, openssl, … Grow wasinix recipes; keep matching
+   allowlist rows `build = wasinix` blocked until published.
+4. **Five WASIX tools**, including bash and nix, proven on Wasmer-capable paths.
 5. **One Wayland proof** (Weston terminal client), then a small GTK client.
    Open questions: libwayland-client and Mesa on `wasm32-wasix`, and how the
    WASIX socket reaches Wawona.
