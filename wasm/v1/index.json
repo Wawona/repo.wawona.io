@@ -371,14 +371,16 @@
     {
       "name": "linerev",
       "version": "0.1.0",
-      "digest": "sha256:a38672cfd19efb0cd3343c78ffe919ece91f5081c9266375d8d9c585f35041e7",
+      "digest": "sha256:1a2677dfd381bc6d33e40a98174827c3e5bfabe5b3dbba2ee2122e29ce033c90",
       "url": "packages/linerev/0.1.0/component.wasm",
       "wasi": "p1",
       "kind": "cli",
-      "summary": "Wawona scratch rev (not GNU/uutils)",
+      "origin": "scratch",
+      "summary": "Scratch reverse characters per line (not GNU/uutils rev)",
       "license": "MIT",
       "runtime": "wawona-1",
       "entry": "component.wasm",
+      "website": "https://wawona.io/docs/wasm/",
       "homepage": "https://wawona.io/docs/wasm/",
       "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
       "programs": [
@@ -400,9 +402,7 @@
         "wayland": false,
         "filesystem": [],
         "network": false
-      },
-      "origin": "scratch",
-      "website": "https://wawona.io/docs/wasm/"
+      }
     },
     {
       "name": "ssub",
