@@ -21,13 +21,18 @@ See [Wawona wasm-package-manager.md](https://github.com/Wawona/Wawona/blob/devel
 
 ## Today: publish a package
 
-Add a row to `index.json` and place the blob under
+**Preferred:** build on GitHub Actions in
+[`Wawona/wasm-packages`](https://github.com/Wawona/wasm-packages)
+(`build-wasm.yml`), then land blobs + `index.json` here via
+`publish-to-repo.yml` (secret `WAWONA_REPO_TOKEN`) or a staged PR.
+
+Manual fallback (debug only): add a row to `index.json` and place the blob under
 `v1/packages/<name>/<version>/component.wasm` with matching `sha256:` digest.
 **`maintainers`** is required: a list of GitHub usernames from
 [`maintainers.json`](../maintainers.json). Names are resolved from GitHub, not
 typed. Optional catalog fields (`kind`, `long_description`, `license`,
 `homepage`, `source`, `programs`, `capabilities`, `platforms`) are ignored by
-`wpm` and shown on the search page.
+`wpm` and shown on the search page. Do not treat a laptop build as production.
 
 ## Later registry (planned)
 

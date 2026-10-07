@@ -16,7 +16,7 @@ Tracked copies: `.cursor/skills/` and `docs/agent-skills/`. Rule:
 | Skill | When |
 |-------|------|
 | `repo-wawona-io-priors` | Task start. Pick the row. |
-| `repo-wawona-io-catalogs` | Search UI, indexes, landings, `wpm`, APT, firewall |
+| `repo-wawona-io-catalogs` | Search UI, indexes, landings, `wpm`, APT, firewall, GHA wasm builds |
 | `repo-wawona-io-learn` | Durable finding this session |
 
 Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
@@ -32,8 +32,9 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 
-Wasm ABI / later Wasmer WebC (planned): `docs/wasm-abi.md`. Not shipping.
-Do not revive `nixpkgs2wasi`.
+Wasm ABI / later Wasmer WebC: `docs/wasm-abi.md`.
+P1 builds: `Wawona/wasm-packages` GHA (`build-wasm.yml`). Catalog stays here.
+Do not revive `nixpkgs2wasi`. Do not publish laptop blobs.
 
 ## Hard-won (do not re-learn)
 
