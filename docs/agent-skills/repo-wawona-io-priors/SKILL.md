@@ -38,6 +38,7 @@ Do not revive `nixpkgs2wasi`. Do not publish laptop blobs.
 
 ## Hard-won (do not re-learn)
 
+- Do not rank iOS APT clients in `/search/` copy (no "Sileo, then Irisin…"). They are interchangeable package managers.
 See `repo-wawona-io-catalogs`. Canonical RAG:
 `wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md` and
 `wasm-abi-registry.md`.

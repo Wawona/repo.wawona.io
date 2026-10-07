@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose a Wawona package catalog</title>
-    <meta name="description" content="Two separate catalogs. Wasm for App Store and Play (wpm). Jailbreak debs for Sileo, Irisin, Zebra, and Cydia and Termux on sideloaded Android. Never one mixed list.">
+    <meta name="description" content="Two separate catalogs. Wasm for App Store and Play (wpm). Debs for jailbroken iOS APT clients and Termux on sideloaded Android. Never one mixed list.">
     <link rel="canonical" href="https://repo.wawona.io/search/">
     <meta property="og:title" content="Wawona package catalogs">
     <meta property="og:description" content="App Store / Play wasm is separate from jailbreak APT debs and Termux Android sideload debs.">
@@ -57,7 +57,7 @@
             <p class="kicker" id="kicker">Package catalogs</p>
             <h1 id="page-title">Two catalogs. Pick one.</h1>
             <p class="lede" id="lede">
-                Wasm for App Store / Play (<code>wpm</code>). Debs for Sileo and Termux.
+                Wasm for App Store / Play (<code>wpm</code>). Debs for jailbreak APT and Termux.
                 Separate indexes. Never mixed.
             </p>
         </div>
@@ -70,17 +70,9 @@
             <a class="door door-deb" id="door-deb" href="./?channel=deb">
                 <p class="door-kicker">APT</p>
                 <h2>Debs</h2>
-                <p>Sileo / Irisin / Zebra / Cydia, and Termux. Same APT root. Not <code>wpm</code>.</p>
+                <p>Jailbreak APT clients and Termux. Same APT root. Not <code>wpm</code>.</p>
             </a>
         </div>
-        <details class="chooser-more">
-            <summary>Audience notes</summary>
-            <p>
-                Jailbroken iOS: Sileo, then Irisin, then Zebra, then Cydia (older jailbreaks).
-                Termux is sideloaded Android only (not jailbreak, not Play).
-                Store binaries must never read APT or <code>.deb</code>.
-            </p>
-        </details>
     </section>
 
     <p class="lane-banner" id="lane-banner" hidden></p>
@@ -95,7 +87,7 @@
                 <fieldset>
                     <legend>Lane</legend>
                     <label><input type="radio" name="channel" value="wasm"> Wasm (App Store / Play)</label>
-                    <label><input type="radio" name="channel" value="deb"> Debs (Sileo / Termux)</label>
+                    <label><input type="radio" name="channel" value="deb"> Debs (jailbreak APT / Termux)</label>
                 </fieldset>
                 <fieldset class="wasm-only">
                     <legend>WASI</legend>

@@ -72,9 +72,9 @@
     const namedInputs = (name) => [...document.querySelectorAll(`input[name="${name}"]`)];
 
     const ARCH_LABELS = {
-        "iphoneos-arm64": "iphoneos-arm64 · iOS rootless (Sileo, Irisin, Zebra)",
-        "iphoneos-arm": "iphoneos-arm · iOS rootful (Sileo, Zebra, Cydia)",
-        "iphoneos-arm64e": "iphoneos-arm64e · iOS RootHide (Irisin, Sileo)",
+        "iphoneos-arm64": "iphoneos-arm64 · iOS rootless",
+        "iphoneos-arm": "iphoneos-arm · iOS rootful",
+        "iphoneos-arm64e": "iphoneos-arm64e · iOS RootHide",
         aarch64: "aarch64 · Termux Android sideload",
         arm: "arm · Termux Android sideload",
     };
@@ -300,7 +300,7 @@
             if (pageTitle) pageTitle.textContent = "Two catalogs. Pick one.";
             if (ledeEl) {
                 ledeEl.innerHTML =
-                    "Wasm for App Store / Play (<code>wpm</code>). Debs for Sileo and Termux. Separate indexes. Never mixed.";
+                    "Wasm for App Store / Play (<code>wpm</code>). Debs for jailbreak APT and Termux. Separate indexes. Never mixed.";
             }
             if (laneBanner) {
                 laneBanner.hidden = true;
@@ -343,12 +343,12 @@
         if (laneBanner) {
             laneBanner.hidden = false;
             laneBanner.className = "lane-banner lane-b";
-            laneBanner.textContent = "APT · Sileo / Irisin / Zebra / Cydia · Termux";
+            laneBanner.textContent = "APT · jailbreak iOS · Termux";
         }
         if (aboutLane) aboutLane.hidden = false;
         if (aboutLaneBody) {
             aboutLaneBody.innerHTML =
-                "Source: <code>https://repo.wawona.io/</code>. Jailbroken iOS: Sileo, then Irisin, then Zebra, then Cydia (older jailbreaks). Irisin: <code>irisin://repository/add?url=https://repo.wawona.io/</code>. Termux is sideloaded Android only (not jailbreak, not Play). Filter <code>iphoneos-*</code> vs <code>aarch64</code>. Not <code>wpm</code>.";
+                "Source: <code>https://repo.wawona.io/</code>. Jailbroken iOS and Termux share this APT root. Filter <code>iphoneos-*</code> vs <code>aarch64</code>. Termux is sideloaded Android (not jailbreak, not Play). Not <code>wpm</code>.";
         }
         if (filterNote) {
             filterNote.innerHTML = "APT root · not <code>wpm</code>";
@@ -537,7 +537,7 @@
     </div>
     <table class="meta">
       ${metaRow("Catalog", isIosJailbreakArch(pkg.architecture)
-          ? "<code>deb</code> (iOS jailbreak APT, rootless/rootful. Sileo, Irisin, Zebra, and Cydia. Not Termux. Not App Store.)"
+          ? "<code>deb</code> (iOS jailbreak APT, rootless/rootful. Not Termux. Not App Store.)"
           : "<code>deb</code> (Termux Android sideload. Not jailbreak. Not Play.)")}
       ${metaRow("Package", `<code>${escapeHtml(pkg.name)}</code>`)}
       ${metaRow("Version", versions)}

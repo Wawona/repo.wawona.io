@@ -32,19 +32,21 @@ Deb APT audiences (same `Packages` file, split by Architecture):
 
 | Audience | Client | Architecture | Jailbreak? |
 |----------|--------|--------------|------------|
-| Jailbroken iOS | Sileo, then Irisin, then Zebra, then Cydia | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo, Zebra, Cydia), `iphoneos-arm64e` RootHide (Irisin and Sileo). Irisin is iOS 16+ rootless and roothide. Cydia is last, for older jailbreaks such as iOS 13. | Yes |
+| Jailbroken iOS | Any APT client for the repo | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, `iphoneos-arm64e` RootHide | Yes |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** |
+
+Do not rank iOS package managers in UI copy. They are interchangeable APT clients.
 
 ## Hard firewall
 
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |---|---|---|
 | App Store / Play / `wpm` in store builds | Yes | **Never** |
-| Sileo, Irisin, Zebra, or Cydia on jailbroken iOS | Optional | Yes |
+| Jailbroken iOS APT clients | Optional | Yes |
 | Termux on sideloaded Android | Optional | Yes |
 | Website Mode B / sideload pages | Optional | Yes |
 
-`/jailbreak/` is an iOS Sileo, Irisin, Zebra, and Cydia bookmark onto `/search/?channel=deb`. It is **not**
+`/jailbreak/` is an iOS APT bookmark onto `/search/?channel=deb`. It is **not**
 the APT tree and **not** Termux. Store `wpm` must never fetch it.
 
 ## Also publish (Mode B)

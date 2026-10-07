@@ -19,14 +19,17 @@ jailbreak.
 
 | Deb audience | Client | Architecture | Jailbreak? | Store/Play? |
 |--------------|--------|--------------|------------|-------------|
-| Jailbroken iOS / iPadOS | Sileo, then Irisin, then Zebra, then Cydia | `iphoneos-arm64` rootless, `iphoneos-arm` rootful (Sileo, Zebra, Cydia), `iphoneos-arm64e` RootHide. Irisin is iOS 16+ rootless and roothide. Cydia is last, for older jailbreaks such as iOS 13. | Yes | No |
+| Jailbroken iOS / iPadOS | Any APT client that speaks the repo | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, `iphoneos-arm64e` RootHide | Yes | No |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** | **No** |
+
+Do not rank iOS package managers in UI copy (no "Sileo, then Irisin, then
+Zebra, then Cydia"). They are interchangeable APT clients for the same root.
 
 `/search/` is a chooser, not a mixed All channel. HTML landings:
 
 - `/wasm/` → wasm catalog
 - `/deb/` → deb catalog (both APT audiences)
-- `/jailbreak/` → iOS bookmark. Order: Sileo, Irisin, Zebra, Cydia. Not Termux. Not APT root.
+- `/jailbreak/` → iOS APT bookmark. Not Termux. Not APT root.
 - `/termux/` → Termux Android sideload bookmark. Not jailbreak. Not Play.
 
 ## Firewall
@@ -34,7 +37,7 @@ jailbreak.
 | Consumer | `/wasm/v1` | APT `/` (`Packages`) |
 |----------|------------|----------------------|
 | App Store / Play `wpm` | Yes | **Never** |
-| Sileo, Irisin, Zebra, or Cydia (jailbroken iOS) | Optional | Yes |
+| Jailbroken iOS APT clients | Optional | Yes |
 | Termux (sideloaded Android) | Optional | Yes |
 
 Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
@@ -43,23 +46,25 @@ Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
 This host publishes `/wasm/v1` today. Do not auto-mirror nixpkgs here.
 ABI labels and later Wasmer/WebC (wasinix): `docs/wasm-abi.md`.
 
-## Wasm package builds (GHA)
+## Wasm package builds (GHA auto-growth)
 
 Production builds: **`Wawona/wasm-packages`** on `ubuntu-24.04` (not a laptop).
 
 | Piece | Where |
 |-------|--------|
-| Recipes | `wasm-packages` `recipes.json` + `packages/<name>/` |
-| Build CI | `build-wasm.yml` (matrix + wasmtime smoke + artifacts) |
-| Publish CI | `publish-to-repo.yml` (needs `WAWONA_REPO_TOKEN`; PRs into this repo) |
+| Allowlist | `wasm-packages` `allowlist.toml` (curated; no nixpkgs mirror) |
+| Recipes | `recipes.json` + `packages/<name>/` (sync from allowlist) |
+| Build CI | `build-wasm.yml` (cron stale select, matrix, smoke, `wasm-out`) |
+| Publish CI | `publish-to-repo.yml` (`workflow_run` → push `development`; `WAWONA_REPO_TOKEN`) |
+| Pages | this repo `pages.yml` on **development** and `main` |
 | Catalog | this repo `wasm/v1/` |
 
 ```bash
+gh secret set WAWONA_REPO_TOKEN --repo Wawona/wasm-packages
 gh workflow run build-wasm.yml --repo Wawona/wasm-packages
-# after green: publish workflow or stage via scripts/stage-for-repo.py
 ```
 
-Proven: `hello-wasi` 0.1.2 and `wasi-true` 0.1.0. Local `cargo` is debug only.
+First-wave P1: grep, sed, awk, gzip, jq (curl blocked). Local `cargo` is debug only.
 Do not claim WASIX/WebC shipping. Do not revive `nixpkgs2wasi` / `n2w`.
 
 ## Never

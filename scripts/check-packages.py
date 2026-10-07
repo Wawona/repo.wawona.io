@@ -377,12 +377,10 @@ def check_search_pages() -> list[str]:
             errors.append("search/index.html must offer separate Mode A wasm and Mode B deb doors")
         if "Mode A" not in text:
             errors.append("search/index.html must label Mode A wasm (App Store / Play)")
-        if "Sileo" not in text or "Termux" not in text:
-            errors.append("search/index.html must name Sileo iOS and Termux Android as separate deb audiences")
-        if "not jailbreak" not in text.lower():
-            errors.append("search/index.html must say Termux is not jailbreak")
-        if "Sileo / Termux" in text:
-            errors.append("search/index.html must not lump Sileo / Termux as one jailbreak product")
+        if "jailbreak" not in text.lower() or "Termux" not in text:
+            errors.append("search/index.html must name jailbreak APT and Termux as separate deb audiences")
+        if "Sileo / Termux" in text or "Sileo, then Irisin" in text:
+            errors.append("search/index.html must not rank or lump iOS package managers in chooser copy")
         if re.search(r'type="radio"[^>]*name="channel"[^>]*value=""', text):
             errors.append("search/index.html must not offer a mixed All channel")
     js_path = ROOT / "search" / "catalog.js"
@@ -393,9 +391,9 @@ def check_search_pages() -> list[str]:
         if "not jailbreak" not in js.lower():
             errors.append("search/catalog.js must say Termux is not jailbreak")
         if "rootless" not in js.lower() or "rootful" not in js.lower():
-            errors.append("search/catalog.js must label iOS Sileo rootless and rootful")
-        if "Sileo / Termux" in js:
-            errors.append("search/catalog.js must not lump Sileo / Termux as one jailbreak product")
+            errors.append("search/catalog.js must label iOS rootless and rootful architectures")
+        if "Sileo / Termux" in js or "Sileo, then Irisin" in js:
+            errors.append("search/catalog.js must not rank or lump iOS package managers in lane copy")
     wasm_html = ROOT / "wasm" / "index.html"
     if not wasm_html.is_file():
         errors.append("wasm/index.html missing")
@@ -420,30 +418,34 @@ def check_search_pages() -> list[str]:
         if "/search/" not in text or "channel=deb" not in text:
             errors.append("jailbreak/index.html must redirect humans to /search/?channel=deb")
         if "https://repo.wawona.io/" not in text:
-            errors.append("jailbreak/index.html must say Sileo still uses https://repo.wawona.io/")
+            errors.append("jailbreak/index.html must point APT clients at https://repo.wawona.io/")
         if "rootless" not in text.lower() or "rootful" not in text.lower():
-            errors.append("jailbreak/index.html must name iOS Sileo rootless and rootful")
-        if "Irisin" not in text or "irisin://repository/add" not in text:
-            errors.append("jailbreak/index.html must offer Irisin next to Sileo and Zebra")
+            errors.append("jailbreak/index.html must name iOS rootless and rootful")
+        if "irisin://repository/add" not in text:
+            errors.append("jailbreak/index.html must offer an Irisin add-repo URL")
         if "Termux is not jailbreak" not in text and "not jailbreak" not in text.lower():
             errors.append("jailbreak/index.html must say Termux is not jailbreak")
     home = ROOT / "index.html"
     if home.is_file():
         home_text = home.read_text(encoding="utf-8")
-        if "Add to Irisin" not in home_text or "irisin://repository/add" not in home_text:
-            errors.append("index.html must offer Add to Irisin beside Sileo and Zebra")
+        if "irisin://repository/add" not in home_text:
+            errors.append("index.html must offer an Irisin add-repo URL")
         if "images/logo/irisin.png" not in home_text:
             errors.append("index.html must show the Irisin logo on the source button")
-        if "Add to Cydia" not in home_text or "cydia://url/" not in home_text:
-            errors.append("index.html must offer Add to Cydia for older jailbreaks")
+        if "cydia://url/" not in home_text:
+            errors.append("index.html must offer a Cydia add-repo URL")
         if "images/logo/cydia.png" not in home_text:
             errors.append("index.html must show the Cydia logo on the source button")
-        sileo_at = home_text.find("sileo://source/")
-        irisin_at = home_text.find("irisin://repository/add")
-        zebra_at = home_text.find("zbra://sources/add")
-        cydia_at = home_text.find("cydia://url/")
-        if not (0 <= sileo_at < irisin_at < zebra_at < cydia_at):
-            errors.append("index.html source buttons must be Sileo, Irisin, Zebra, then Cydia")
+        for scheme, label in (
+            ("sileo://source/", "Sileo"),
+            ("irisin://repository/add", "Irisin"),
+            ("zbra://sources/add", "Zebra"),
+            ("cydia://url/", "Cydia"),
+        ):
+            if scheme not in home_text:
+                errors.append(f"index.html must include {label} APT add URL ({scheme})")
+        if "Sileo, then Irisin" in home_text:
+            errors.append("index.html must not rank iOS package managers in copy")
     if not (ROOT / "images" / "logo" / "cydia.png").is_file():
         errors.append("images/logo/cydia.png missing")
     if not (ROOT / "images" / "logo" / "irisin.png").is_file():
