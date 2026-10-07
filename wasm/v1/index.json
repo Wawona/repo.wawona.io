@@ -90,14 +90,14 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T15:14:15Z",
+        "checked_at": "2026-10-07T16:21:00Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
           "socket": "unknown",
           "wayland": "unknown"
         },
-        "detail": "Wasmtime smoke on wasm-packages GHA"
+        "detail": "ok"
       }
     },
     {
@@ -184,14 +184,14 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T15:14:15Z",
+        "checked_at": "2026-10-07T16:21:00Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
           "socket": "unknown",
           "wayland": "unknown"
         },
-        "detail": "Wasmtime smoke on wasm-packages GHA"
+        "detail": "rc=1 (expected non-zero)"
       }
     },
     {
@@ -231,14 +231,14 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T15:14:15Z",
+        "checked_at": "2026-10-07T16:21:00Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
           "socket": "unknown",
           "wayland": "unknown"
         },
-        "detail": "Wasmtime smoke on wasm-packages GHA"
+        "detail": "rc=0"
       }
     },
     {
