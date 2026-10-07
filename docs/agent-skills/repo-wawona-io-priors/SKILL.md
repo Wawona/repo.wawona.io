@@ -29,7 +29,7 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `repo-wawona-io-agent-learn` | Always. Read skills. Write new learnings back. |
 | `repo-wawona-io-channels` | Two catalogs. Never one list. |
 | `repo-wawona-io-maintainers` | GitHub-queryable maintainers on every package |
-| `repo-wawona-io-ports` | Port names = upstream; versions = upstream; website + source |
+| `repo-wawona-io-ports` | Port names = upstream; versions = upstream; homepage + source |
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 
@@ -40,10 +40,11 @@ Do not revive `nixpkgs2wasi`. Do not publish laptop blobs.
 ## Hard-won (do not re-learn)
 
 - Do not rank iOS APT clients in `/search/` copy (no "Sileo, then Irisin…"). They are interchangeable package managers.
-- Ports use the upstream software version, not a fake `0.1.0` for "just ported". Never brand names with `wawona-` / `wwn-`.
+- Ports use the upstream software version and `homepage` (nixpkgs-style), not a fake `0.1.0` or a blanket `wawona.io/docs/wasm/` link. Never brand names with `wawona-` / `wwn-`. Stubs are not ports.
 See `repo-wawona-io-catalogs` and `repo-wawona-io-ports`. Canonical RAG:
-`wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md` and
-`wasm-abi-registry.md`.
+`wwn-mcp/knowledge/wawona/repo-wawona-io-catalogs.md`,
+`wawona-ports.md`, and `wasm-abi-registry.md`.
+
 
 Procursus launchctl: XPC client to host launchd, not a second launchd.
 `nix build .#launchctl` uses host stdenv + xcrun, never ios-cross stdenv.

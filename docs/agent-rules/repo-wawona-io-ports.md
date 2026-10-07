@@ -1,5 +1,5 @@
 ---
-description: Wawona Ports naming, upstream versions, and website/source links for repo.wawona.io packages
+description: Wawona Ports naming, upstream versions, and homepage/source links for repo.wawona.io packages
 alwaysApply: true
 ---
 
@@ -39,28 +39,35 @@ For a **port**, `version` is the **upstream software version** you ported
 
 Scratch (Wawona-written, `origin = scratch`) may use Wawona-owned versions.
 Do not publish a from-scratch stub under an upstream name at a forged
-`0.1.0` that looks like that project's release.
+`0.1.0` that looks like that project's release. A 30-line reimplementation
+is **not** a port of GNU sed / jqlang jq. Keep it out of the catalog until
+the real upstream tree is packaged.
 
 ## Links (nixpkgs-style)
 
-Every port package must publish both:
+Every package must publish both:
 
 | Field | Meaning |
 |-------|---------|
-| `website` | Upstream project homepage (original software). Alias: `homepage`. |
+| `homepage` | Upstream project homepage (original software). Same role as nixpkgs `meta.homepage`. Field name is **`homepage`**, not `website`. |
 | `source` | The port / packaging tree used to build this catalog row (Wawona recipe, fork commit, or wasm-packages path). |
 
-Same idea as nixpkgs search: website = project, source = the derivation /
-port sources. UI shows **website** and **source**.
+UI shows **homepage** and **source**.
+
+- Port: `homepage` must be the upstream project's site (e.g. `https://jqlang.github.io/jq/`). Never a blanket `wawona.io/docs/…` URL.
+- Scratch (Wawona-original smoke): `homepage` is that tool's own project page (usually its GitHub tree). Still never a catch-all docs URL shared by every row.
 
 ## Hard rejects
 
 - `wawona-grep`, `wwn-foo`, `chess-wawona`, or any `wwn-` / `wawona-` brand
   in the package name
-- Port row with version `0.1.0` (or other bootstrap) instead of upstream
-- Port row with only a Wawona docs URL as website and no upstream homepage
-- Missing `website`/`homepage` or `source` on a catalog package
-- Claiming a port while shipping an unrelated stub under the upstream name
+- Port row with invented bootstrap version instead of upstream
+- Port row with only a Wawona docs URL as `homepage`
+- Blanket `https://wawona.io/docs/wasm/` (or similar) as `homepage` for every package
+- Missing `homepage` or `source` on a catalog package
+- Renaming the field to `website`
+- Claiming a port (or publishing under `sed` / `jq` / `grep`) while shipping
+  an unrelated stub
 
 ## Related
 

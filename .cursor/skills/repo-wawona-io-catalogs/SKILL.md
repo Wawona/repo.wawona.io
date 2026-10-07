@@ -76,9 +76,11 @@ is a port of existing software.
   Never `wawona-` / `wwn-` prefix or `-wawona` / `-wwn` suffix.
 - Port `version`: the upstream release/tag you ported. Never invent `0.1.0`
   because the port just landed. Require `upstream_version` (equal to `version`).
-  Set `upstream_is_bootstrap` only when upstream itself is that bootstrap.
-- Links: `website` = upstream homepage; `source` = port / packaging tree.
-  Search UI labels them website and source (`homepage` is an alias).
+- Links: field **`homepage`** (nixpkgs-style upstream project URL) and
+  `source` (port / packaging tree). Do not rename to `website`. Do not set
+  every row to `wawona.io/docs/wasm/`.
+- A short reimplementation is not a port of GNU sed / jqlang jq. Keep stubs
+  blocked until the real upstream tree ships with that project's version.
 
 `scripts/check-packages.py` enforces this on `wasm/v1/index.json`. Build
 allowlist: `Wawona/wasm-packages` `docs/package-versioning.md`.
@@ -102,6 +104,8 @@ allowlist: `Wawona/wasm-packages` `docs/package-versioning.md`.
 - Drop `hello-wasi` from `wasm/v1/index.json`
 - Brand package names with `wawona-` / `wwn-` (or `-wawona` / `-wwn`)
 - Publish a port at invented `0.1.0` instead of the upstream version
+- Rename `homepage` to `website`, or blanket-link every package to docs/wasm
+- Ship stub `sed`/`jq`/`grep` blobs as if they were upstream ports
 
 ## Humans
 

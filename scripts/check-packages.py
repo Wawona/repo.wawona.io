@@ -69,6 +69,10 @@ FORGED_SCRATCH_NAMES = frozenset(
     }
 )
 BOOTSTRAP_VERSIONS = frozenset({"0.0.0", "0.0.1", "0.1.0", "v0.0.0", "v0.0.1", "v0.1.0"})
+# Catch-all docs URLs are not a package homepage (nixpkgs meta.homepage).
+BLANKET_HOMEPAGE_RE = re.compile(
+    r"^https?://(www\.)?wawona\.io/docs/(user/)?wasm/?$", re.IGNORECASE
+)
 
 
 def bind_root(root: Path) -> None:
@@ -293,7 +297,7 @@ def query_github(roster: dict) -> tuple[dict, list[str]]:
 
 
 def check_wasm_ports(pkg: dict) -> list[str]:
-    """Wawona Ports naming, upstream versions, website + source links."""
+    """Wawona Ports naming, upstream versions, homepage + source links."""
     errors: list[str] = []
     name = pkg.get("name") or "<unnamed>"
     if BRAND_NAME_RE.search(str(name)):
@@ -304,12 +308,21 @@ def check_wasm_ports(pkg: dict) -> list[str]:
     origin = pkg.get("origin")
     if origin not in ("port", "scratch"):
         errors.append(f"wasm {name}: origin must be port or scratch")
-    website = str(pkg.get("website") or pkg.get("homepage") or "").strip()
+    homepage = str(pkg.get("homepage") or "").strip()
     source = str(pkg.get("source") or "").strip()
-    if not website:
-        errors.append(f"wasm {name}: website (or homepage) is required")
+    if pkg.get("website") and not pkg.get("homepage"):
+        errors.append(
+            f"wasm {name}: use field homepage (nixpkgs-style), not website"
+        )
+    if not homepage:
+        errors.append(f"wasm {name}: homepage is required (upstream project URL)")
     if not source:
         errors.append(f"wasm {name}: source is required (port / packaging tree)")
+    if homepage and BLANKET_HOMEPAGE_RE.match(homepage):
+        errors.append(
+            f"wasm {name}: homepage must be this package's upstream (or own) "
+            f"project URL, not a blanket wawona.io/docs/wasm link"
+        )
     version = str(pkg.get("version") or "").strip()
     if origin == "port":
         upstream_ver = str(pkg.get("upstream_version") or "").strip()
@@ -329,16 +342,15 @@ def check_wasm_ports(pkg: dict) -> list[str]:
                 f"'just ported'; set upstream_is_bootstrap only when upstream "
                 f"itself publishes that version"
             )
-        if website and "wawona.io" in website and "github.com" not in website:
-            # Ports need the upstream project homepage, not only Wawona docs.
+        if homepage and "wawona.io" in homepage:
             errors.append(
-                f"wasm {name}: website must be the upstream project homepage "
-                f"(not only a wawona.io docs URL)"
+                f"wasm {name}: homepage must be the upstream project site "
+                f"(not wawona.io)"
             )
     if origin == "scratch" and name in FORGED_SCRATCH_NAMES:
         errors.append(
             f"wasm {name}: forged upstream name with origin=scratch; "
-            f"use a distinct unbranded name"
+            f"use a distinct unbranded name, or origin=port of the real tree"
         )
     return errors
 
