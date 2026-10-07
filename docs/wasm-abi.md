@@ -8,8 +8,11 @@ packaging stays in [`packaging.md`](./packaging.md). Do not mix catalogs.
 `.wasm` blobs. That path stays live.
 
 **Builds:** Production package builds run on **GitHub Actions**
-(`Wawona/wasm-packages`, `ubuntu-24.04`). Local `cargo` is optional recipe
-debug only. Do not publish laptop-built blobs as the source of truth.
+(`Wawona/wasm-packages`, `ubuntu-24.04`). Curated `allowlist.toml` drives
+nightly stale builds; green runs auto-publish into this repo's `development`
+`wasm/v1` (bot + `WAWONA_REPO_TOKEN`). Pages deploys `development`. Local
+`cargo` is optional recipe debug only. Do not publish laptop-built blobs as
+the source of truth. Never auto-mirror nixpkgs.
 
 **Status later (planned):** `repo.wawona.io/wasm` becomes a curated
 Wasmer-compatible registry. Distribution unit is WebC (`.webc`) via
@@ -65,19 +68,22 @@ label. CI builds the declared target, smoke-tests, **rejects a P1 package that
 calls `fork`**, emits `.webc`, then `wasinix publish` (or `wasmer publish`
 through the wawona profile).
 
-## Phase order (when packaging work starts)
+## Phase order
 
-Not started in the tip that only adds this doc. Order when it starts:
-
-1. **Fork wasinix.** Point the `wawona` publication profile at
-   `repo.wawona.io/wasm`.
-2. **P1 CLI set** (curated from nixpkgs via wasinix, not a Wawona converter):
-   coreutils, busybox, grep, sed, awk, gzip, curl, wget, jq, git, make,
-   cmake, CPython core, lua, sqlite3, openssl CLI.
-3. **Five WASIX tools**, including bash and nix. wasinix already ships some
+1. **P1 CLI allowlist on GHA (in progress).** `Wawona/wasm-packages`
+   `allowlist.toml` + recipes. First wave: grep, sed, awk, gzip, jq
+   (minimal WASI ports); curl blocked until a store-safe sockets recipe
+   exists. Nightly + auto-publish grow `/wasm/v1`. Expand the curated list
+   as each recipe goes green. Not a nixpkgs scrape.
+2. **Fork wasinix.** Point the `wawona` publication profile at
+   `repo.wawona.io/wasm` for later WebC.
+3. **Broader P1 set** (still curated; wasinix when available, not a Wawona
+   converter): coreutils, busybox, wget, git, make, cmake, CPython core,
+   lua, sqlite3, openssl CLI.
+4. **Five WASIX tools**, including bash and nix. wasinix already ships some
    WASIX packages (zlib, git). New recipes follow wasinix
    `docs/packaging.md`.
-4. **One Wayland proof** (Weston terminal client), then a small GTK client.
+5. **One Wayland proof** (Weston terminal client), then a small GTK client.
    Open questions: libwayland-client and Mesa on `wasm32-wasix`, and how the
    WASIX socket reaches Wawona.
 
@@ -109,7 +115,7 @@ Hard rejects until the gate lands:
 |---------|-------|-------|
 | Machine API | `/wasm/v1/index.json` + `.wasm` | Wasmer/WebC publish profile; keep or evolve `/wasm/v1` for `wpm` without breaking store clients |
 | Humans | `/search/?channel=wasm` | Same channel; show ABI labels when present |
-| Producer | Manual / curated blobs | wasinix + `wawona` profile |
+| Producer | GHA allowlist in `Wawona/wasm-packages` (auto-publish) | wasinix + `wawona` profile |
 | Deb APT | Separate | Still separate. Never one list |
 
 See also: [`../wasm/README.md`](../wasm/README.md),

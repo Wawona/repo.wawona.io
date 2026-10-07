@@ -2,7 +2,9 @@ name: Pages
 
 on:
   push:
-    branches: [main]
+    # development: bot auto-publish from wasm-packages lands here and must go live.
+    # main: keep for promote/release deploys if used.
+    branches: [development, main]
   workflow_dispatch:
 
 permissions:

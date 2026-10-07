@@ -43,23 +43,25 @@ Store `wpm` default registry: `https://repo.wawona.io/wasm/v1` (client fetches
 This host publishes `/wasm/v1` today. Do not auto-mirror nixpkgs here.
 ABI labels and later Wasmer/WebC (wasinix): `docs/wasm-abi.md`.
 
-## Wasm package builds (GHA)
+## Wasm package builds (GHA auto-growth)
 
 Production builds: **`Wawona/wasm-packages`** on `ubuntu-24.04` (not a laptop).
 
 | Piece | Where |
 |-------|--------|
-| Recipes | `wasm-packages` `recipes.json` + `packages/<name>/` |
-| Build CI | `build-wasm.yml` (matrix + wasmtime smoke + artifacts) |
-| Publish CI | `publish-to-repo.yml` (needs `WAWONA_REPO_TOKEN`; PRs into this repo) |
+| Allowlist | `wasm-packages` `allowlist.toml` (curated; no nixpkgs mirror) |
+| Recipes | `recipes.json` + `packages/<name>/` (sync from allowlist) |
+| Build CI | `build-wasm.yml` (cron stale select, matrix, smoke, `wasm-out`) |
+| Publish CI | `publish-to-repo.yml` (`workflow_run` → push `development`; `WAWONA_REPO_TOKEN`) |
+| Pages | this repo `pages.yml` on **development** and `main` |
 | Catalog | this repo `wasm/v1/` |
 
 ```bash
+gh secret set WAWONA_REPO_TOKEN --repo Wawona/wasm-packages
 gh workflow run build-wasm.yml --repo Wawona/wasm-packages
-# after green: publish workflow or stage via scripts/stage-for-repo.py
 ```
 
-Proven: `hello-wasi` 0.1.2 and `wasi-true` 0.1.0. Local `cargo` is debug only.
+First-wave P1: grep, sed, awk, gzip, jq (curl blocked). Local `cargo` is debug only.
 Do not claim WASIX/WebC shipping. Do not revive `nixpkgs2wasi` / `n2w`.
 
 ## Never
