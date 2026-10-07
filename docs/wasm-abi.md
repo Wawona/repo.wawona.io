@@ -14,6 +14,11 @@ nightly stale builds; green runs auto-publish into this repo's `development`
 `cargo` is optional recipe debug only. Do not publish laptop-built blobs as
 the source of truth. Never auto-mirror nixpkgs.
 
+**Versions:** Catalog `version` is the **package** version (upstream release for
+ports, Wawona-owned for `wawona-*` scratch). ABI (`wasi-p1` / `wasix`) is a
+separate field. Never put P1/P2/X into `version`. Do not forge upstream names
+(`jq`, `gzip`) for from-scratch stubs.
+
 **Status later (planned):** `repo.wawona.io/wasm` becomes a curated
 Wasmer-compatible registry. Distribution unit is WebC (`.webc`) via
 `wasmer publish`. Orchestration is upstream
