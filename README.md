@@ -15,7 +15,7 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 | **`/` APT** (`Packages`, `debs/`) | Jailbroken iOS APT clients **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
 | **`/jailbreak/`** | Jailbroken iOS | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). **Not** Termux. **Not** a second APT tree. |
 | **`/termux/`** | Sideloaded Android (Termux) | Bookmark onto `aarch64` debs. **Not jailbreak.** **Not Play.** |
-| **Mode B `.deb`** | Jailbroken iOS | Full **Wawona Mode B** app for iOS 11+. **Never** submitted to App Store. |
+| **Mode B `.deb`** | Jailbroken iOS | Full **Wawona Mode B** app for iOS 13+. **Never** submitted to App Store. |
 
 `/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML pages redirect humans into `/search/`. `wpm` still talks to `/wasm/v1/`. Jailbreak APT clients and Termux still talk to `/`. Do not rank iOS package managers in UI copy.
 
@@ -25,7 +25,7 @@ Store / Play Wawona may download Wasm from `/wasm/v1` only. Never APT, never `.d
 
 ### Jailbreak debs (iOS)
 
-Rootless and rootful packages for jailbreak APT clients ([docs/packaging.md](docs/packaging.md)). Wawona's Mode B `.deb` starts at iOS 11. The separate TrollStore `.tipa` starts at iOS 14 and is not one of these debs. Neither is an App Store binary.
+Rootless and rootful packages for jailbreak APT clients ([docs/packaging.md](docs/packaging.md)). Wawona's Mode B `.deb` starts at iOS 13. The separate TrollStore `.tipa` starts at iOS 14 and is not one of these debs. Neither is an App Store binary.
 
 ### Termux debs (sideloaded Android)
 
