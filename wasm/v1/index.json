@@ -90,7 +90,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T16:21:00Z",
+        "checked_at": "2026-10-08T13:00:52Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
