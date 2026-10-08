@@ -42,9 +42,9 @@ Canonical prose: `Wawona/docs/mode-a-b.md`, `swinging-bridge.md`, `iland-mode-a-
 
 ### VMs / containers
 
-- Platforms: planned on macOS, iOS, iPadOS, visionOS, Android, Linux. **Forbidden** on tvOS, watchOS.
-- iOS / iPadOS / visionOS Mode A: UTM-SE-class **jitless**. Mode B: JIT UTM via Mode B IPA.
-- Backends differ by OS (macOS Virtualization/Apple Container ≠ iOS UTM ≠ Android QEMU). Do not force one engine.
+- Platforms: planned on macOS, iOS, iPadOS, Android, Linux. **Forbidden** on tvOS, watchOS, visionOS.
+- Guests are Linux only (NixOS prebuilts). Engine is Wawona Relay. Never UTM (GitHub #33 closed wontfix).
+- Mode A: Relay jitless. Mode B: that runtime plus Relay's Mode B runtime. Guest GUI is Wayland into Wawona.
 - Not the same as on-device `wwn-zsh` shell or Wasm packages.
 
 ### Wawona Runtime packages (`wpm` / WASI) — Mode A forever
