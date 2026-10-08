@@ -90,7 +90,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-08T15:48:25Z",
+        "checked_at": "2026-10-08T16:56:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
@@ -184,7 +184,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-08T15:48:25Z",
+        "checked_at": "2026-10-08T16:56:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
@@ -231,7 +231,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-08T15:48:25Z",
+        "checked_at": "2026-10-08T16:56:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
