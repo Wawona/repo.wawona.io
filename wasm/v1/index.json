@@ -54,6 +54,54 @@
       }
     },
     {
+      "name": "effectcraft-expr",
+      "version": "0.6.0",
+      "digest": "sha256:f5d5ab3378ec5926731cc0361449452daa36dbd576ee55004f71604fa375f5ac",
+      "url": "packages/effectcraft-expr/0.6.0/component.wasm",
+      "wasi": "p1",
+      "kind": "cli",
+      "origin": "port",
+      "summary": "EffectCraft expression syntax check (WASI P1 slice of upstream v0.6.0; not the full GUI)",
+      "license": "MIT",
+      "runtime": "wawona-1",
+      "entry": "component.wasm",
+      "homepage": "https://github.com/storytold/effectcraft",
+      "source": "https://github.com/Wawona/wasm-packages/tree/development/packages/effectcraft-expr",
+      "programs": [
+        "effectcraft-expr"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "tvos",
+        "visionos",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": false,
+        "filesystem": [],
+        "network": false
+      },
+      "ci": {
+        "status": "pass",
+        "runtime": "wasmtime",
+        "checked_at": "2026-10-08T15:48:25Z",
+        "suites": {
+          "smoke": "pass",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        },
+        "detail": "ok"
+      },
+      "upstream_version": "0.6.0"
+    },
+    {
       "name": "hello-wasi",
       "version": "0.1.2",
       "digest": "sha256:019d79014a3f26b61e9afb8b61a95be1c0b2a3cf6d3a771ddb5be09706d55fb9",
@@ -90,7 +138,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-08T13:00:52Z",
+        "checked_at": "2026-10-08T15:48:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
@@ -184,7 +232,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T16:21:00Z",
+        "checked_at": "2026-10-08T15:48:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
@@ -231,7 +279,7 @@
       "ci": {
         "status": "pass",
         "runtime": "wasmtime",
-        "checked_at": "2026-10-07T16:21:00Z",
+        "checked_at": "2026-10-08T15:48:25Z",
         "suites": {
           "smoke": "pass",
           "terminal": "unknown",
