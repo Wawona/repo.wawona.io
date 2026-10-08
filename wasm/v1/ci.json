@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "description": "Wasm package CI smoke status (Hydra-style). UI dots on /search/?channel=wasm.",
-  "generated_at": "2026-10-08T15:48:25Z",
+  "generated_at": "2026-10-08T16:53:36Z",
   "runtime_policy": {
     "wasi-p1": "wasmtime",
     "wasi-p2": "wasmtime",
@@ -13,8 +13,8 @@
     "socket",
     "wayland"
   ],
-  "total": 7,
-  "passed": 4,
+  "total": 6,
+  "passed": 3,
   "failed": 0,
   "unknown": 3,
   "packages": [
@@ -26,19 +26,6 @@
       "checked_at": null,
       "suites": {
         "smoke": "unknown",
-        "terminal": "unknown",
-        "socket": "unknown",
-        "wayland": "unknown"
-      }
-    },
-    {
-      "name": "effectcraft-expr",
-      "version": "0.6.0",
-      "status": "pass",
-      "runtime": "wasmtime",
-      "checked_at": "2026-10-08T15:48:25Z",
-      "suites": {
-        "smoke": "pass",
         "terminal": "unknown",
         "socket": "unknown",
         "wayland": "unknown"
