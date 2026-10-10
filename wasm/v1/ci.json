@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "description": "Wasm package CI smoke status (Hydra-style). UI dots on /search/?channel=wasm.",
-  "generated_at": "2026-10-09T12:47:16Z",
+  "generated_at": "2026-10-10T12:05:23Z",
   "runtime_policy": {
     "wasi-p1": "wasmtime",
     "wasi-p2": "wasmtime",
@@ -36,7 +36,7 @@
       "version": "0.1.2",
       "status": "pass",
       "runtime": "wasmtime",
-      "checked_at": "2026-10-09T12:47:16Z",
+      "checked_at": "2026-10-10T12:05:23Z",
       "suites": {
         "smoke": "pass",
         "terminal": "unknown",
