@@ -1,0 +1,83 @@
+diff --git a/src/c_api.rs b/src/c_api.rs
+--- a/src/c_api.rs
++++ b/src/c_api.rs
+@@ -17,6 +17,8 @@
+ 
+ use std::env;
+ use std::ffi::c_int;
++use std::panic::{catch_unwind, AssertUnwindSafe};
++use std::sync::atomic::{AtomicBool, Ordering};
+ use std::path::PathBuf;
+ 
+ use calloop::EventLoop;
+@@ -26,20 +28,65 @@
+ 
+ use crate::niri::State;
+ 
++static CONSUMED: AtomicBool = AtomicBool::new(false);
++static RUNNING: AtomicBool = AtomicBool::new(false);
++
++struct RunningGuard;
++
++impl Drop for RunningGuard {
++    fn drop(&mut self) {
++        RUNNING.store(false, Ordering::SeqCst);
++    }
++}
++
++/// 1 while `niri_main` is inside `run()`. Used by wawona-dispatch so a second
++/// `niri` from zsh does not claim async success.
++#[no_mangle]
++pub extern "C" fn wwn_niri_main_is_running() -> c_int {
++    i32::from(RUNNING.load(Ordering::SeqCst))
++}
++
++/// 1 after the first `niri_main` call (success or fail). niri is not re-entrant.
++#[no_mangle]
++pub extern "C" fn wwn_niri_main_already_used() -> c_int {
++    i32::from(CONSUMED.load(Ordering::SeqCst))
++}
++
+ /// Runs the niri compositor in-process until the session ends.
+ ///
+ /// Returns 0 on clean shutdown and nonzero on a fatal startup error. Call at
+ /// most once per process; niri's compositor state is not re-entrant.
+ #[no_mangle]
+ pub extern "C" fn niri_main() -> c_int {
+-    match run() {
+-        Ok(()) => 0,
+-        Err(err) => {
+-            // The host app may not have a tracing subscriber; make sure the
+-            // failure reaches stderr either way.
++    if CONSUMED.swap(true, Ordering::SeqCst) {
++        eprintln!(
++            "niri_main already ran in this process (not re-entrant). Inner niri needs a separate process, or relaunch Wawona."
++        );
++        return 1;
++    }
++    RUNNING.store(true, Ordering::SeqCst);
++    let _running = RunningGuard;
++    // Wawona hosts niri in-process. An uncaught panic through this extern "C"
++    // boundary becomes panic_cannot_unwind -> abort of the whole app (iOS
++    // Simulator SIGABRT). Convert panics into a nonzero exit code so the host
++    // can tear down cleanly and surface WWNNativeClientLaunchFailedNotification.
++    match catch_unwind(AssertUnwindSafe(|| run())) {
++        Ok(Ok(())) => 0,
++        Ok(Err(err)) => {
+             eprintln!("niri_main: fatal error: {err:?}");
+             1
+         }
++        Err(payload) => {
++            let msg = if let Some(s) = payload.downcast_ref::<&str>() {
++                (*s).to_owned()
++            } else if let Some(s) = payload.downcast_ref::<String>() {
++                s.clone()
++            } else {
++                "unknown panic".to_owned()
++            };
++            eprintln!("niri_main: panicked: {msg}");
++            101
++        }
+     }
+ }
+ 

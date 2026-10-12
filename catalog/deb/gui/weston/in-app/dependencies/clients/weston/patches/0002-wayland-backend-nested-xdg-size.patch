@@ -1,0 +1,21 @@
+--- a/libweston/backend-wayland/wayland.c
++++ b/libweston/backend-wayland/wayland.c
+@@ -2699,9 +2699,15 @@ registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
+ 		xdg_wm_base_add_listener(b->parent.xdg_wm_base,
+ 					 &wm_base_listener, b);
+ 	} else if (strcmp(interface, "zwp_fullscreen_shell_v1") == 0) {
+-		b->parent.fshell =
+-			wl_registry_bind(registry, name,
+-					 &zwp_fullscreen_shell_v1_interface, 1);
++		/* WAWONA_NESTED_WAYLAND: xdg client of Wawona. Binding
++		 * fullscreen_shell sprawls onto wlparent-N with no mode. */
++		const char *nested = getenv("WAWONA_NESTED_WAYLAND");
++		if (!(nested && nested[0] && strcmp(nested, "0") != 0)) {
++			b->parent.fshell =
++				wl_registry_bind(registry, name,
++						 &zwp_fullscreen_shell_v1_interface,
++						 1);
++		}
+ 	} else if (strcmp(interface, "wl_seat") == 0) {
+ 		display_start_add_seat(b, name, version);
+ 	} else if (strcmp(interface, "wl_output") == 0) {

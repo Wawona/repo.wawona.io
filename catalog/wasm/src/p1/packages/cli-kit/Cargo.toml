@@ -1,0 +1,28 @@
+[package]
+name = "cli-kit"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Wawona scratch CLIs (not GNU/uutils; versions are Wawona-owned)"
+publish = false
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true
+
+[[bin]]
+name = "linededupe"
+path = "src/bin/linededupe.rs"
+[[bin]]
+name = "wasi-false"
+path = "src/bin/wasi-false.rs"
+[[bin]]
+name = "b64enc"
+path = "src/bin/b64enc.rs"
+[[bin]]
+name = "bytesum"
+path = "src/bin/bytesum.rs"
+[[bin]]
+name = "linerev"
+path = "src/bin/linerev.rs"

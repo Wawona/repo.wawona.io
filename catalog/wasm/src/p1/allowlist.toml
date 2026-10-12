@@ -1,0 +1,667 @@
+# Curated WASI P1 catalog. Never auto-mirror nixpkgs.
+# version = package version (upstream or Wawona-owned). NOT the ABI.
+# origin = port | scratch
+#   port: version MUST match upstream release; name is upstream name;
+#         homepage MUST be the upstream project URL
+#   scratch: Wawona-written smoke; distinct name; homepage = that tool's page
+# See docs/package-versioning.md and repo.wawona.io rule repo-wawona-io-ports
+
+
+[meta]
+maintainers = ["aspauldingcode"]
+max_new_per_nightly = 8
+
+# --- Active: Wawona-original Runtime smokes (not ports of GNU/jq/…) ---
+
+[[packages]]
+name = "hello-wasi"
+version = "0.1.2"
+abi = "wasi-p1"
+status = "active"
+origin = "scratch"
+build = "cargo-wasip1"
+version_policy = "local"
+source = "packages/hello-wasi"
+bin = "hello-wasi"
+homepage = "https://github.com/Wawona/wasm-packages/tree/development/packages/hello-wasi"
+summary = "Wawona WASI P1 hello smoke for wpm"
+smoke_args = []
+smoke_expect = "hello"
+
+[[packages]]
+name = "wasi-true"
+version = "0.1.0"
+abi = "wasi-p1"
+status = "active"
+origin = "scratch"
+build = "cargo-wasip1"
+version_policy = "local"
+source = "packages/wasi-true"
+bin = "wasi-true"
+homepage = "https://github.com/Wawona/wasm-packages/tree/development/packages/wasi-true"
+summary = "Wawona WASI P1 true(1): exit 0"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "wasi-false"
+version = "0.1.0"
+abi = "wasi-p1"
+status = "active"
+origin = "scratch"
+build = "cargo-wasip1"
+version_policy = "local"
+source = "packages/cli-kit"
+bin = "wasi-false"
+homepage = "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit"
+summary = "WASI P1 false(1): exit 1"
+smoke_args = []
+smoke_stdin = ""
+smoke_expect = ""
+smoke_exit = 1
+
+# --- ArtCraft Crafting Apps (storytold/*craft). See docs/artcraft-crafting-apps.md ---
+# Browser xtask web (wasm32-unknown-unknown) is NOT /wasm/v1. Pilot is WASI P1 only.
+
+[[packages]]
+name = "effectcraft-expr"
+version = "0.6.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_name = "effectcraft-expr"
+upstream_version = "0.6.0"
+upstream_git = "https://github.com/storytold/effectcraft"
+version_policy = "git-tag"
+build = "none"
+source = "packages/effectcraft-expr"
+bin = "effectcraft-expr"
+homepage = "https://github.com/storytold/effectcraft"
+summary = "EffectCraft expression WASI slice (withdrawn from /wasm/v1 until Wayland GUI path)"
+reason = "Pulled from catalog. CLI-only expr slice is not the ArtCraft product; wait for egui→Wayland wasip1 (or GPU WSI) before republishing."
+smoke_args = ["1+1"]
+smoke_expect = "ok"
+
+[[packages]]
+name = "effectcraft-cli"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/effectcraft"
+homepage = "https://github.com/storytold/effectcraft"
+source = "blocked"
+bin = "effectcraft-cli"
+summary = "Queued EffectCraft headless CLI (needs wasip1 without ui-egui/gpu)"
+reason = "effectcraft-cli pulls ui-egui + gpu; not wasip1 yet. Wait for Wayland/headless wasip1 path."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "effectcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/effectcraft"
+homepage = "https://github.com/storytold/effectcraft"
+source = "blocked"
+bin = "effectcraft"
+summary = "Queued EffectCraft GUI (needs Wayland/egui port; not xtask web)"
+reason = "Desktop egui/wgpu and browser wasm32-unknown-unknown are wrong ABI for Relay. Real port required."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "photocraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/photocraft"
+homepage = "https://github.com/storytold/photocraft"
+source = "blocked"
+bin = "photocraft"
+summary = "Queued PhotoCraft WASI port"
+reason = "No wasip1 recipe yet. Browser xtask web is not /wasm/v1."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "vectorcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/vectorcraft"
+homepage = "https://github.com/storytold/vectorcraft"
+source = "blocked"
+bin = "vectorcraft"
+summary = "Queued VectorCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "filmcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/filmcraft"
+homepage = "https://github.com/storytold/filmcraft"
+source = "blocked"
+bin = "filmcraft"
+summary = "Queued FilmCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "lightcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/lightcraft"
+homepage = "https://github.com/storytold/lightcraft"
+source = "blocked"
+bin = "lightcraft"
+summary = "Queued LightCraft WASI port"
+reason = "No wasip1 recipe yet (flake.nix is upstream desktop/web, not GHA wasip1)."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "pdfcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/pdfcraft"
+homepage = "https://github.com/storytold/pdfcraft"
+source = "blocked"
+bin = "pdfcraft"
+summary = "Queued PdfCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "designcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/designcraft"
+homepage = "https://github.com/storytold/designcraft"
+source = "blocked"
+bin = "designcraft"
+summary = "Queued DesignCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "soundcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/soundcraft"
+homepage = "https://github.com/storytold/soundcraft"
+source = "blocked"
+bin = "soundcraft"
+summary = "Queued SoundCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "wordcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/wordcraft"
+homepage = "https://github.com/storytold/wordcraft"
+source = "blocked"
+bin = "wordcraft"
+summary = "Queued WordCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "deckcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/deckcraft"
+homepage = "https://github.com/storytold/deckcraft"
+source = "blocked"
+bin = "deckcraft"
+summary = "Queued DeckCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "gridcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/gridcraft"
+homepage = "https://github.com/storytold/gridcraft"
+source = "blocked"
+bin = "gridcraft"
+summary = "Queued GridCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "cadcraft"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/cadcraft"
+homepage = "https://github.com/storytold/cadcraft"
+source = "blocked"
+bin = "cadcraft"
+summary = "Queued CADCraft WASI port"
+reason = "No wasip1 recipe yet."
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "craft-fonts"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_git = "https://github.com/storytold/craft-fonts"
+homepage = "https://github.com/storytold/craft-fonts"
+source = "blocked"
+bin = "craft-fonts"
+summary = "ArtCraft shared fonts (asset dependency, not a Runtime package)"
+reason = "Fonts only. Bundle as assets with Craft ports; do not publish as /wasm/v1 component."
+smoke_args = []
+smoke_expect = ""
+
+# --- Blocked stubs: same blobs once forged as grep/sed/jq/gzip/awk ---
+# Do not publish until a real upstream tree is packaged with that project's
+# version and homepage (e.g. GNU sed, jaq, ripgrep).
+
+[[packages]]
+name = "jsonlit"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not jqlang/jq. Port jaq or jq with upstream version + homepage."
+build = "none"
+source = "packages/jsonlit"
+bin = "jsonlit"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "fstrmatch"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU grep. Port real grep/ripgrep with upstream version + homepage."
+build = "none"
+source = "packages/fstrmatch"
+bin = "fstrmatch"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "ssub"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU sed. Port real sed with upstream version + homepage."
+build = "none"
+source = "packages/ssub"
+bin = "ssub"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "col1"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not awk. Port real awk with upstream version + homepage."
+build = "none"
+source = "packages/col1"
+bin = "col1"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "flate-selftest"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU gzip. Port real gzip with upstream version + homepage."
+build = "none"
+source = "packages/flate-selftest"
+bin = "flate-selftest"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "b64enc"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU/uutils base64. Prefer native; else real port + upstream version."
+build = "none"
+source = "packages/cli-kit"
+bin = "b64enc"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "bytesum"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU cksum."
+build = "none"
+source = "packages/cli-kit"
+bin = "bytesum"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "linededupe"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU uniq."
+build = "none"
+source = "packages/cli-kit"
+bin = "linededupe"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "linerev"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Stub is not GNU rev."
+build = "none"
+source = "packages/cli-kit"
+bin = "linerev"
+smoke_args = []
+smoke_expect = ""
+
+# Legacy forged / branded catalog names (prune from live index).
+[[packages]]
+name = "jq"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+upstream_name = "jqlang/jq"
+upstream_version = ""
+reason = "Do not ship scratch as jq. Port real jq/jaq with upstream version + homepage."
+build = "none"
+source = "blocked"
+bin = "jq"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "gzip"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+reason = "Do not ship scratch as gzip."
+build = "none"
+source = "blocked"
+bin = "gzip"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "grep"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+reason = "Do not ship scratch as grep."
+build = "none"
+source = "blocked"
+bin = "grep"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "sed"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+reason = "Do not ship scratch as sed."
+build = "none"
+source = "blocked"
+bin = "sed"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "awk"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+reason = "Do not ship scratch as awk."
+build = "none"
+source = "blocked"
+bin = "awk"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "base64"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Forged GNU name. Native preferred."
+build = "none"
+source = "blocked"
+bin = "base64"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "cksum"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Forged GNU name."
+build = "none"
+source = "blocked"
+bin = "cksum"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "false"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Use wasi-false."
+build = "none"
+source = "blocked"
+bin = "false"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "uniq"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Forged GNU name."
+build = "none"
+source = "blocked"
+bin = "uniq"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "rev"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Forged GNU name."
+build = "none"
+source = "blocked"
+bin = "rev"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "chess-wawona"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "port"
+reason = "Never suffix -wawona. Catalog name is chess."
+build = "none"
+source = "blocked"
+bin = "chess-wawona"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "wawona-grep"
+version = "0.0.0"
+abi = "wasi-p1"
+status = "blocked"
+origin = "scratch"
+reason = "Never brand with wawona-."
+build = "none"
+source = "blocked"
+bin = "wawona-grep"
+smoke_args = []
+smoke_expect = ""
+
+# --- wasinix queue (blocked; activate with real upstream version + homepage) ---
+[[packages]]
+name = "curl"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+version_policy = "git-tag"
+upstream_git = "https://github.com/Wawona/wasinix"
+homepage = "https://curl.se/"
+source = "wasinix:curl"
+bin = "curl"
+summary = "Queued wasinix WASIX curl"
+reason = "Activate with upstream curl version + homepage from wasinix recipe"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "git"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+upstream_git = "https://github.com/Wawona/wasinix"
+homepage = "https://git-scm.com/"
+source = "wasinix:git"
+bin = "git"
+summary = "Queued wasinix WASIX git"
+reason = "Activate with upstream git version + homepage"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "tar"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+homepage = "https://www.gnu.org/software/tar/"
+source = "wasinix:tar"
+bin = "tar"
+summary = "Queued wasinix WASIX tar"
+reason = "Activate with upstream tar version + homepage"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "find"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+homepage = "https://www.gnu.org/software/findutils/"
+source = "wasinix:find"
+bin = "find"
+summary = "Queued wasinix WASIX find"
+reason = "Activate with upstream findutils version + homepage"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "bash"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+homepage = "https://www.gnu.org/software/bash/"
+source = "wasinix:bash"
+bin = "bash"
+summary = "Queued WASIX bash"
+reason = "Activate with upstream bash version + homepage"
+smoke_args = []
+smoke_expect = ""
+
+[[packages]]
+name = "python3"
+version = "0.0.0"
+abi = "wasix"
+status = "blocked"
+origin = "port"
+build = "wasinix"
+homepage = "https://www.python.org/"
+source = "wasinix:python3"
+bin = "python3"
+summary = "Queued WASIX CPython"
+reason = "Activate with upstream CPython version + homepage"
+smoke_args = []
+smoke_expect = ""

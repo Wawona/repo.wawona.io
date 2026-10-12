@@ -1,0 +1,89 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  readme-badge:
+    name: README CI badge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: README has CI status badge
+        run: grep -E 'actions/workflows/.+/badge\.svg' README.md
+  patch-anchors:
+    name: verify neovim patch anchors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          repository: Wawona/wwn-toolchain
+          path: wwn-toolchain
+      - uses: actions/checkout@v5
+        with:
+          repository: Wawona/wwn-zsh
+          path: wwn-zsh
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Verify patch anchors + dispatch sync
+        env:
+          WWN_TOOLCHAIN_ROOT: ${{ github.workspace }}/wwn-toolchain
+          WWN_ZSH_ROOT: ${{ github.workspace }}/wwn-zsh
+        run: python3 .github/scripts/verify-neovim-ios-patches.py
+
+  eval:
+    name: flake eval (instantiation)
+    runs-on: macos-15
+    needs: patch-anchors
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix eval .#registryFragment --apply builtins.attrNames
+      - run: |
+          nix eval --raw .#packages.aarch64-darwin.neovim-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.neovim-rootfs-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.neovim-android.drvPath
+
+  build-ios:
+    name: build neovim (Apple mobile)
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            sandbox = relaxed
+            allow-import-from-derivation = true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.neovim-ios .#packages.aarch64-darwin.neovim-rootfs-ios -L
+
+  build-android:
+    name: build neovim (Android)
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            sandbox = relaxed
+            allow-import-from-derivation = true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.neovim-android -L

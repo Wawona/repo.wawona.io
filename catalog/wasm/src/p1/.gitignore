@@ -1,0 +1,8 @@
+/out/
+**/target/
+.DS_Store
+result
+result-*
+
+out/
+**/target/

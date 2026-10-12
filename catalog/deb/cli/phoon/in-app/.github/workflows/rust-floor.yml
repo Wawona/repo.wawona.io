@@ -1,0 +1,26 @@
+name: Verification report
+
+on:
+  push:
+    branches: [development]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/*.rs"
+      - "deny.toml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/*.rs"
+      - "deny.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Verification report
+    uses: Wawona/Wawona/.github/workflows/rust-repo-floor.yml@development
+    with:
+      miri: true

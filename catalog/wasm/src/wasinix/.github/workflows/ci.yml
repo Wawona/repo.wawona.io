@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - development
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-matrix:
+    name: Smoke matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      packages: ${{ steps.set.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set
+        run: echo "packages=$(python3 scripts/list-smoke-matrix.py)" >> "$GITHUB_OUTPUT"
+
+  build-smoke:
+    name: Build+Wasmer ${{ matrix.package }}
+    needs: smoke-matrix
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.smoke-matrix.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v19
+
+      - name: Install Wasmer
+        uses: wasmerio/setup-wasmer@v3.1
+
+      - name: Build Wasmer package
+        shell: bash
+        run: |
+          set -euo pipefail
+          nix build --print-build-logs --show-trace ".#wasmer.${{ matrix.package }}" -o "result-${{ matrix.package }}"
+
+      - name: Smoke with Wasmer
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/*.sh
+          wasm="$(find "result-${{ matrix.package }}/pkg" -type f -name '*.wasm' | head -1)"
+          test -n "$wasm"
+          ./scripts/smoke-wasix-package.sh "${{ matrix.package }}" "$wasm"
+
+      - name: Upload smoke result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ matrix.package }}
+          path: out/smoke/${{ matrix.package }}.json
+          if-no-files-found: warn
+
+  summarize-smokes:
+    name: All Wasmer smokes green
+    needs: [smoke-matrix, build-smoke]
+    runs-on: ubuntu-24.04
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download smoke results
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/smoke-arts
+          pattern: smoke-*
+          merge-multiple: false
+      - name: Summarize
+        run: |
+          set -euo pipefail
+          mkdir -p out/smoke
+          for d in /tmp/smoke-arts/smoke-*; do
+            [[ -d "$d" ]] || continue
+            cp -f "$d"/*.json out/smoke/ 2>/dev/null || true
+          done
+          python3 scripts/summarize-smoke-results.py
+          if [[ "${{ needs.build-smoke.result }}" != "success" ]]; then
+            echo "one or more package build/smoke jobs failed"
+            exit 1
+          fi
+
+  build-all:
+    name: Build all packages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v19
+
+      - name: Build all
+        shell: bash
+        run: |
+          set -euo pipefail
+          nix build --print-build-logs --show-trace .#all

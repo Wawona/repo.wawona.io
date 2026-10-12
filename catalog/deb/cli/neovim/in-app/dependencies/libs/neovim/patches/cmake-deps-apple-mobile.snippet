@@ -1,0 +1,7 @@
+option(WAWONA_APPLE_MOBILE "Wawona App Store–compliant Apple mobile deps" OFF)
+
+if(WAWONA_APPLE_MOBILE)
+  set(USE_BUNDLED_LUAJIT OFF CACHE BOOL "LuaJIT forbidden on Apple mobile (no JIT)" FORCE)
+  set(USE_BUNDLED_LUA ON CACHE BOOL "PUC Lua for Apple mobile" FORCE)
+  set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include")
+endif()

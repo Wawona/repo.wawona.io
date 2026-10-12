@@ -1,0 +1,25 @@
+--- a/screen.c
++++ b/screen.c
+@@ -1255,8 +1255,20 @@
+ 		term = DEFAULT_TERM;
+ 	hardcopy = 0;
+ 	/* {{ Should probably just pass NULL instead of termbuf. }} */
+-	if (tgetent(termbuf, term) != TGETENT_OK)
+-		hardcopy = 1;
++	if (tgetent(termbuf, term) != TGETENT_OK)
++	{
++		/*
++		 * WASIX/container environments often pass TERM values that are not
++		 * present in the embedded fallback table (for example xterm-kitty).
++		 * Retry with conservative built-in entries before giving up.
++		 */
++		if (tgetent(termbuf, "xterm-256color") != TGETENT_OK &&
++		    tgetent(termbuf, "xterm") != TGETENT_OK &&
++		    tgetent(termbuf, "ansi") != TGETENT_OK)
++		{
++			hardcopy = 1;
++		}
++	}
+ 	if (ltgetflag("hc"))
+ 		hardcopy = 1;
+ 

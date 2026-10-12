@@ -1,0 +1,59 @@
+name: ci
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  readme-badge:
+    name: README CI badge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: README has CI status badge
+        run: grep -E 'actions/workflows/.+/badge\.svg' README.md
+  cargo:
+    name: cargo test (compat corpus + units)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: build
+        run: cargo build --release --all-targets
+      - name: test (byte-for-byte reference corpus + units)
+        run: cargo test --release -- --nocapture
+
+  eval:
+    name: flake eval (instantiation)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - name: fragment evaluates
+        run: nix eval .#registryFragment --apply builtins.attrNames
+      - name: phoon instantiates (no build)
+        run: |
+          nix eval --raw .#packages.aarch64-darwin.phoon-macos.drvPath
+          nix eval --raw .#packages.aarch64-darwin.phoon-ios.drvPath
+
+  build:
+    name: build phoon (macOS static lib)
+    runs-on: macos-15
+    needs: [cargo, eval]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.phoon-macos -L

@@ -1,0 +1,104 @@
+--- a/src/utils/spawning.rs
++++ b/src/utils/spawning.rs
+@@ -1,6 +1,10 @@
+ use std::ffi::OsStr;
+ use std::os::unix::process::CommandExt;
+ use std::path::Path;
++#[cfg(any(target_os = "ios", target_os = "tvos", target_os = "visionos"))]
++use std::ffi::CString;
++#[cfg(any(target_os = "ios", target_os = "tvos", target_os = "visionos"))]
++use std::os::unix::ffi::OsStrExt;
+ use std::process::{Child, Command, Stdio};
+ use std::sync::atomic::{AtomicBool, Ordering};
+ use std::sync::RwLock;
+@@ -109,6 +113,90 @@
+         Ok(None) => (),
+         Err(err) => {
+             warn!("error expanding ~: {err:?}");
++        }
++    }
++
++    // Apple mobile cannot fork/exec/posix_spawn. Route bundled helpers through
++    // Wawona's in-process dispatcher on a background thread so Wayland clients
++    // (fuzzel) do not freeze the compositor spawn thread.
++    #[cfg(any(target_os = "ios", target_os = "tvos", target_os = "visionos"))]
++    {
++        extern "C" {
++            fn wawona_dispatch_can_handle(argv0: *const libc::c_char) -> libc::c_int;
++            fn wawona_dispatch_spawn_async(
++                path: *const libc::c_char,
++                argv: *const *const libc::c_char,
++                envp: *const *const libc::c_char,
++            ) -> libc::c_int;
++        }
++
++        let cmd_cstr = match CString::new(command.as_bytes()) {
++            Ok(s) => s,
++            Err(_) => return,
++        };
++        if unsafe { wawona_dispatch_can_handle(cmd_cstr.as_ptr()) } != 0 {
++            let mut argv_owned: Vec<CString> = Vec::new();
++            let mut argv_ptrs: Vec<*const libc::c_char> = Vec::new();
++
++            argv_owned.push(cmd_cstr);
++            argv_ptrs.push(argv_owned[0].as_ptr());
++            for arg in args {
++                match CString::new(arg.as_ref().as_bytes()) {
++                    Ok(s) => {
++                        argv_ptrs.push(s.as_ptr());
++                        argv_owned.push(s);
++                    }
++                    Err(_) => return,
++                }
++            }
++            argv_ptrs.push(std::ptr::null());
++
++            if REMOVE_ENV_RUST_BACKTRACE.load(Ordering::Relaxed) {
++                std::env::remove_var("RUST_BACKTRACE");
++            }
++            if REMOVE_ENV_RUST_LIB_BACKTRACE.load(Ordering::Relaxed) {
++                std::env::remove_var("RUST_LIB_BACKTRACE");
++            }
++            std::env::remove_var("NOTIFY_SOCKET");
++            let display = CHILD_DISPLAY.read().unwrap();
++            if let Some(display) = &*display {
++                std::env::set_var("DISPLAY", display);
++            } else {
++                std::env::remove_var("DISPLAY");
++            }
++            let env = CHILD_ENV.read().unwrap();
++            for var in &env.0 {
++                if let Some(value) = &var.value {
++                    std::env::set_var(&var.name, value);
++                } else {
++                    std::env::remove_var(&var.name);
++                }
++            }
++            drop(env);
++            if let Some(token) = token.as_ref() {
++                std::env::set_var("XDG_ACTIVATION_TOKEN", token.as_str());
++                std::env::set_var("DESKTOP_STARTUP_ID", token.as_str());
++            }
++
++            // In-process children share niri's environ. Point them at niri's
++            // nested socket (not the host WAYLAND_DISPLAY niri itself uses).
++            if let Ok(nested) = std::env::var("NIRI_NESTED_WAYLAND_DISPLAY") {
++                if !nested.is_empty() {
++                    std::env::set_var("WAYLAND_DISPLAY", nested);
++                }
++            }
++
++            let rc = unsafe {
++                wawona_dispatch_spawn_async(
++                    argv_owned[0].as_ptr(),
++                    argv_ptrs.as_ptr(),
++                    std::ptr::null(),
++                )
++            };
++            if rc == -2 {
++                warn!("failed to spawn {:?} in-process on Apple mobile", command);
++            }
++            return;
+         }
+     }
+ 

@@ -1,0 +1,55 @@
+From: Wawona <dev@wawona.io>
+Subject: wasixccenv: capture `clang --version` output to avoid SIGPIPE
+
+`run_tool_with_passthrough_args` used `command.status()`, letting the
+compiler inherit the build's stdout. When a build system (autoconf,
+meson) runs `cc --version` with a pipe and closes the read end early,
+clang is killed by SIGPIPE. Fontconfig's configure does exactly this,
+which intermittently broke cairo/pango builds.
+
+Capture the child's output and re-emit it, ignoring EPIPE on the way
+out, so clang writes into a pipe we always drain.
+
+Upstream: https://github.com/wasix-org/wasixcc
+diff --git a/src/main.rs b/src/main.rs
+index 9a2d601..fbcda3d 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -76,13 +76,34 @@ fn run_tool_with_passthrough_args(
+     args: Vec<String>,
+     user_settings: UserSettings,
+ ) -> Result<()> {
++    let tool_path = user_settings.llvm_location.get_tool_path(tool);
++    let mut command = Command::new(tool_path);
++    command.args(args);
++
+     if is_version_command() {
++        // Capture the tool's output instead of letting it inherit stdout.
++        // Some build systems (autoconf, meson) close the read end of a
++        // version probe pipe early, which makes the underlying clang die
++        // with SIGPIPE. Reading the child to completion here, and ignoring
++        // EPIPE on our own re-emit, avoids that.
++        use std::io::Write;
++
++        let output = command
++            .output()
++            .with_context(|| format!("Failed to run version command: {command:?}"))?;
+         print_version();
++        let _ = std::io::stdout().write_all(&output.stdout);
++        let _ = std::io::stdout().flush();
++        let _ = std::io::stderr().write_all(&output.stderr);
++        if !output.status.success() {
++            bail!(
++                "Command failed with status: {}; the command was: {command:?}",
++                output.status
++            );
++        }
++        return Ok(());
+     }
+ 
+-    let tool_path = user_settings.llvm_location.get_tool_path(tool);
+-    let mut command = Command::new(tool_path);
+-    command.args(args);
+     compiler::run_command(command)
+ }
+ 

@@ -1,0 +1,43 @@
+diff --git a/src/backend/tty.rs b/src/backend/tty.rs
+index 78f8675..fa8a526 100644
+--- a/src/backend/tty.rs
++++ b/src/backend/tty.rs
+@@ -469,6 +469,10 @@ impl Tty {
+                 let primary_gpu_path = udev::primary_gpu(&seat_name)
+                     .context("error getting the primary GPU")?
+                     .context("couldn't find a GPU")?;
++                #[cfg(target_os = "macos")]
++                let primary_node = drm_node_open_iland(primary_gpu_path.as_ref())
++                    .context("error opening the primary GPU DRM node")?;
++                #[cfg(not(target_os = "macos"))]
+                 let primary_node = DrmNode::from_path(primary_gpu_path)
+                     .context("error opening the primary GPU DRM node")?;
+                 let primary_render_node = primary_node
+@@ -2722,8 +2726,26 @@ impl GammaProps {
+     }
+ }
+ 
++
++/// wwn-iland: Mode B hooks libc open("/dev/dri/..."), not rustix stat(2).
++#[cfg(target_os = "macos")]
++fn drm_node_open_iland(path: &Path) -> anyhow::Result<DrmNode> {
++    use std::fs::OpenOptions;
++
++    let file = OpenOptions::new()
++        .read(true)
++        .write(true)
++        .open(path)
++        .with_context(|| format!("error opening DRM path {path:?}"))?;
++    DrmNode::from_file(&file).with_context(|| format!("error parsing DRM node {path:?}"))
++}
++
+ fn primary_node_from_render_node(path: &Path) -> Option<(DrmNode, DrmNode)> {
+-    match DrmNode::from_path(path) {
++    #[cfg(target_os = "macos")]
++    let opened = drm_node_open_iland(path);
++    #[cfg(not(target_os = "macos"))]
++    let opened = DrmNode::from_path(path);
++    match opened {
+         Ok(node) => {
+             if node.ty() == NodeType::Render {
+                 match node.node_with_type(NodeType::Primary) {

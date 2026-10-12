@@ -1,0 +1,44 @@
+[package]
+name = "phoon-rs"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+license = "MIT"
+description = "Independent, dependency-free Rust implementation reproducing the terminal output of the historical `phoon` moon-phase utility (clean-room; output-compatible)."
+repository = "https://github.com/Wawona/wwn-phoon-rs"
+homepage = "https://github.com/Wawona/wwn-phoon-rs"
+authors = ["Alex Spaulding"]
+readme = "README.md"
+keywords = ["moon", "phase", "ascii", "cli", "astronomy"]
+categories = ["command-line-utilities"]
+
+# staticlib + cdylib expose `phoon_main` for in-process linking on Apple mobile
+# (mirrors the waypipe_main / fastfetch_main model); rlib lets Wawona and tests
+# use it as a plain Rust crate (`use phoon_rs::Moon;`).
+[lib]
+name = "phoon_rs"
+crate-type = ["staticlib", "rlib", "cdylib"]
+
+[[bin]]
+name = "phoon"
+path = "src/bin/phoon.rs"
+
+# Dev-only tool: reconstructs the ASCII background frames from a reference
+# `phoon` binary's *output* (PHOON_REF). Never built for shipping targets.
+[[bin]]
+name = "gen-backgrounds"
+path = "tools/gen_backgrounds.rs"
+required-features = ["oracle-tools"]
+
+[features]
+default = []
+oracle-tools = []
+
+# NB: no `panic = "abort"`. This crate is linked in-process into the Wawona
+# shell; a panic in `phoon_main` must unwind and be caught at the FFI boundary
+# (see src/ffi.rs), never abort the host process. Keeping `unwind` also lets
+# `cargo test --release` run the harness.
+[profile.release]
+opt-level = 2
+lto = true
+codegen-units = 1

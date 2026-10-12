@@ -1,0 +1,16 @@
+[package]
+name = "fstrmatch"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Wawona scratch fixed-string grep (not GNU grep)"
+publish = false
+
+[[bin]]
+name = "fstrmatch"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

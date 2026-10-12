@@ -1,0 +1,19 @@
+[package]
+name = "jsonlit"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Wawona scratch JSON -n literal (not jq)"
+publish = false
+
+[[bin]]
+name = "jsonlit"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

@@ -1,0 +1,14 @@
+[package]
+name = "wayland-bridge-smoke"
+version = "0.1.0"
+edition = "2021"
+description = "WASIX Wayland SHM one-frame smoke via wawona_wayland_* host imports"
+license = "MIT"
+
+[[bin]]
+name = "wayland-bridge-smoke"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+opt-level = "s"

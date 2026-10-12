@@ -1,0 +1,3241 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index b03ba15..4bcd3c6 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2286,6 +2286,8 @@ dependencies = [
+  "tracy-client",
+  "wayland-backend",
+  "wayland-client",
++ "wayland-egl",
++ "wayland-protocols",
+  "wayland-scanner",
+  "wayland-server",
+  "xcursor",
+@@ -4193,9 +4195,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "wayland-protocols"
+-version = "0.32.12"
++version = "0.32.13"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "563a85523cade2429938e790815fd7319062103b9f4a2dc806e9b53b95982d8f"
++checksum = "23d0c813de3daa2ed6520af85a3bd49b0e722a3078506899aa9686fea58dc4b6"
+ dependencies = [
+  "bitflags 2.11.1",
+  "wayland-backend",
+diff --git a/Cargo.toml b/Cargo.toml
+index fa7164e..50a4050 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -50,6 +50,12 @@ rust-version.workspace = true
+ readme = "README.md"
+ keywords = ["wayland", "compositor", "tiling", "smithay", "wm"]
+ 
++# Wawona (wwn-niri): also emit a static library so mobile targets can link
++# niri in-process (niri_main C ABI in src/c_api.rs) instead of exec'ing a
++# binary, per App Store posture.
++[lib]
++crate-type = ["lib", "staticlib"]
++
+ [dependencies]
+ # accesskit_unix 0.18 has a regression where it doesn't work in normal configurations.
+ # accesskit 0.21 is its correct dependent version.
+@@ -64,57 +70,79 @@ atomic = "0.6.1"
+ bitflags.workspace = true
+ bytemuck = { version = "1.25.0", features = ["derive"] }
+ calloop = { version = "0.14.4", features = ["executor", "futures-io", "signals"] }
++# Wawona (wwn-niri): host-side client stack for the nested backend (niri as a
++# Wayland client of Wawona).
++calloop-wayland-source = "0.4.1"
+ clap = { workspace = true, features = ["string"] }
+ clap_complete = "4.6.2"
+ clap_complete_nushell = "4.6.0"
+ directories = "6.0.0"
+-drm-ffi = "0.9.1"
+ fastrand = "2.4.1"
+ futures-util = { version = "0.3.32", default-features = false, features = ["std", "io"] }
+ git-version = "0.3.9"
+ glam = "0.32.1"
+-input = { version = "0.10.0", features = ["libinput_1_21"] }
+ keyframe = { version = "1.1.1", default-features = false }
+ libc = "0.2.185"
+-libdisplay-info = "0.3.0"
+ log = { version = "0.4.29", features = ["max_level_trace", "release_max_level_debug"] }
+ niri-config = { version = "26.4.0", path = "niri-config" }
+ niri-ipc = { version = "26.4.0", path = "niri-ipc", features = ["clap"] }
+ ordered-float = "5.3.0"
+ pango = { version = "0.21.5", features = ["v1_44"] }
+ pangocairo = "0.21.5"
+-pipewire = { version = "0.9.2", optional = true, features = ["v0_3_33"] }
+ png = "0.18.1"
+ profiling = "1.0.17"
+ sd-notify = "0.5.0"
+ serde.workspace = true
+ serde_json.workspace = true
+-smithay-drm-extras.workspace = true
+ tracing-subscriber.workspace = true
+ tracing.workspace = true
+ tracy-client.workspace = true
+-wayland-backend = "0.3.15"
++# Wawona (wwn-niri): client_system so the nested backend can hand the host
++# libwayland wl_display to EGL (EGL_KHR_platform_wayland).
++wayland-backend = { version = "0.3.15", features = ["client_system"] }
++wayland-client = "0.31.14"
++wayland-egl = "0.32.11"
++wayland-protocols = { version = "0.32.13", features = ["client", "staging", "unstable"] }
+ wayland-scanner = "0.31.10"
+ wayland-server = "0.31.13"
+ xcursor = "0.3.10"
+ zbus = { version = "5.13.2", optional = true }
+ 
++# Wawona (wwn-niri): the DRM/KMS + libinput + udev + libseat + pipewire stack
++# only exists on desktop Linux. On Apple platforms and Android, niri runs
++# strictly as a nested Wayland client of the Wawona compositor, so those
++# backends (and their FFI crates) are compiled out entirely.
++[target.'cfg(target_os = "linux")'.dependencies]
++drm-ffi = "0.9.1"
++input = { version = "0.10.0", features = ["libinput_1_21"] }
++libdisplay-info = "0.3.0"
++pipewire = { version = "0.9.2", optional = true, features = ["v0_3_33"] }
++smithay-drm-extras.workspace = true
++
+ [dependencies.smithay]
+ workspace = true
+ features = [
+-    "backend_drm",
+     "backend_egl",
++    "desktop",
++    "renderer_gl",
++    "renderer_pixman",
++    "use_system_lib",
++    "wayland_frontend",
++]
++
++# Wawona (wwn-niri): backend_winit is Linux-only too — on macOS winit's
++# EventLoop is CFRunLoop-based (no AsFd), which smithay's calloop integration
++# cannot drive. Non-Linux targets use the nested backend exclusively.
++[target.'cfg(target_os = "linux")'.dependencies.smithay]
++workspace = true
++features = [
++    "backend_drm",
+     "backend_gbm",
+     "backend_libinput",
+     "backend_session_libseat",
+     "backend_udev",
+     "backend_winit",
+-    "desktop",
+-    "renderer_gl",
+-    "renderer_pixman",
+     "renderer_multi",
+-    "use_system_lib",
+-    "wayland_frontend",
+ ]
+ 
+ [dev-dependencies]
+diff --git a/niri-config/Cargo.toml b/niri-config/Cargo.toml
+index 1cc0373..f510856 100644
+--- a/niri-config/Cargo.toml
++++ b/niri-config/Cargo.toml
+@@ -14,10 +14,16 @@ knuffel = "3.2.0"
+ miette = { version = "5.10.0", features = ["fancy-no-backtrace"] }
+ niri-ipc = { version = "26.4.0", path = "../niri-ipc" }
+ regex = "1.12.3"
+-smithay = { workspace = true, features = ["backend_libinput"] }
++smithay.workspace = true
+ tracing.workspace = true
+ tracy-client.workspace = true
+ 
++# Wawona (wwn-niri): libinput types only exist on desktop Linux; non-Linux
++# builds use xkb/keysym types from smithay core only.
++[target.'cfg(target_os = "linux")'.dependencies.smithay]
++workspace = true
++features = ["backend_libinput"]
++
+ [dev-dependencies]
+ insta.workspace = true
+ pretty_assertions = "1.4.1"
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index dceb5c6..da19df5 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -2,6 +2,9 @@ use std::str::FromStr;
+ 
+ use miette::miette;
+ use smithay::input::keyboard::XkbConfig;
++// Wawona (wwn-niri): libinput only exists on desktop Linux; the config enums
++// themselves stay portable, only the conversions into libinput types are gated.
++#[cfg(target_os = "linux")]
+ use smithay::reexports::input;
+ 
+ use crate::binds::Modifiers;
+@@ -297,6 +300,7 @@ pub enum ClickMethod {
+     ButtonAreas,
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl From<ClickMethod> for input::ClickMethod {
+     fn from(value: ClickMethod) -> Self {
+         match value {
+@@ -312,6 +316,7 @@ pub enum AccelProfile {
+     Flat,
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl From<AccelProfile> for input::AccelProfile {
+     fn from(value: AccelProfile) -> Self {
+         match value {
+@@ -329,6 +334,7 @@ pub enum ScrollMethod {
+     OnButtonDown,
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl From<ScrollMethod> for input::ScrollMethod {
+     fn from(value: ScrollMethod) -> Self {
+         match value {
+@@ -346,6 +352,7 @@ pub enum TapButtonMap {
+     LeftMiddleRight,
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl From<TapButtonMap> for input::TapButtonMap {
+     fn from(value: TapButtonMap) -> Self {
+         match value {
+diff --git a/src/backend/mod.rs b/src/backend/mod.rs
+index 49fbc6b..aecf2da 100644
+--- a/src/backend/mod.rs
++++ b/src/backend/mod.rs
+@@ -11,19 +11,32 @@ use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
+ use crate::niri::Niri;
+ use crate::utils::id::IdCounter;
+ 
++// Wawona (wwn-niri): the TTY (DRM/KMS + libinput) and winit backends only
++// exist on desktop Linux. On Apple platforms and Android, niri runs strictly
++// nested: a Wayland client of the Wawona compositor (the `nested` backend).
++#[cfg(target_os = "linux")]
+ pub mod tty;
++#[cfg(target_os = "linux")]
+ pub use tty::Tty;
+ 
++#[cfg(target_os = "linux")]
+ pub mod winit;
++#[cfg(target_os = "linux")]
+ pub use winit::Winit;
+ 
++pub mod nested;
++pub use nested::Nested;
++
+ pub mod headless;
+ pub use headless::Headless;
+ 
+ #[allow(clippy::large_enum_variant)]
+ pub enum Backend {
++    #[cfg(target_os = "linux")]
+     Tty(Tty),
++    #[cfg(target_os = "linux")]
+     Winit(Winit),
++    Nested(Box<Nested>),
+     Headless(Headless),
+ }
+ 
+@@ -58,16 +71,22 @@ impl Backend {
+     pub fn init(&mut self, niri: &mut Niri) {
+         let _span = tracy_client::span!("Backend::init");
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.init(niri),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.init(niri),
++            Backend::Nested(nested) => nested.init(niri),
+             Backend::Headless(headless) => headless.init(niri),
+         }
+     }
+ 
+     pub fn seat_name(&self) -> String {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.seat_name(),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.seat_name(),
++            Backend::Nested(nested) => nested.seat_name(),
+             Backend::Headless(headless) => headless.seat_name(),
+         }
+     }
+@@ -77,8 +96,11 @@ impl Backend {
+         f: impl FnOnce(&mut GlesRenderer) -> T,
+     ) -> Option<T> {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.with_primary_renderer(f),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.with_primary_renderer(f),
++            Backend::Nested(nested) => nested.with_primary_renderer(f),
+             Backend::Headless(headless) => headless.with_primary_renderer(f),
+         }
+     }
+@@ -89,15 +111,22 @@ impl Backend {
+         output: &Output,
+         target_presentation_time: Duration,
+     ) -> RenderResult {
++        let _ = target_presentation_time;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.render(niri, output, target_presentation_time),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.render(niri, output),
++            Backend::Nested(nested) => nested.render(niri, output),
+             Backend::Headless(headless) => headless.render(niri, output),
+         }
+     }
+ 
+     pub fn mod_key(&self, config: &Config) -> ModKey {
+         match self {
++            // Nested (and winit) sessions run inside another compositor, which
++            // usually already owns Super.
++            #[cfg(target_os = "linux")]
+             Backend::Winit(_) => config.input.mod_key_nested.unwrap_or({
+                 if let Some(ModKey::Alt) = config.input.mod_key {
+                     ModKey::Super
+@@ -105,54 +134,74 @@ impl Backend {
+                     ModKey::Alt
+                 }
+             }),
+-            Backend::Tty(_) | Backend::Headless(_) => config.input.mod_key.unwrap_or(ModKey::Super),
++            Backend::Nested(_) => config.input.mod_key_nested.unwrap_or({
++                if let Some(ModKey::Alt) = config.input.mod_key {
++                    ModKey::Super
++                } else {
++                    ModKey::Alt
++                }
++            }),
++            #[cfg(target_os = "linux")]
++            Backend::Tty(_) => config.input.mod_key.unwrap_or(ModKey::Super),
++            Backend::Headless(_) => config.input.mod_key.unwrap_or(ModKey::Super),
+         }
+     }
+ 
+     pub fn change_vt(&mut self, vt: i32) {
++        let _ = vt;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.change_vt(vt),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn suspend(&mut self) {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.suspend(),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn toggle_debug_tint(&mut self) {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.toggle_debug_tint(),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.toggle_debug_tint(),
++            Backend::Nested(nested) => nested.toggle_debug_tint(),
+             Backend::Headless(_) => (),
+         }
+     }
+ 
+     pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.import_dmabuf(dmabuf),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.import_dmabuf(dmabuf),
++            Backend::Nested(nested) => nested.import_dmabuf(dmabuf),
+             Backend::Headless(headless) => headless.import_dmabuf(dmabuf),
+         }
+     }
+ 
+     pub fn early_import(&mut self, surface: &WlSurface) {
++        let _ = surface;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.early_import(surface),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn ipc_outputs(&self) -> Arc<Mutex<IpcOutputMap>> {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.ipc_outputs(),
++            #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.ipc_outputs(),
++            Backend::Nested(nested) => nested.ipc_outputs(),
+             Backend::Headless(headless) => headless.ipc_outputs(),
+         }
+     }
+@@ -163,44 +212,49 @@ impl Backend {
+     ) -> Option<smithay::backend::allocator::gbm::GbmDevice<smithay::backend::drm::DrmDeviceFd>>
+     {
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.primary_gbm_device(),
+-            Backend::Winit(_) => None,
+-            Backend::Headless(_) => None,
++            _ => None,
+         }
+     }
+ 
+     pub fn set_monitors_active(&mut self, active: bool) {
++        let _ = active;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.set_monitors_active(active),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn set_output_on_demand_vrr(&mut self, niri: &mut Niri, output: &Output, enable_vrr: bool) {
++        let _ = (&niri, output, enable_vrr);
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.set_output_on_demand_vrr(niri, output, enable_vrr),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn update_ignored_nodes_config(&mut self, niri: &mut Niri) {
++        let _ = &niri;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.update_ignored_nodes_config(niri),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
+     pub fn on_output_config_changed(&mut self, niri: &mut Niri) {
++        let _ = &niri;
+         match self {
++            #[cfg(target_os = "linux")]
+             Backend::Tty(tty) => tty.on_output_config_changed(niri),
+-            Backend::Winit(_) => (),
+-            Backend::Headless(_) => (),
++            _ => (),
+         }
+     }
+ 
++    #[cfg(target_os = "linux")]
+     pub fn tty_checked(&mut self) -> Option<&mut Tty> {
+         if let Self::Tty(v) = self {
+             Some(v)
+@@ -209,6 +263,7 @@ impl Backend {
+         }
+     }
+ 
++    #[cfg(target_os = "linux")]
+     pub fn tty(&mut self) -> &mut Tty {
+         if let Self::Tty(v) = self {
+             v
+@@ -217,6 +272,7 @@ impl Backend {
+         }
+     }
+ 
++    #[cfg(target_os = "linux")]
+     pub fn winit(&mut self) -> &mut Winit {
+         if let Self::Winit(v) = self {
+             v
+@@ -225,6 +281,14 @@ impl Backend {
+         }
+     }
+ 
++    pub fn nested(&mut self) -> &mut Nested {
++        if let Self::Nested(v) = self {
++            v
++        } else {
++            panic!("backend is not Nested")
++        }
++    }
++
+     pub fn headless(&mut self) -> &mut Headless {
+         if let Self::Headless(v) = self {
+             v
+diff --git a/src/backend/nested/input.rs b/src/backend/nested/input.rs
+new file mode 100644
+index 0000000..68d399a
+--- /dev/null
++++ b/src/backend/nested/input.rs
+@@ -0,0 +1,377 @@
++//! Input backend types for the nested (Wayland client) backend.
++//!
++//! Wawona (wwn-niri): translates wl_pointer / wl_keyboard / wl_touch events
++//! received from the host compositor (Wawona) into smithay `InputBackend`
++//! events that niri's generic input pipeline consumes. Modeled on smithay's
++//! winit input backend.
++
++use std::path::PathBuf;
++
++use smithay::backend::input::{
++    AbsolutePositionEvent, Axis, AxisRelativeDirection, AxisSource, ButtonState, Device,
++    DeviceCapability, Event, InputBackend, KeyState, KeyboardKeyEvent, Keycode, PointerAxisEvent,
++    PointerButtonEvent, PointerMotionAbsoluteEvent, TouchCancelEvent, TouchDownEvent, TouchEvent,
++    TouchMotionEvent, TouchSlot, TouchUpEvent, UnusedEvent,
++};
++
++/// Marker used to define the `InputBackend` types for the nested backend.
++#[derive(Debug)]
++pub struct NestedInput;
++
++/// Virtual input device representing the host seat.
++#[derive(PartialEq, Eq, Hash, Debug)]
++pub struct NestedVirtualDevice;
++
++impl Device for NestedVirtualDevice {
++    fn id(&self) -> String {
++        String::from("nested")
++    }
++
++    fn name(&self) -> String {
++        String::from("nested (host seat) virtual input")
++    }
++
++    fn has_capability(&self, capability: DeviceCapability) -> bool {
++        matches!(
++            capability,
++            DeviceCapability::Keyboard | DeviceCapability::Pointer | DeviceCapability::Touch
++        )
++    }
++
++    fn usb_id(&self) -> Option<(u32, u32)> {
++        None
++    }
++
++    fn syspath(&self) -> Option<PathBuf> {
++        None
++    }
++}
++
++/// Keyboard event from the host wl_keyboard.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
++pub struct NestedKeyboardInputEvent {
++    pub time: u64,
++    /// evdev keycode as delivered by wl_keyboard::key.
++    pub key: u32,
++    pub state: KeyState,
++}
++
++impl Event<NestedInput> for NestedKeyboardInputEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl KeyboardKeyEvent<NestedInput> for NestedKeyboardInputEvent {
++    fn key_code(&self) -> Keycode {
++        // evdev -> XKB keycode offset, same as every other smithay backend.
++        (self.key + 8).into()
++    }
++
++    fn state(&self) -> KeyState {
++        self.state
++    }
++
++    fn count(&self) -> u32 {
++        1
++    }
++}
++
++/// Absolute pointer motion within the nested output.
++#[derive(Debug, Clone, Copy, PartialEq)]
++pub struct NestedPointerMotionEvent {
++    pub time: u64,
++    /// Surface-local position in logical pixels.
++    pub position: (f64, f64),
++    /// Current surface (== output) logical size.
++    pub surface_size: (i32, i32),
++}
++
++impl Event<NestedInput> for NestedPointerMotionEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl PointerMotionAbsoluteEvent<NestedInput> for NestedPointerMotionEvent {}
++impl AbsolutePositionEvent<NestedInput> for NestedPointerMotionEvent {
++    fn x(&self) -> f64 {
++        self.position.0
++    }
++
++    fn y(&self) -> f64 {
++        self.position.1
++    }
++
++    fn x_transformed(&self, width: i32) -> f64 {
++        if self.surface_size.0 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.0 * width as f64 / self.surface_size.0 as f64, 0.0)
++    }
++
++    fn y_transformed(&self, height: i32) -> f64 {
++        if self.surface_size.1 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.1 * height as f64 / self.surface_size.1 as f64, 0.0)
++    }
++}
++
++/// Pointer button event from the host wl_pointer.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
++pub struct NestedPointerButtonEvent {
++    pub time: u64,
++    /// Raw button code (BTN_*).
++    pub button: u32,
++    pub state: ButtonState,
++}
++
++impl Event<NestedInput> for NestedPointerButtonEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl PointerButtonEvent<NestedInput> for NestedPointerButtonEvent {
++    fn button_code(&self) -> u32 {
++        self.button
++    }
++
++    fn state(&self) -> ButtonState {
++        self.state
++    }
++}
++
++/// Pointer axis (scroll) event from the host wl_pointer.
++#[derive(Debug, Clone, Copy, PartialEq)]
++pub struct NestedPointerAxisEvent {
++    pub time: u64,
++    pub source: AxisSource,
++    /// Continuous scroll amount (logical pixels), per axis.
++    pub amount: (Option<f64>, Option<f64>),
++    /// v120 discrete scroll amount, per axis.
++    pub amount_v120: (Option<f64>, Option<f64>),
++}
++
++impl Event<NestedInput> for NestedPointerAxisEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl PointerAxisEvent<NestedInput> for NestedPointerAxisEvent {
++    fn amount(&self, axis: Axis) -> Option<f64> {
++        match axis {
++            Axis::Horizontal => self.amount.0,
++            Axis::Vertical => self.amount.1,
++        }
++    }
++
++    fn amount_v120(&self, axis: Axis) -> Option<f64> {
++        match axis {
++            Axis::Horizontal => self.amount_v120.0,
++            Axis::Vertical => self.amount_v120.1,
++        }
++    }
++
++    fn source(&self) -> AxisSource {
++        self.source
++    }
++
++    fn relative_direction(&self, _axis: Axis) -> AxisRelativeDirection {
++        AxisRelativeDirection::Identical
++    }
++}
++
++/// Touch down event from the host wl_touch.
++#[derive(Debug, Clone, Copy, PartialEq)]
++pub struct NestedTouchDownEvent {
++    pub time: u64,
++    pub id: i32,
++    pub position: (f64, f64),
++    pub surface_size: (i32, i32),
++}
++
++impl Event<NestedInput> for NestedTouchDownEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl TouchDownEvent<NestedInput> for NestedTouchDownEvent {}
++impl TouchEvent<NestedInput> for NestedTouchDownEvent {
++    fn slot(&self) -> TouchSlot {
++        Some(self.id as u32).into()
++    }
++}
++impl AbsolutePositionEvent<NestedInput> for NestedTouchDownEvent {
++    fn x(&self) -> f64 {
++        self.position.0
++    }
++
++    fn y(&self) -> f64 {
++        self.position.1
++    }
++
++    fn x_transformed(&self, width: i32) -> f64 {
++        if self.surface_size.0 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.0 * width as f64 / self.surface_size.0 as f64, 0.0)
++    }
++
++    fn y_transformed(&self, height: i32) -> f64 {
++        if self.surface_size.1 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.1 * height as f64 / self.surface_size.1 as f64, 0.0)
++    }
++}
++
++/// Touch motion event from the host wl_touch.
++#[derive(Debug, Clone, Copy, PartialEq)]
++pub struct NestedTouchMotionEvent {
++    pub time: u64,
++    pub id: i32,
++    pub position: (f64, f64),
++    pub surface_size: (i32, i32),
++}
++
++impl Event<NestedInput> for NestedTouchMotionEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl TouchMotionEvent<NestedInput> for NestedTouchMotionEvent {}
++impl TouchEvent<NestedInput> for NestedTouchMotionEvent {
++    fn slot(&self) -> TouchSlot {
++        Some(self.id as u32).into()
++    }
++}
++impl AbsolutePositionEvent<NestedInput> for NestedTouchMotionEvent {
++    fn x(&self) -> f64 {
++        self.position.0
++    }
++
++    fn y(&self) -> f64 {
++        self.position.1
++    }
++
++    fn x_transformed(&self, width: i32) -> f64 {
++        if self.surface_size.0 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.0 * width as f64 / self.surface_size.0 as f64, 0.0)
++    }
++
++    fn y_transformed(&self, height: i32) -> f64 {
++        if self.surface_size.1 <= 0 {
++            return 0.0;
++        }
++        f64::max(self.position.1 * height as f64 / self.surface_size.1 as f64, 0.0)
++    }
++}
++
++/// Touch up event from the host wl_touch.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
++pub struct NestedTouchUpEvent {
++    pub time: u64,
++    pub id: i32,
++}
++
++impl Event<NestedInput> for NestedTouchUpEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl TouchUpEvent<NestedInput> for NestedTouchUpEvent {}
++impl TouchEvent<NestedInput> for NestedTouchUpEvent {
++    fn slot(&self) -> TouchSlot {
++        Some(self.id as u32).into()
++    }
++}
++
++/// Touch cancel event from the host wl_touch.
++#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
++pub struct NestedTouchCancelEvent {
++    pub time: u64,
++}
++
++impl Event<NestedInput> for NestedTouchCancelEvent {
++    fn time(&self) -> u64 {
++        self.time
++    }
++
++    fn device(&self) -> NestedVirtualDevice {
++        NestedVirtualDevice
++    }
++}
++
++impl TouchCancelEvent<NestedInput> for NestedTouchCancelEvent {}
++impl TouchEvent<NestedInput> for NestedTouchCancelEvent {
++    fn slot(&self) -> TouchSlot {
++        None.into()
++    }
++}
++
++impl InputBackend for NestedInput {
++    type Device = NestedVirtualDevice;
++    type KeyboardKeyEvent = NestedKeyboardInputEvent;
++    type PointerAxisEvent = NestedPointerAxisEvent;
++    type PointerButtonEvent = NestedPointerButtonEvent;
++    type PointerMotionEvent = UnusedEvent;
++    type PointerMotionAbsoluteEvent = NestedPointerMotionEvent;
++
++    type GestureSwipeBeginEvent = UnusedEvent;
++    type GestureSwipeUpdateEvent = UnusedEvent;
++    type GestureSwipeEndEvent = UnusedEvent;
++    type GesturePinchBeginEvent = UnusedEvent;
++    type GesturePinchUpdateEvent = UnusedEvent;
++    type GesturePinchEndEvent = UnusedEvent;
++    type GestureHoldBeginEvent = UnusedEvent;
++    type GestureHoldEndEvent = UnusedEvent;
++
++    type TouchDownEvent = NestedTouchDownEvent;
++    type TouchUpEvent = NestedTouchUpEvent;
++    type TouchMotionEvent = NestedTouchMotionEvent;
++    type TouchCancelEvent = NestedTouchCancelEvent;
++    type TouchFrameEvent = UnusedEvent;
++    type TabletToolAxisEvent = UnusedEvent;
++    type TabletToolProximityEvent = UnusedEvent;
++    type TabletToolTipEvent = UnusedEvent;
++    type TabletToolButtonEvent = UnusedEvent;
++
++    type SwitchToggleEvent = UnusedEvent;
++    type SpecialEvent = UnusedEvent;
++}
+diff --git a/src/backend/nested/mod.rs b/src/backend/nested/mod.rs
+new file mode 100644
+index 0000000..ce00c20
+--- /dev/null
++++ b/src/backend/nested/mod.rs
+@@ -0,0 +1,1476 @@
++//! Nested backend: niri as a Wayland client of a host compositor (Wawona).
++//!
++//! Wawona (wwn-niri): on Apple platforms and Android there is no DRM/KMS,
++//! libinput, or winit-Wayland, so niri runs strictly *nested* — it connects to
++//! the host compositor (Wawona) advertised via WAYLAND_DISPLAY, creates one
++//! xdg_toplevel that acts as niri's single output, renders with GLES through
++//! EGL_KHR_platform_wayland (served by wwn-iland/ANGLE on Apple targets), and
++//! translates the host seat's wl_pointer/wl_keyboard/wl_touch events into
++//! niri's input pipeline. niri in turn hosts its own scrollable-tiling clients
++//! on its own (child) Wayland socket.
++//!
++//! Only core + xdg-shell (+ optional xdg-decoration) globals are bound from
++//! the host — exactly the subset Wawona serves.
++
++use std::cell::RefCell;
++use std::collections::HashMap;
++use std::mem;
++use std::os::raw::c_int;
++use std::rc::Rc;
++use std::sync::atomic::{AtomicBool, Ordering};
++use std::sync::{Arc, Mutex};
++
++use anyhow::Context as _;
++use calloop_wayland_source::WaylandSource;
++use niri_config::{Config, OutputName};
++use smithay::backend::allocator::dmabuf::Dmabuf;
++use smithay::backend::allocator::Fourcc;
++use smithay::backend::egl::context::{GlAttributes, PixelFormatRequirements};
++use smithay::backend::egl::display::EGLDisplayHandle;
++use smithay::backend::egl::native::{EGLNativeDisplay, EGLNativeSurface, EGLPlatform};
++use smithay::backend::egl::{ffi, wrap_egl_call_ptr, EGLContext, EGLDisplay, EGLError, EGLSurface};
++use smithay::backend::input::{AxisSource, ButtonState, InputEvent, KeyState};
++use smithay::backend::renderer::damage::OutputDamageTracker;
++use smithay::backend::renderer::gles::{GlesRenderbuffer, GlesRenderer};
++use smithay::backend::renderer::{Bind, DebugFlags, ExportMem, ImportDma, Offscreen, Renderer};
++use smithay::egl_platform;
++use smithay::output::{Mode, Output, PhysicalProperties, Subpixel};
++use smithay::reexports::calloop::LoopHandle;
++use smithay::reexports::wayland_protocols::wp::presentation_time::server::wp_presentation_feedback;
++use smithay::utils::{Physical, Size};
++#[cfg(target_os = "linux")]
++use smithay::wayland::dmabuf::DmabufFeedbackBuilder;
++use smithay::wayland::dmabuf::DmabufGlobal;
++use smithay::wayland::presentation::Refresh;
++use wayland_client::globals::{registry_queue_init, GlobalList, GlobalListContents};
++use wayland_client::protocol::wl_buffer::{self, WlBuffer};
++use wayland_client::protocol::wl_callback::WlCallback;
++use wayland_client::protocol::wl_compositor::WlCompositor;
++use wayland_client::protocol::wl_keyboard::{self, WlKeyboard};
++use wayland_client::protocol::wl_pointer::{self, WlPointer};
++use wayland_client::protocol::wl_registry::WlRegistry;
++use wayland_client::protocol::wl_seat::{self, WlSeat};
++use wayland_client::protocol::wl_shm::{self, WlShm};
++use wayland_client::protocol::wl_shm_pool::WlShmPool;
++use wayland_client::protocol::wl_surface::WlSurface as ClientWlSurface;
++use wayland_client::protocol::wl_touch::{self, WlTouch};
++use wayland_client::{Connection, Dispatch, Proxy, QueueHandle};
++use wayland_egl as wegl;
++use wayland_protocols::xdg::decoration::zv1::client::zxdg_decoration_manager_v1::ZxdgDecorationManagerV1;
++use wayland_protocols::xdg::decoration::zv1::client::zxdg_toplevel_decoration_v1::{
++    self, ZxdgToplevelDecorationV1,
++};
++use wayland_protocols::xdg::shell::client::xdg_surface::{self, XdgSurface};
++use wayland_protocols::xdg::shell::client::xdg_toplevel::{self, XdgToplevel};
++use wayland_protocols::xdg::shell::client::xdg_wm_base::{self, XdgWmBase};
++
++use super::{IpcOutputMap, OutputId, RenderResult};
++use crate::niri::{Niri, RedrawState, State};
++use crate::render_helpers::debug::draw_damage;
++use crate::render_helpers::{resources, shaders, RenderCtx, RenderTarget};
++use crate::utils::{get_monotonic_time, logical_output};
++
++pub mod input;
++pub use input::*;
++
++const DEFAULT_SIZE: (i32, i32) = (1280, 800);
++
++/// EGL native display over the host libwayland client connection.
++struct NestedEglDisplay(*mut std::os::raw::c_void);
++
++// SAFETY: the pointer is the host libwayland wl_display, which outlives the
++// backend and is safe to hand to EGL from any thread.
++unsafe impl Send for NestedEglDisplay {}
++
++impl EGLNativeDisplay for NestedEglDisplay {
++    fn supported_platforms(&self) -> Vec<EGLPlatform<'_>> {
++        let display = self.0;
++        vec![
++            // see: https://www.khronos.org/registry/EGL/extensions/KHR/EGL_KHR_platform_wayland.txt
++            egl_platform!(PLATFORM_WAYLAND_KHR, display, &["EGL_KHR_platform_wayland"]),
++            // see: https://www.khronos.org/registry/EGL/extensions/EXT/EGL_EXT_platform_wayland.txt
++            egl_platform!(PLATFORM_WAYLAND_EXT, display, &["EGL_EXT_platform_wayland"]),
++            // see: https://raw.githubusercontent.com/google/angle/main/extensions/EGL_ANGLE_platform_angle.txt
++            //
++            // Note: ANGLE's Vulkan backend accepts a wl_display native handle
++            // (EGL_PLATFORM_ANGLE_NATIVE_PLATFORM_TYPE_ANGLE = WAYLAND_EXT)
++            // even when EGL_EXT_platform_wayland is not advertised as a
++            // *client* extension, so don't require it here.
++            #[cfg(not(any(target_os = "ios", target_os = "tvos", target_os = "visionos", target_os = "macos")))]
++            egl_platform!(
++                PLATFORM_ANGLE_ANGLE,
++                display,
++                &[
++                    "EGL_ANGLE_platform_angle",
++                    "EGL_ANGLE_platform_angle_vulkan",
++                ],
++                vec![
++                    ffi::egl::PLATFORM_ANGLE_NATIVE_PLATFORM_TYPE_ANGLE,
++                    ffi::egl::PLATFORM_WAYLAND_EXT as _,
++                    ffi::egl::PLATFORM_ANGLE_TYPE_ANGLE,
++                    ffi::egl::PLATFORM_ANGLE_TYPE_VULKAN_ANGLE,
++                    ffi::egl::NONE as ffi::EGLint
++                ]
++            ),
++            // Apple ANGLE (macOS + mobile) advertises Metal, not Vulkan. macOS is
++            // here too: Vulkan-ANGLE eglInitialize needs a MoltenVK/KosmicKrisp
++            // device the headless macOS CI VM cannot create (EGL_NOT_INITIALIZED).
++            #[cfg(any(target_os = "ios", target_os = "tvos", target_os = "visionos", target_os = "macos"))]
++            egl_platform!(
++                PLATFORM_ANGLE_ANGLE,
++                display,
++                &[
++                    "EGL_ANGLE_platform_angle",
++                    "EGL_ANGLE_platform_angle_metal",
++                ],
++                vec![
++                    ffi::egl::PLATFORM_ANGLE_NATIVE_PLATFORM_TYPE_ANGLE,
++                    ffi::egl::PLATFORM_WAYLAND_EXT as _,
++                    ffi::egl::PLATFORM_ANGLE_TYPE_ANGLE,
++                    0x3489 as ffi::EGLint, // EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE
++                    ffi::egl::NONE as ffi::EGLint
++                ]
++            ),
++        ]
++    }
++
++    fn identifier(&self) -> Option<String> {
++        Some("nested (host wayland)".to_owned())
++    }
++}
++
++static NESTED_SURFACE_ATTRIBUTES: [c_int; 3] = [
++    ffi::egl::RENDER_BUFFER as c_int,
++    ffi::egl::BACK_BUFFER as c_int,
++    ffi::egl::NONE as c_int,
++];
++
++/// Whether the EGL implementation can create window surfaces from
++/// wl_egl_window (a real Wayland winsys).
++///
++/// ANGLE on Apple targets and Android system EGL initialize a display over
++/// the wl_display handle (Vulkan/Metal backends) but have no Wayland window
++/// surface support — CreatePlatformWindowSurfaceEXT would treat the
++/// wl_egl_window as a native object of the underlying OS (CALayer /
++/// ANativeWindow) and crash. In that case rendering goes through the
++/// offscreen + wl_shm readback path instead.
++///
++/// Must be called after the EGL library has been loaded (EGLDisplay::new).
++fn egl_has_wayland_winsys() -> bool {
++    unsafe {
++        let ptr = ffi::egl::QueryString(ffi::egl::NO_DISPLAY, ffi::egl::EXTENSIONS as ffi::EGLint);
++        if ptr.is_null() {
++            return false;
++        }
++        let extensions = std::ffi::CStr::from_ptr(ptr).to_string_lossy();
++        extensions
++            .split_whitespace()
++            .any(|ext| ext == "EGL_KHR_platform_wayland" || ext == "EGL_EXT_platform_wayland")
++    }
++}
++
++/// EGL native surface over a wl_egl_window for the host surface.
++struct NestedEglSurface(wegl::WlEglSurface);
++
++unsafe impl EGLNativeSurface for NestedEglSurface {
++    unsafe fn create(
++        &self,
++        display: &Arc<EGLDisplayHandle>,
++        config_id: ffi::egl::types::EGLConfig,
++    ) -> Result<*const std::os::raw::c_void, EGLError> {
++        wrap_egl_call_ptr(|| unsafe {
++            ffi::egl::CreatePlatformWindowSurfaceEXT(
++                display.handle,
++                config_id,
++                self.0.ptr() as *mut _,
++                NESTED_SURFACE_ATTRIBUTES.as_ptr(),
++            )
++        })
++    }
++
++    fn resize(&self, width: i32, height: i32, dx: i32, dy: i32) -> bool {
++        wegl::WlEglSurface::resize(&self.0, width, height, dx, dy);
++        true
++    }
++
++    fn identifier(&self) -> Option<String> {
++        Some("nested (wl_egl_window)".to_owned())
++    }
++}
++
++/// How rendered frames reach the host surface.
++enum Present {
++    /// Direct EGL window surface over a wl_egl_window; eglSwapBuffers
++    /// attaches + commits. Used when the host EGL has a Wayland winsys.
++    Egl(EGLSurface),
++    /// Offscreen GLES renderbuffer + CPU readback into wl_shm buffers.
++    /// Used with ANGLE (Apple targets) and Android system EGL, which
++    /// initialize an EGL display but cannot create Wayland window surfaces.
++    Shm(ShmState),
++}
++
++struct ShmState {
++    shm: WlShm,
++    renderbuffer: Option<GlesRenderbuffer>,
++    slots: [Option<ShmSlot>; 2],
++    /// Size the renderbuffer + slots were created for.
++    size: Option<Size<i32, Physical>>,
++}
++
++/// One wl_shm buffer: an unlinked temp file mapped into memory.
++struct ShmSlot {
++    buffer: WlBuffer,
++    pool: WlShmPool,
++    ptr: *mut u8,
++    len: usize,
++    /// Cleared on attach, set again by wl_buffer.release.
++    free: Arc<AtomicBool>,
++}
++
++impl Drop for ShmSlot {
++    fn drop(&mut self) {
++        self.buffer.destroy();
++        self.pool.destroy();
++        unsafe {
++            libc::munmap(self.ptr.cast(), self.len);
++        }
++    }
++}
++
++impl ShmSlot {
++    fn new(
++        shm: &WlShm,
++        qh: &QueueHandle<State>,
++        size: Size<i32, Physical>,
++    ) -> anyhow::Result<Self> {
++        use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd};
++
++        let stride = size.w * 4;
++        let len = (stride * size.h) as usize;
++
++        // Sandbox-safe backing file: XDG_RUNTIME_DIR lives inside the app
++        // container on Apple/Android targets.
++        let dir = std::env::var_os("XDG_RUNTIME_DIR")
++            .map(std::path::PathBuf::from)
++            .unwrap_or_else(std::env::temp_dir);
++        let template = dir.join("niri-nested-shm-XXXXXX");
++        let mut path = template.into_os_string().as_encoded_bytes().to_vec();
++        path.push(0);
++        let fd = unsafe { libc::mkstemp(path.as_mut_ptr().cast()) };
++        anyhow::ensure!(
++            fd >= 0,
++            "mkstemp failed: {}",
++            std::io::Error::last_os_error()
++        );
++        let fd = unsafe { OwnedFd::from_raw_fd(fd) };
++        unsafe { libc::unlink(path.as_ptr().cast()) };
++        let ret = unsafe { libc::ftruncate(fd.as_raw_fd(), len as libc::off_t) };
++        anyhow::ensure!(
++            ret == 0,
++            "ftruncate failed: {}",
++            std::io::Error::last_os_error()
++        );
++
++        let ptr = unsafe {
++            libc::mmap(
++                std::ptr::null_mut(),
++                len,
++                libc::PROT_READ | libc::PROT_WRITE,
++                libc::MAP_SHARED,
++                fd.as_raw_fd(),
++                0,
++            )
++        };
++        anyhow::ensure!(
++            ptr != libc::MAP_FAILED,
++            "mmap failed: {}",
++            std::io::Error::last_os_error()
++        );
++
++        let free = Arc::new(AtomicBool::new(true));
++        let pool = shm.create_pool(fd.as_fd(), len as i32, qh, ());
++        let buffer = pool.create_buffer(
++            0,
++            size.w,
++            size.h,
++            stride,
++            wl_shm::Format::Argb8888,
++            qh,
++            free.clone(),
++        );
++
++        Ok(Self {
++            buffer,
++            pool,
++            ptr: ptr.cast(),
++            len,
++            free,
++        })
++    }
++}
++
++/// Host-side (client) Wayland objects.
++///
++/// Several of these are never read back, but must be kept alive for the
++/// lifetime of the connection (dropping the Rust proxy does not destroy the
++/// protocol object, but keeping them makes the ownership explicit).
++#[allow(dead_code)]
++struct HostObjects {
++    _compositor: WlCompositor,
++    surface: ClientWlSurface,
++    wm_base: XdgWmBase,
++    xdg_surface: XdgSurface,
++    toplevel: XdgToplevel,
++    _decoration: Option<ZxdgToplevelDecorationV1>,
++    seat: Option<WlSeat>,
++    pointer: Option<WlPointer>,
++    keyboard: Option<WlKeyboard>,
++    touch: Option<WlTouch>,
++}
++
++/// Accumulates a wl_pointer axis frame.
++#[derive(Default)]
++struct PendingAxis {
++    source: Option<AxisSource>,
++    amount: (Option<f64>, Option<f64>),
++    amount_v120: (Option<f64>, Option<f64>),
++    time: u32,
++    has_events: bool,
++}
++
++pub struct Nested {
++    config: Rc<RefCell<Config>>,
++    connection: Connection,
++    qh: QueueHandle<State>,
++    host: HostObjects,
++
++    output: Output,
++    // The EGL display must be kept alive as long as the surface/context.
++    _egl_display: EGLDisplay,
++    present: Present,
++    renderer: GlesRenderer,
++    damage_tracker: OutputDamageTracker,
++    damage_tracking: bool,
++    dmabuf_global: Option<DmabufGlobal>,
++    ipc_outputs: Arc<Mutex<IpcOutputMap>>,
++
++    /// Set after the initial xdg_surface configure; the output is added to
++    /// niri (and rendering starts) only then.
++    configured: bool,
++    /// Size requested by the latest xdg_toplevel configure.
++    pending_size: Option<Size<i32, Physical>>,
++    /// Current surface/output size in physical pixels.
++    window_size: Size<i32, Physical>,
++    /// Size the EGL surface was last resized to.
++    bind_size: Option<Size<i32, Physical>>,
++    /// Whether a frame callback from the host is outstanding.
++    frame_callback_pending: bool,
++
++    /// Pointer state: last known surface-local position.
++    pointer_position: (f64, f64),
++    pending_axis: PendingAxis,
++}
++
++impl Nested {
++    pub fn new(
++        config: Rc<RefCell<Config>>,
++        event_loop: LoopHandle<'static, State>,
++    ) -> anyhow::Result<Self> {
++        let _span = tracy_client::span!("Nested::new");
++
++        let connection =
++            Connection::connect_to_env().context("error connecting to the host compositor")?;
++
++        let (globals, event_queue) = registry_queue_init::<State>(&connection)
++            .context("error initializing the host registry")?;
++        let qh = event_queue.handle();
++
++        let compositor: WlCompositor = globals
++            .bind(&qh, 1..=6, ())
++            .context("host compositor does not serve wl_compositor")?;
++        let wm_base: XdgWmBase = globals
++            .bind(&qh, 1..=6, ())
++            .context("host compositor does not serve xdg_wm_base")?;
++
++        let surface = compositor.create_surface(&qh, ());
++        let xdg_surface = wm_base.get_xdg_surface(&surface, &qh, ());
++        let toplevel = xdg_surface.get_toplevel(&qh, ());
++        toplevel.set_title("niri (nested)".to_owned());
++        toplevel.set_app_id("niri".to_owned());
++
++        // Ask the host for server-side decorations when available; Wawona
++        // draws SSD frames for nested compositors.
++        let decoration = globals
++            .bind::<ZxdgDecorationManagerV1, State, ()>(&qh, 1..=1, ())
++            .ok()
++            .map(|manager| {
++                let deco = manager.get_toplevel_decoration(&toplevel, &qh, ());
++                deco.set_mode(zxdg_toplevel_decoration_v1::Mode::ServerSide);
++                deco
++            });
++
++        let seat = globals.bind::<WlSeat, State, ()>(&qh, 1..=8, ()).ok();
++
++        // Commit the initial (buffer-less) state; the host replies with the
++        // first configure, after which rendering may start.
++        surface.commit();
++        connection
++            .flush()
++            .context("error flushing the initial host commit")?;
++
++        // EGL over the host wayland display (EGL_KHR_platform_wayland; on
++        // Apple targets this resolves to the wwn-iland/ANGLE EGL).
++        let display_ptr = connection.backend().display_ptr() as *mut std::os::raw::c_void;
++        let egl_display = unsafe { EGLDisplay::new(NestedEglDisplay(display_ptr)) }
++            .context("error creating the nested EGL display")?;
++
++        let gl_attributes = GlAttributes {
++            version: (3, 0),
++            profile: None,
++            debug: cfg!(debug_assertions),
++            vsync: false,
++        };
++        let context = EGLContext::new_with_config(
++            &egl_display,
++            gl_attributes,
++            PixelFormatRequirements::_10_bit(),
++        )
++        .or_else(|_| {
++            EGLContext::new_with_config(
++                &egl_display,
++                gl_attributes,
++                PixelFormatRequirements::_8_bit(),
++            )
++        })
++        .context("error creating the nested EGL context")?;
++
++        let present = if egl_has_wayland_winsys() {
++            let wl_egl_surface =
++                wegl::WlEglSurface::new(surface.id(), DEFAULT_SIZE.0, DEFAULT_SIZE.1)
++                    .context("error creating the wl_egl_window")?;
++            let egl_surface = unsafe {
++                EGLSurface::new(
++                    &egl_display,
++                    context
++                        .pixel_format()
++                        .context("EGL context has no pixel format")?,
++                    context.config_id(),
++                    NestedEglSurface(wl_egl_surface),
++                )
++            }
++            .context("error creating the nested EGL surface")?;
++            Present::Egl(egl_surface)
++        } else {
++            // No Wayland winsys in the host EGL (ANGLE on Apple targets,
++            // Android system EGL): render offscreen and present via wl_shm.
++            info!("host EGL has no Wayland winsys; using offscreen + wl_shm presentation");
++            let shm: WlShm = globals
++                .bind(&qh, 1..=1, ())
++                .context("host compositor does not serve wl_shm")?;
++            Present::Shm(ShmState {
++                shm,
++                renderbuffer: None,
++                slots: [None, None],
++                size: None,
++            })
++        };
++
++        let renderer =
++            unsafe { GlesRenderer::new(context) }.context("error creating the GLES renderer")?;
++        let damage_tracking =
++            matches!(present, Present::Egl(_)) && egl_display.supports_damage();
++
++        let output = Output::new(
++            "nested".to_string(),
++            PhysicalProperties {
++                size: (0, 0).into(),
++                subpixel: Subpixel::Unknown,
++                make: "Wawona".into(),
++                model: "Nested".into(),
++                serial_number: "Unknown".into(),
++            },
++        );
++
++        let mode = Mode {
++            size: Size::from(DEFAULT_SIZE),
++            refresh: 60_000,
++        };
++        output.change_current_state(Some(mode), None, None, None);
++        output.set_preferred(mode);
++
++        output.user_data().insert_if_missing(|| OutputName {
++            connector: "nested".to_string(),
++            make: Some("Wawona".to_string()),
++            model: Some("Nested".to_string()),
++            serial: None,
++        });
++
++        let physical_properties = output.physical_properties();
++        let ipc_outputs = Arc::new(Mutex::new(HashMap::from([(
++            OutputId::next(),
++            niri_ipc::Output {
++                name: output.name(),
++                make: physical_properties.make,
++                model: physical_properties.model,
++                serial: None,
++                physical_size: None,
++                modes: vec![niri_ipc::Mode {
++                    width: DEFAULT_SIZE.0 as u16,
++                    height: DEFAULT_SIZE.1 as u16,
++                    refresh_rate: 60_000,
++                    is_preferred: true,
++                }],
++                current_mode: Some(0),
++                is_custom_mode: true,
++                vrr_supported: false,
++                vrr_enabled: false,
++                logical: Some(logical_output(&output)),
++            },
++        )])));
++
++        let damage_tracker = OutputDamageTracker::from_output(&output);
++
++        WaylandSource::new(connection.clone(), event_queue)
++            .insert(event_loop)
++            .map_err(|err| anyhow::anyhow!("error inserting the host Wayland source: {err}"))?;
++
++        // GlobalList is no longer needed; dynamic globals arrive through the
++        // registry Dispatch below.
++        let _: &GlobalList = &globals;
++
++        Ok(Self {
++            config,
++            connection,
++            qh,
++            host: HostObjects {
++                _compositor: compositor,
++                surface,
++                wm_base,
++                xdg_surface,
++                toplevel,
++                _decoration: decoration,
++                seat,
++                pointer: None,
++                keyboard: None,
++                touch: None,
++            },
++            output,
++            _egl_display: egl_display,
++            present,
++            renderer,
++            damage_tracker,
++            damage_tracking,
++            dmabuf_global: None,
++            ipc_outputs,
++            configured: false,
++            pending_size: None,
++            window_size: Size::from(DEFAULT_SIZE),
++            bind_size: None,
++            frame_callback_pending: false,
++            pointer_position: (0.0, 0.0),
++            pending_axis: PendingAxis::default(),
++        })
++    }
++
++    pub fn init(&mut self, niri: &mut Niri) {
++        let renderer = &mut self.renderer;
++        resources::init(renderer);
++        shaders::init(renderer);
++
++        let config = self.config.borrow();
++        if let Some(src) = config.animations.window_resize.custom_shader.as_deref() {
++            shaders::set_custom_resize_program(renderer, Some(src));
++        }
++        if let Some(src) = config.animations.window_close.custom_shader.as_deref() {
++            shaders::set_custom_close_program(renderer, Some(src));
++        }
++        if let Some(src) = config.animations.window_open.custom_shader.as_deref() {
++            shaders::set_custom_open_program(renderer, Some(src));
++        }
++        drop(config);
++
++        niri.update_shaders();
++
++        self.create_dmabuf_global(niri);
++
++        // The output is added on the initial xdg_surface configure, not here:
++        // committing buffers before the initial configure is a protocol error.
++    }
++
++    fn create_dmabuf_global(&mut self, niri: &mut Niri) {
++        let renderer = &mut self.renderer;
++
++        let primary_formats = renderer.dmabuf_formats();
++        if primary_formats.iter().next().is_none() {
++            // No dmabuf support in the host EGL (common on the SHM-first
++            // Wawona mobile targets, where wwn-iland/ANGLE serves EGL);
++            // clients fall back to wl_shm.
++            debug!("nested EGL exposes no dmabuf formats; skipping the dmabuf global");
++            return;
++        }
++
++        // Dmabuf feedback (v4) needs a DRM render node, which only exists on
++        // Linux; elsewhere serve dmabuf v3 with the plain format list.
++        #[cfg(target_os = "linux")]
++        let dmabuf_global = {
++            let default_feedback = || {
++                let display = renderer.egl_context().display();
++                let device = smithay::backend::egl::EGLDevice::device_for_display(display)
++                    .context("error getting EGL device")?;
++                let node = device
++                    .try_get_render_node()
++                    .context("error getting EGL device render node")?
++                    .context("failed to query EGL device render node")?;
++
++                DmabufFeedbackBuilder::new(node.dev_id(), primary_formats.clone())
++                    .build()
++                    .context("error building dmabuf feedback")
++            };
++
++            match default_feedback() {
++                Ok(feedback) => niri
++                    .dmabuf_state
++                    .create_global_with_default_feedback::<State>(&niri.display_handle, &feedback),
++                Err(err) => {
++                    debug!("failed building default dmabuf feedback, falling back to v3: {err:?}");
++                    niri.dmabuf_state
++                        .create_global::<State>(&niri.display_handle, primary_formats)
++                }
++            }
++        };
++        #[cfg(not(target_os = "linux"))]
++        let dmabuf_global = niri
++            .dmabuf_state
++            .create_global::<State>(&niri.display_handle, primary_formats);
++
++        assert!(self.dmabuf_global.replace(dmabuf_global).is_none());
++    }
++
++    pub fn seat_name(&self) -> String {
++        "nested".to_owned()
++    }
++
++    pub fn with_primary_renderer<T>(
++        &mut self,
++        f: impl FnOnce(&mut GlesRenderer) -> T,
++    ) -> Option<T> {
++        Some(f(&mut self.renderer))
++    }
++
++    pub fn render(&mut self, niri: &mut Niri, output: &Output) -> RenderResult {
++        let _span = tracy_client::span!("Nested::render");
++
++        if !self.configured {
++            // The initial configure has not arrived yet; attaching a buffer
++            // now would be a protocol error.
++            let output_state = niri.output_state.get_mut(output).unwrap();
++            output_state.redraw_state = RedrawState::Idle;
++            return RenderResult::Skipped;
++        }
++
++        // Render the elements.
++        let ctx = RenderCtx {
++            renderer: &mut self.renderer,
++            target: RenderTarget::Output,
++            xray: None,
++        };
++        let mut elements = niri.render_to_vec(ctx, output, true);
++
++        // Visualize the damage, if enabled.
++        if niri.debug_draw_damage {
++            let output_state = niri.output_state.get_mut(output).unwrap();
++            draw_damage(&mut output_state.debug_damage_tracker, &mut elements);
++        }
++
++        // Request a frame callback before the commit (performed by
++        // eglSwapBuffers or the explicit shm attach+commit) so the host
++        // paces our redraws.
++        if !self.frame_callback_pending {
++            self.host.surface.frame(&self.qh, ());
++            self.frame_callback_pending = true;
++        }
++
++        let window_size = self.window_size;
++        let (res, presented) = match &mut self.present {
++            Present::Egl(egl_surface) => {
++                // Resize the EGL surface to the current window size before
++                // binding.
++                if Some(window_size) != self.bind_size {
++                    egl_surface.resize(window_size.w, window_size.h, 0, 0);
++                    self.bind_size = Some(window_size);
++                }
++
++                let res = {
++                    let age = if self.damage_tracking {
++                        egl_surface.buffer_age().unwrap_or(0) as usize
++                    } else {
++                        0
++                    };
++                    let mut framebuffer = match self.renderer.bind(egl_surface) {
++                        Ok(fb) => fb,
++                        Err(err) => {
++                            warn!("error binding the nested EGL surface: {err:?}");
++                            let output_state = niri.output_state.get_mut(output).unwrap();
++                            output_state.redraw_state = RedrawState::Idle;
++                            return RenderResult::Skipped;
++                        }
++                    };
++                    self.damage_tracker
++                        .render_output(&mut self.renderer, &mut framebuffer, age, &elements, [0.; 4])
++                        .unwrap()
++                };
++
++                let mut presented = false;
++                if let Some(damage) = res.damage {
++                    if self
++                        .config
++                        .borrow()
++                        .debug
++                        .wait_for_frame_completion_before_queueing
++                    {
++                        let _span = tracy_client::span!("wait for completion");
++                        if let Err(err) = res.sync.wait() {
++                            warn!("error waiting for frame completion: {err:?}");
++                        }
++                    }
++
++                    let mut damage = damage.clone();
++                    if let Err(err) = egl_surface.swap_buffers(Some(&mut damage)) {
++                        warn!("error swapping the nested EGL surface: {err:?}");
++                    }
++                    presented = true;
++                }
++                (res, presented)
++            }
++            Present::Shm(shm_state) => {
++                // (Re)allocate the offscreen renderbuffer and shm slots when
++                // the window size changes.
++                if shm_state.size != Some(window_size) {
++                    let buffer_size =
++                        smithay::utils::Size::from((window_size.w, window_size.h));
++                    match self.renderer.create_buffer(Fourcc::Abgr8888, buffer_size) {
++                        Ok(rb) => shm_state.renderbuffer = Some(rb),
++                        Err(err) => {
++                            warn!("error creating the offscreen renderbuffer: {err:?}");
++                            let output_state = niri.output_state.get_mut(output).unwrap();
++                            output_state.redraw_state = RedrawState::Idle;
++                            return RenderResult::Skipped;
++                        }
++                    }
++                    shm_state.slots = [None, None];
++                    shm_state.size = Some(window_size);
++                }
++
++                // Find a released shm slot to draw into.
++                let mut slot_idx = None;
++                for (i, slot) in shm_state.slots.iter_mut().enumerate() {
++                    match slot {
++                        Some(s) if s.free.load(Ordering::Acquire) => {
++                            slot_idx = Some(i);
++                            break;
++                        }
++                        None => {
++                            match ShmSlot::new(&shm_state.shm, &self.qh, window_size) {
++                                Ok(s) => {
++                                    *slot = Some(s);
++                                    slot_idx = Some(i);
++                                }
++                                Err(err) => {
++                                    warn!("error creating an shm slot: {err:?}");
++                                }
++                            }
++                            break;
++                        }
++                        _ => (),
++                    }
++                }
++                let Some(slot_idx) = slot_idx else {
++                    // Both buffers are still held by the host; skip this
++                    // frame (the pending frame callback re-queues a redraw).
++                    let output_state = niri.output_state.get_mut(output).unwrap();
++                    output_state.redraw_state = RedrawState::Idle;
++                    return RenderResult::Skipped;
++                };
++
++                let renderbuffer = shm_state.renderbuffer.as_mut().unwrap();
++                let (res, mapping) = {
++                    let mut framebuffer = match self.renderer.bind(renderbuffer) {
++                        Ok(fb) => fb,
++                        Err(err) => {
++                            warn!("error binding the offscreen renderbuffer: {err:?}");
++                            let output_state = niri.output_state.get_mut(output).unwrap();
++                            output_state.redraw_state = RedrawState::Idle;
++                            return RenderResult::Skipped;
++                        }
++                    };
++                    let res = self
++                        .damage_tracker
++                        .render_output(&mut self.renderer, &mut framebuffer, 0, &elements, [0.; 4])
++                        .unwrap();
++
++                    let mapping = if res.damage.is_some() {
++                        let region = smithay::utils::Rectangle::from_size(
++                            smithay::utils::Size::from((window_size.w, window_size.h)),
++                        );
++                        // Argb8888 maps to a BGRA read; Wawona's ANGLE
++                        // supports it, but fall back to Abgr8888 (plain
++                        // RGBA, always readable) with a CPU swizzle.
++                        match self
++                            .renderer
++                            .copy_framebuffer(&framebuffer, region, Fourcc::Argb8888)
++                        {
++                            Ok(m) => Some((m, false)),
++                            Err(_) => match self.renderer.copy_framebuffer(
++                                &framebuffer,
++                                region,
++                                Fourcc::Abgr8888,
++                            ) {
++                                Ok(m) => Some((m, true)),
++                                Err(err) => {
++                                    warn!("error copying the offscreen framebuffer: {err:?}");
++                                    None
++                                }
++                            },
++                        }
++                    } else {
++                        None
++                    };
++                    (res, mapping)
++                };
++
++                let mut presented = false;
++                if let Some((mapping, swizzle)) = mapping {
++                    use smithay::backend::renderer::TextureMapping as _;
++                    match self.renderer.map_texture(&mapping) {
++                        Ok(data) => {
++                            let slot = shm_state.slots[slot_idx].as_ref().unwrap();
++                            let stride = (window_size.w * 4) as usize;
++                            let height = window_size.h as usize;
++                            // Smithay renders to offscreen targets with a
++                            // y-inverted projection (so sampled textures come
++                            // out upright), which cancels the bottom-up row
++                            // order of glReadPixels: when the mapping reports
++                            // flipped, the rows are already top-down for
++                            // wl_shm.
++                            let flipped = !mapping.flipped();
++                            let dst = unsafe {
++                                std::slice::from_raw_parts_mut(slot.ptr, slot.len)
++                            };
++                            for y in 0..height {
++                                let src_y = if flipped { height - 1 - y } else { y };
++                                let src_row = &data[src_y * stride..src_y * stride + stride];
++                                let dst_row = &mut dst[y * stride..y * stride + stride];
++                                if swizzle {
++                                    // RGBA -> BGRA (little-endian ARGB)
++                                    for (d, s) in
++                                        dst_row.chunks_exact_mut(4).zip(src_row.chunks_exact(4))
++                                    {
++                                        d[0] = s[2];
++                                        d[1] = s[1];
++                                        d[2] = s[0];
++                                        d[3] = s[3];
++                                    }
++                                } else {
++                                    dst_row.copy_from_slice(src_row);
++                                }
++                            }
++
++                            slot.free.store(false, Ordering::Release);
++                            self.host.surface.attach(Some(&slot.buffer), 0, 0);
++                            self.host
++                                .surface
++                                .damage_buffer(0, 0, window_size.w, window_size.h);
++                            self.host.surface.commit();
++                            presented = true;
++                        }
++                        Err(err) => {
++                            warn!("error mapping the framebuffer copy: {err:?}");
++                        }
++                    }
++                }
++                (res, presented)
++            }
++        };
++
++        niri.update_primary_scanout_output(output, &res.states);
++
++        let rv;
++        if presented {
++            let _ = self.connection.flush();
++
++            let mut presentation_feedbacks = niri.take_presentation_feedbacks(output, &res.states);
++            presentation_feedbacks.presented::<_, smithay::utils::Monotonic>(
++                get_monotonic_time(),
++                Refresh::Unknown,
++                0,
++                wp_presentation_feedback::Kind::empty(),
++            );
++
++            rv = RenderResult::Submitted;
++        } else {
++            rv = RenderResult::NoDamage;
++        }
++
++        let output_state = niri.output_state.get_mut(output).unwrap();
++        match mem::replace(&mut output_state.redraw_state, RedrawState::Idle) {
++            RedrawState::Idle => unreachable!(),
++            RedrawState::Queued => (),
++            RedrawState::WaitingForVBlank { .. } => unreachable!(),
++            RedrawState::WaitingForEstimatedVBlank(_) => unreachable!(),
++            RedrawState::WaitingForEstimatedVBlankAndQueued(_) => unreachable!(),
++        }
++
++        output_state.frame_callback_sequence = output_state.frame_callback_sequence.wrapping_add(1);
++
++        rv
++    }
++
++    pub fn toggle_debug_tint(&mut self) {
++        let renderer = &mut self.renderer;
++        renderer.set_debug_flags(renderer.debug_flags() ^ DebugFlags::TINT);
++    }
++
++    pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
++        match self.renderer.import_dmabuf(dmabuf, None) {
++            Ok(_texture) => true,
++            Err(err) => {
++                debug!("error importing dmabuf: {err:?}");
++                false
++            }
++        }
++    }
++
++    pub fn ipc_outputs(&self) -> Arc<Mutex<IpcOutputMap>> {
++        self.ipc_outputs.clone()
++    }
++
++    fn apply_configure(state: &mut State) {
++        let nested = state.backend.nested();
++        let size = nested.pending_size.take();
++        let first_configure = !nested.configured;
++        nested.configured = true;
++
++        let mut new_size = None;
++        if let Some(size) = size {
++            if size.w > 0 && size.h > 0 && size != nested.window_size {
++                nested.window_size = size;
++                new_size = Some(size);
++            }
++        }
++
++        let output = nested.output.clone();
++
++        if let Some(size) = new_size {
++            nested.output.change_current_state(
++                Some(Mode {
++                    size,
++                    refresh: 60_000,
++                }),
++                None,
++                None,
++                None,
++            );
++
++            {
++                let mut ipc_outputs = nested.ipc_outputs.lock().unwrap();
++                let ipc_output = ipc_outputs.values_mut().next().unwrap();
++                let mode = &mut ipc_output.modes[0];
++                mode.width = size.w.clamp(0, u16::MAX as i32) as u16;
++                mode.height = size.h.clamp(0, u16::MAX as i32) as u16;
++                if let Some(logical) = ipc_output.logical.as_mut() {
++                    logical.width = size.w as u32;
++                    logical.height = size.h as u32;
++                }
++                state.niri.ipc_outputs_changed = true;
++            }
++        }
++
++        if first_configure {
++            state.niri.add_output(output.clone(), None, false);
++        } else if new_size.is_some() {
++            state.niri.output_resized(&output);
++        }
++
++        state.niri.queue_redraw(&output);
++    }
++}
++
++// ---------------------------------------------------------------------------
++// Host-side Dispatch implementations.
++// ---------------------------------------------------------------------------
++
++impl Dispatch<WlRegistry, GlobalListContents> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &WlRegistry,
++        _event: wayland_client::protocol::wl_registry::Event,
++        _data: &GlobalListContents,
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<WlCompositor, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &WlCompositor,
++        _event: wayland_client::protocol::wl_compositor::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<ClientWlSurface, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &ClientWlSurface,
++        _event: wayland_client::protocol::wl_surface::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<WlCallback, ()> for State {
++    fn event(
++        state: &mut State,
++        _proxy: &WlCallback,
++        event: wayland_client::protocol::wl_callback::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        if let wayland_client::protocol::wl_callback::Event::Done { .. } = event {
++            let nested = state.backend.nested();
++            nested.frame_callback_pending = false;
++            let output = nested.output.clone();
++
++            let unfinished = state
++                .niri
++                .output_state
++                .get(&output)
++                .is_some_and(|s| s.unfinished_animations_remain);
++            if unfinished {
++                state.niri.queue_redraw(&output);
++            }
++        }
++    }
++}
++
++impl Dispatch<WlShm, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &WlShm,
++        _event: wl_shm::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<WlShmPool, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &WlShmPool,
++        _event: wayland_client::protocol::wl_shm_pool::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<WlBuffer, Arc<AtomicBool>> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &WlBuffer,
++        event: wl_buffer::Event,
++        data: &Arc<AtomicBool>,
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        if let wl_buffer::Event::Release = event {
++            data.store(true, Ordering::Release);
++        }
++    }
++}
++
++impl Dispatch<XdgWmBase, ()> for State {
++    fn event(
++        _state: &mut State,
++        proxy: &XdgWmBase,
++        event: xdg_wm_base::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        if let xdg_wm_base::Event::Ping { serial } = event {
++            proxy.pong(serial);
++        }
++    }
++}
++
++impl Dispatch<XdgSurface, ()> for State {
++    fn event(
++        state: &mut State,
++        proxy: &XdgSurface,
++        event: xdg_surface::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        if let xdg_surface::Event::Configure { serial } = event {
++            proxy.ack_configure(serial);
++            Nested::apply_configure(state);
++        }
++    }
++}
++
++impl Dispatch<XdgToplevel, ()> for State {
++    fn event(
++        state: &mut State,
++        _proxy: &XdgToplevel,
++        event: xdg_toplevel::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        match event {
++            xdg_toplevel::Event::Configure { width, height, .. } => {
++                if width > 0 && height > 0 {
++                    state.backend.nested().pending_size =
++                        Some(Size::from((width, height)));
++                }
++            }
++            xdg_toplevel::Event::Close => {
++                info!("host requested close; stopping niri");
++                state.niri.stop_signal.stop();
++            }
++            _ => (),
++        }
++    }
++}
++
++impl Dispatch<ZxdgDecorationManagerV1, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &ZxdgDecorationManagerV1,
++        _event: wayland_protocols::xdg::decoration::zv1::client::zxdg_decoration_manager_v1::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<ZxdgToplevelDecorationV1, ()> for State {
++    fn event(
++        _state: &mut State,
++        _proxy: &ZxdgToplevelDecorationV1,
++        _event: zxdg_toplevel_decoration_v1::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++    }
++}
++
++impl Dispatch<WlSeat, ()> for State {
++    fn event(
++        state: &mut State,
++        proxy: &WlSeat,
++        event: wl_seat::Event,
++        _data: &(),
++        _conn: &Connection,
++        qh: &QueueHandle<State>,
++    ) {
++        if let wl_seat::Event::Capabilities { capabilities } = event {
++            let capabilities = match capabilities {
++                wayland_client::WEnum::Value(v) => v,
++                wayland_client::WEnum::Unknown(_) => return,
++            };
++            let nested = state.backend.nested();
++
++            if capabilities.contains(wl_seat::Capability::Pointer) {
++                if nested.host.pointer.is_none() {
++                    nested.host.pointer = Some(proxy.get_pointer(qh, ()));
++                }
++            } else if let Some(pointer) = nested.host.pointer.take() {
++                pointer.release();
++            }
++
++            if capabilities.contains(wl_seat::Capability::Keyboard) {
++                if nested.host.keyboard.is_none() {
++                    nested.host.keyboard = Some(proxy.get_keyboard(qh, ()));
++                }
++            } else if let Some(keyboard) = nested.host.keyboard.take() {
++                keyboard.release();
++            }
++
++            if capabilities.contains(wl_seat::Capability::Touch) {
++                if nested.host.touch.is_none() {
++                    nested.host.touch = Some(proxy.get_touch(qh, ()));
++                }
++            } else if let Some(touch) = nested.host.touch.take() {
++                touch.release();
++            }
++        }
++    }
++}
++
++impl Dispatch<WlPointer, ()> for State {
++    fn event(
++        state: &mut State,
++        _proxy: &WlPointer,
++        event: wl_pointer::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        let surface_size = {
++            let nested = state.backend.nested();
++            (nested.window_size.w, nested.window_size.h)
++        };
++
++        match event {
++            wl_pointer::Event::Enter {
++                surface_x,
++                surface_y,
++                ..
++            }
++            | wl_pointer::Event::Motion {
++                surface_x,
++                surface_y,
++                ..
++            } => {
++                let time = match &event {
++                    wl_pointer::Event::Motion { time, .. } => u64::from(*time) * 1000,
++                    _ => get_monotonic_time().as_micros() as u64,
++                };
++                state.backend.nested().pointer_position = (surface_x, surface_y);
++                state.process_input_event(InputEvent::<NestedInput>::PointerMotionAbsolute {
++                    event: NestedPointerMotionEvent {
++                        time,
++                        position: (surface_x, surface_y),
++                        surface_size,
++                    },
++                });
++            }
++            wl_pointer::Event::Leave { .. } => (),
++            wl_pointer::Event::Button {
++                time,
++                button,
++                state: button_state,
++                ..
++            } => {
++                let button_state = match button_state {
++                    wayland_client::WEnum::Value(wl_pointer::ButtonState::Pressed) => {
++                        ButtonState::Pressed
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::ButtonState::Released) => {
++                        ButtonState::Released
++                    }
++                    _ => return,
++                };
++                state.process_input_event(InputEvent::<NestedInput>::PointerButton {
++                    event: NestedPointerButtonEvent {
++                        time: u64::from(time) * 1000,
++                        button,
++                        state: button_state,
++                    },
++                });
++            }
++            wl_pointer::Event::Axis { time, axis, value } => {
++                let nested = state.backend.nested();
++                let pending = &mut nested.pending_axis;
++                pending.time = time;
++                pending.has_events = true;
++                match axis {
++                    wayland_client::WEnum::Value(wl_pointer::Axis::HorizontalScroll) => {
++                        pending.amount.0 = Some(pending.amount.0.unwrap_or(0.0) + value);
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::Axis::VerticalScroll) => {
++                        pending.amount.1 = Some(pending.amount.1.unwrap_or(0.0) + value);
++                    }
++                    _ => (),
++                }
++            }
++            wl_pointer::Event::AxisSource { axis_source } => {
++                let source = match axis_source {
++                    wayland_client::WEnum::Value(wl_pointer::AxisSource::Wheel) => {
++                        AxisSource::Wheel
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::AxisSource::Finger) => {
++                        AxisSource::Finger
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::AxisSource::Continuous) => {
++                        AxisSource::Continuous
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::AxisSource::WheelTilt) => {
++                        AxisSource::WheelTilt
++                    }
++                    _ => AxisSource::Continuous,
++                };
++                state.backend.nested().pending_axis.source = Some(source);
++            }
++            wl_pointer::Event::AxisDiscrete { axis, discrete } => {
++                let nested = state.backend.nested();
++                let pending = &mut nested.pending_axis;
++                pending.has_events = true;
++                match axis {
++                    wayland_client::WEnum::Value(wl_pointer::Axis::HorizontalScroll) => {
++                        pending.amount_v120.0 =
++                            Some(pending.amount_v120.0.unwrap_or(0.0) + f64::from(discrete) * 120.0);
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::Axis::VerticalScroll) => {
++                        pending.amount_v120.1 =
++                            Some(pending.amount_v120.1.unwrap_or(0.0) + f64::from(discrete) * 120.0);
++                    }
++                    _ => (),
++                }
++            }
++            wl_pointer::Event::AxisValue120 { axis, value120 } => {
++                let nested = state.backend.nested();
++                let pending = &mut nested.pending_axis;
++                pending.has_events = true;
++                match axis {
++                    wayland_client::WEnum::Value(wl_pointer::Axis::HorizontalScroll) => {
++                        pending.amount_v120.0 =
++                            Some(pending.amount_v120.0.unwrap_or(0.0) + f64::from(value120));
++                    }
++                    wayland_client::WEnum::Value(wl_pointer::Axis::VerticalScroll) => {
++                        pending.amount_v120.1 =
++                            Some(pending.amount_v120.1.unwrap_or(0.0) + f64::from(value120));
++                    }
++                    _ => (),
++                }
++            }
++            wl_pointer::Event::Frame => {
++                let (axis, source, time) = {
++                    let nested = state.backend.nested();
++                    let pending = mem::take(&mut nested.pending_axis);
++                    if !pending.has_events {
++                        return;
++                    }
++                    (
++                        (pending.amount, pending.amount_v120),
++                        pending.source.unwrap_or(AxisSource::Wheel),
++                        pending.time,
++                    )
++                };
++                state.process_input_event(InputEvent::<NestedInput>::PointerAxis {
++                    event: NestedPointerAxisEvent {
++                        time: u64::from(time) * 1000,
++                        source,
++                        amount: axis.0,
++                        amount_v120: axis.1,
++                    },
++                });
++            }
++            _ => (),
++        }
++    }
++}
++
++impl Dispatch<WlKeyboard, ()> for State {
++    fn event(
++        state: &mut State,
++        _proxy: &WlKeyboard,
++        event: wl_keyboard::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        match event {
++            wl_keyboard::Event::Key {
++                time,
++                key,
++                state: key_state,
++                ..
++            } => {
++                let key_state = match key_state {
++                    wayland_client::WEnum::Value(wl_keyboard::KeyState::Pressed) => {
++                        KeyState::Pressed
++                    }
++                    wayland_client::WEnum::Value(wl_keyboard::KeyState::Released) => {
++                        KeyState::Released
++                    }
++                    _ => return,
++                };
++                state.process_input_event(InputEvent::<NestedInput>::Keyboard {
++                    event: NestedKeyboardInputEvent {
++                        time: u64::from(time) * 1000,
++                        key,
++                        state: key_state,
++                    },
++                });
++            }
++            // niri runs its own XKB state on the raw keycodes; the host keymap
++            // and modifier events are intentionally ignored (same as the winit
++            // backend).
++            _ => (),
++        }
++    }
++}
++
++impl Dispatch<WlTouch, ()> for State {
++    fn event(
++        state: &mut State,
++        _proxy: &WlTouch,
++        event: wl_touch::Event,
++        _data: &(),
++        _conn: &Connection,
++        _qh: &QueueHandle<State>,
++    ) {
++        let surface_size = {
++            let nested = state.backend.nested();
++            (nested.window_size.w, nested.window_size.h)
++        };
++
++        match event {
++            wl_touch::Event::Down {
++                time, id, x, y, ..
++            } => {
++                state.process_input_event(InputEvent::<NestedInput>::TouchDown {
++                    event: NestedTouchDownEvent {
++                        time: u64::from(time) * 1000,
++                        id,
++                        position: (x, y),
++                        surface_size,
++                    },
++                });
++            }
++            wl_touch::Event::Motion { time, id, x, y } => {
++                state.process_input_event(InputEvent::<NestedInput>::TouchMotion {
++                    event: NestedTouchMotionEvent {
++                        time: u64::from(time) * 1000,
++                        id,
++                        position: (x, y),
++                        surface_size,
++                    },
++                });
++            }
++            wl_touch::Event::Up { time, id, .. } => {
++                state.process_input_event(InputEvent::<NestedInput>::TouchUp {
++                    event: NestedTouchUpEvent {
++                        time: u64::from(time) * 1000,
++                        id,
++                    },
++                });
++            }
++            wl_touch::Event::Cancel => {
++                state.process_input_event(InputEvent::<NestedInput>::TouchCancel {
++                    event: NestedTouchCancelEvent {
++                        time: get_monotonic_time().as_micros() as u64,
++                    },
++                });
++            }
++            _ => (),
++        }
++    }
++}
+diff --git a/src/c_api.rs b/src/c_api.rs
+new file mode 100644
+index 0000000..8191997
+--- /dev/null
++++ b/src/c_api.rs
+@@ -0,0 +1,112 @@
++//! Wawona (wwn-niri): C ABI entry point for running niri in-process.
++//!
++//! On Apple mobile targets (and optionally Android), the Wawona app cannot
++//! fork/exec a bundled `niri` binary (App Store posture: no spawning external
++//! executables), so it links niri as a static library and starts the
++//! compositor on a dedicated thread through this entry point.
++//!
++//! Contract:
++//! - The host (Wawona) compositor socket must already be advertised through
++//!   WAYLAND_DISPLAY (and XDG_RUNTIME_DIR must point at a writable,
++//!   sandbox-safe directory inside the app container).
++//! - An explicit niri config may be passed through NIRI_CONFIG (read-only
++//!   bundled KDL); otherwise the built-in default config is used.
++//! - niri runs its nested backend (Wayland client of Wawona) and exports its
++//!   own child Wayland socket name through NIRI_NESTED_WAYLAND_DISPLAY so the
++//!   host app can point niri's clients at it.
++
++use std::env;
++use std::ffi::c_int;
++use std::path::PathBuf;
++
++use calloop::EventLoop;
++use smithay::reexports::wayland_server::Display;
++
++use crate::niri::State;
++
++/// Runs the niri compositor in-process until the session ends.
++///
++/// Returns 0 on clean shutdown and nonzero on a fatal startup error. Call at
++/// most once per process; niri's compositor state is not re-entrant.
++#[no_mangle]
++pub extern "C" fn niri_main() -> c_int {
++    match run() {
++        Ok(()) => 0,
++        Err(err) => {
++            // The host app may not have a tracing subscriber; make sure the
++            // failure reaches stderr either way.
++            eprintln!("niri_main: fatal error: {err:?}");
++            1
++        }
++    }
++}
++
++fn run() -> anyhow::Result<()> {
++    // The host app may already have installed a subscriber; ignore failure.
++    let directives = env::var("RUST_LOG")
++        .unwrap_or_else(|_| "niri=debug,smithay::backend::renderer::gles=error".to_owned());
++    let env_filter = tracing_subscriber::EnvFilter::builder().parse_lossy(directives);
++    let _ = tracing_subscriber::fmt()
++        .compact()
++        .with_writer(std::io::stderr)
++        .with_env_filter(env_filter)
++        .try_init();
++
++    tracy_client::Client::start();
++
++    info!("starting niri (in-process) version {}", crate::utils::version());
++
++    // Load the bundled/explicit config, falling back to the built-in default.
++    let config = match env::var_os("NIRI_CONFIG") {
++        Some(path) => {
++            let path = PathBuf::from(path);
++            match niri_config::Config::load(&path).config {
++                Ok(config) => config,
++                Err(err) => {
++                    warn!("error loading config from {path:?}: {err:?}; using the default config");
++                    niri_config::Config::load_default()
++                }
++            }
++        }
++        None => niri_config::Config::load_default(),
++    };
++
++    let mut event_loop = EventLoop::<State>::try_new()?;
++    let display = Display::new()?;
++
++    let mut state = State::new(
++        config,
++        event_loop.handle(),
++        event_loop.get_signal(),
++        display,
++        false,
++        true,
++        false,
++    )
++    .map_err(|err| anyhow::anyhow!("error creating the compositor state: {err}"))?;
++
++    // Export the child socket for clients (fuzzel, etc.). niri itself already
++    // holds an open connection to the host via the prior WAYLAND_DISPLAY value,
++    // so rewriting WAYLAND_DISPLAY here is safe and required: in-process
++    // children share this environ and must not connect to the host (which on
++    // Apple mobile does not advertise zwlr_layer_shell_v1).
++    if let Some(socket_name) = state.niri.socket_name.as_deref() {
++        env::set_var("NIRI_NESTED_WAYLAND_DISPLAY", socket_name);
++        env::set_var("WAYLAND_DISPLAY", socket_name);
++        info!(
++            "niri (nested) listening on Wayland socket: {}",
++            socket_name.to_string_lossy()
++        );
++    }
++
++    if let Some(ipc) = &state.niri.ipc_server {
++        if let Some(socket_path) = ipc.socket_path.as_deref() {
++            env::set_var(niri_ipc::socket::SOCKET_PATH_ENV, socket_path);
++            info!("IPC listening on: {}", socket_path.to_string_lossy());
++        }
++    }
++
++    event_loop.run(None, &mut state, |state| state.refresh_and_flush_clients())?;
++
++    Ok(())
++}
+diff --git a/src/handlers/mod.rs b/src/handlers/mod.rs
+index 3532078..b2b9028 100644
+--- a/src/handlers/mod.rs
++++ b/src/handlers/mod.rs
+@@ -11,6 +11,7 @@ use std::thread;
+ use std::time::Duration;
+ 
+ use smithay::backend::allocator::dmabuf::Dmabuf;
++#[cfg(target_os = "linux")]
+ use smithay::backend::drm::DrmNode;
+ use smithay::backend::input::{InputEvent, TabletToolDescriptor};
+ use smithay::desktop::{PopupKind, PopupManager};
+@@ -26,6 +27,7 @@ use smithay::reexports::wayland_server::Resource;
+ use smithay::utils::{Logical, Point, Rectangle, Serial};
+ use smithay::wayland::compositor::{get_parent, with_states};
+ use smithay::wayland::dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier};
++#[cfg(target_os = "linux")]
+ use smithay::wayland::drm_lease::{
+     DrmLease, DrmLeaseBuilder, DrmLeaseHandler, DrmLeaseRequest, DrmLeaseState, LeaseRejected,
+ };
+@@ -61,9 +63,11 @@ use smithay::wayland::tablet_manager::TabletSeatHandler;
+ use smithay::wayland::xdg_activation::{
+     XdgActivationHandler, XdgActivationState, XdgActivationToken, XdgActivationTokenData,
+ };
++#[cfg(target_os = "linux")]
++use smithay::delegate_drm_lease;
+ use smithay::{
+     delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf,
+-    delegate_drm_lease, delegate_ext_data_control, delegate_fractional_scale,
++    delegate_ext_data_control, delegate_fractional_scale,
+     delegate_idle_inhibit, delegate_idle_notify, delegate_input_method_manager,
+     delegate_keyboard_shortcuts_inhibit, delegate_output, delegate_pointer_constraints,
+     delegate_pointer_gestures, delegate_presentation, delegate_primary_selection,
+@@ -126,16 +130,23 @@ impl SeatHandler for State {
+     }
+ 
+     fn led_state_changed(&mut self, _seat: &Seat<Self>, led_state: keyboard::LedState) {
+-        let keyboards = self
+-            .niri
+-            .devices
+-            .iter()
+-            .filter(|device| device.has_capability(input::DeviceCapability::Keyboard))
+-            .cloned();
+-
+-        for mut keyboard in keyboards {
+-            keyboard.led_update(led_state.into());
++        // Wawona (wwn-niri): LED state only reaches real hardware through
++        // libinput devices, which exist on desktop Linux only.
++        #[cfg(target_os = "linux")]
++        {
++            let keyboards = self
++                .niri
++                .devices
++                .iter()
++                .filter(|device| device.has_capability(input::DeviceCapability::Keyboard))
++                .cloned();
++
++            for mut keyboard in keyboards {
++                keyboard.led_update(led_state.into());
++            }
+         }
++        #[cfg(not(target_os = "linux"))]
++        let _ = led_state;
+     }
+ }
+ delegate_seat!(State);
+@@ -688,6 +699,7 @@ impl VirtualPointerHandler for State {
+ }
+ delegate_virtual_pointer!(State);
+ 
++#[cfg(target_os = "linux")]
+ impl DrmLeaseHandler for State {
+     fn drm_lease_state(&mut self, node: DrmNode) -> &mut DrmLeaseState {
+         self.backend
+@@ -733,6 +745,7 @@ impl DrmLeaseHandler for State {
+             .remove_lease(lease_id);
+     }
+ }
++#[cfg(target_os = "linux")]
+ delegate_drm_lease!(State);
+ 
+ delegate_viewporter!(State);
+@@ -743,6 +756,7 @@ impl GammaControlHandler for State {
+     }
+ 
+     fn get_gamma_size(&mut self, output: &Output) -> Option<u32> {
++        #[cfg(target_os = "linux")]
+         match self.backend.tty().get_gamma_size(output) {
+             Ok(0) => None, // Setting gamma is not supported.
+             Ok(size) => Some(size),
+@@ -754,9 +768,16 @@ impl GammaControlHandler for State {
+                 None
+             }
+         }
++        // Wawona (wwn-niri): no DRM outputs on nested-only targets.
++        #[cfg(not(target_os = "linux"))]
++        {
++            let _ = output;
++            None
++        }
+     }
+ 
+     fn set_gamma(&mut self, output: &Output, ramp: Option<Vec<u16>>) -> Option<()> {
++        #[cfg(target_os = "linux")]
+         match self.backend.tty().set_gamma(output, ramp) {
+             Ok(()) => Some(()),
+             Err(err) => {
+@@ -764,6 +785,11 @@ impl GammaControlHandler for State {
+                 None
+             }
+         }
++        #[cfg(not(target_os = "linux"))]
++        {
++            let _ = (output, ramp);
++            None
++        }
+     }
+ }
+ delegate_gamma_control!(State);
+diff --git a/src/input/backend_ext.rs b/src/input/backend_ext.rs
+index 99f4a90..438bb54 100644
+--- a/src/input/backend_ext.rs
++++ b/src/input/backend_ext.rs
+@@ -1,8 +1,11 @@
++#[cfg(target_os = "linux")]
+ use ::input as libinput;
+ use smithay::backend::input;
++#[cfg(target_os = "linux")]
+ use smithay::backend::winit::WinitVirtualDevice;
+ use smithay::output::Output;
+ 
++use crate::backend::nested::NestedVirtualDevice;
+ use crate::niri::State;
+ use crate::protocols::virtual_pointer::VirtualPointer;
+ 
+@@ -23,6 +26,7 @@ pub trait NiriInputDevice: input::Device {
+     fn output(&self, state: &State) -> Option<Output>;
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl NiriInputDevice for libinput::Device {
+     fn output(&self, _state: &State) -> Option<Output> {
+         // FIXME: Allow specifying the output per-device?
+@@ -30,6 +34,15 @@ impl NiriInputDevice for libinput::Device {
+     }
+ }
+ 
++impl NiriInputDevice for NestedVirtualDevice {
++    fn output(&self, _state: &State) -> Option<Output> {
++        // Same trick as the winit device below: with the single nested output,
++        // relying on global coordinates does the right thing.
++        None
++    }
++}
++
++#[cfg(target_os = "linux")]
+ impl NiriInputDevice for WinitVirtualDevice {
+     fn output(&self, _state: &State) -> Option<Output> {
+         // FIXME: we should be returning the single output that the winit backend creates,
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index f1ad493..018a969 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -5,6 +5,7 @@ use std::collections::HashSet;
+ use std::time::Duration;
+ 
+ use calloop::timer::{TimeoutAction, Timer};
++#[cfg(target_os = "linux")]
+ use input::event::gesture::GestureEventCoordinates as _;
+ use niri_config::{
+     Action, Bind, Binds, Config, Key, ModKey, Modifiers, MruDirection, SwitchBinds, Trigger,
+@@ -18,6 +19,7 @@ use smithay::backend::input::{
+     TabletToolButtonEvent, TabletToolEvent, TabletToolProximityEvent, TabletToolTipEvent,
+     TabletToolTipState, TouchEvent,
+ };
++#[cfg(target_os = "linux")]
+ use smithay::backend::libinput::LibinputInputBackend;
+ use smithay::input::dnd::DnDGrab;
+ use smithay::input::keyboard::{keysyms, FilterResult, Keysym, Layout, ModifiersState};
+@@ -195,6 +197,7 @@ impl State {
+         }
+     }
+ 
++    #[cfg(target_os = "linux")]
+     pub fn process_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
+         let _span = tracy_client::span!("process_libinput_event");
+ 
+@@ -265,6 +268,7 @@ impl State {
+                 tablet_seat.clear_tools();
+             }
+         }
++        #[cfg(target_os = "linux")]
+         if device.has_capability(DeviceCapability::Touch) && self.niri.touch.is_empty() {
+             self.niri.seat.remove_touch();
+         }
+@@ -326,21 +330,25 @@ impl State {
+             pos.x /= target_geo.size.w as f64;
+             pos.y /= target_geo.size.h as f64;
+ 
+-            let device = event.device();
+-            if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
+-                if let Some(data) = self.niri.tablets.get(device) {
+-                    // This code does the same thing as mutter with "keep aspect ratio" enabled.
+-                    let size = transform.invert().transform_size(target_geo.size);
+-                    let output_aspect_ratio = size.w as f64 / size.h as f64;
+-                    let ratio = data.aspect_ratio / output_aspect_ratio;
+-
+-                    if ratio > 1. {
+-                        pos.x *= ratio;
+-                    } else {
+-                        pos.y /= ratio;
++            #[cfg(target_os = "linux")]
++            {
++                let device = event.device();
++                if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
++                    if let Some(data) = self.niri.tablets.get(device) {
++                        // This code does the same thing as mutter with "keep aspect ratio"
++                        // enabled.
++                        let size = transform.invert().transform_size(target_geo.size);
++                        let output_aspect_ratio = size.w as f64 / size.h as f64;
++                        let ratio = data.aspect_ratio / output_aspect_ratio;
++
++                        if ratio > 1. {
++                            pos.x *= ratio;
++                        } else {
++                            pos.y /= ratio;
++                        }
+                     }
+                 }
+-            };
++            }
+ 
+             pos.x *= target_geo.size.w as f64;
+             pos.y *= target_geo.size.h as f64;
+@@ -3780,9 +3788,12 @@ impl State {
+     ) where
+         I::Device: 'static,
+     {
++        #[cfg_attr(not(target_os = "linux"), allow(unused_mut))]
+         let mut delta_x = event.delta_x();
++        #[cfg_attr(not(target_os = "linux"), allow(unused_mut))]
+         let mut delta_y = event.delta_y();
+ 
++        #[cfg(target_os = "linux")]
+         if let Some(libinput_event) =
+             (&event as &dyn Any).downcast_ref::<input::event::gesture::GestureSwipeUpdateEvent>()
+         {
+@@ -3792,11 +3803,14 @@ impl State {
+ 
+         let uninverted_delta_y = delta_y;
+ 
+-        let device = event.device();
+-        if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
+-            if device.config_scroll_natural_scroll_enabled() {
+-                delta_x = -delta_x;
+-                delta_y = -delta_y;
++        #[cfg(target_os = "linux")]
++        {
++            let device = event.device();
++            if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
++                if device.config_scroll_natural_scroll_enabled() {
++                    delta_x = -delta_x;
++                    delta_y = -delta_y;
++                }
+             }
+         }
+ 
+@@ -4671,6 +4685,7 @@ fn hardcoded_overview_bind(raw: Keysym, mods: ModifiersState) -> Option<Bind> {
+     })
+ }
+ 
++#[cfg(target_os = "linux")]
+ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::Device) {
+     // According to Mutter code, this setting is specific to touchpads.
+     let is_touchpad = device.config_tap_finger_count() > 0;
+diff --git a/src/lib.rs b/src/lib.rs
+index d516838..028d0fa 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -5,6 +5,10 @@ extern crate tracing;
+ pub mod a11y;
+ pub mod animation;
+ pub mod backend;
++// Wawona (wwn-niri): C ABI entry point for in-process hosting on targets
++// where spawning a niri binary is not allowed (App Store posture).
++#[cfg(not(target_os = "linux"))]
++pub mod c_api;
+ pub mod cli;
+ pub mod cursor;
+ #[cfg(feature = "dbus")]
+diff --git a/src/niri.rs b/src/niri.rs
+index ec40e01..bf9c118 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -23,9 +23,10 @@ use smithay::backend::input::Keycode;
+ use smithay::backend::renderer::damage::OutputDamageTracker;
+ use smithay::backend::renderer::element::memory::MemoryRenderBufferRenderElement;
+ use smithay::backend::renderer::element::surface::WaylandSurfaceRenderElement;
++#[cfg(target_os = "linux")]
++use smithay::backend::renderer::element::utils::select_dmabuf_feedback;
+ use smithay::backend::renderer::element::utils::{
+-    select_dmabuf_feedback, CropRenderElement, Relocate, RelocateRenderElement,
+-    RescaleRenderElement,
++    CropRenderElement, Relocate, RelocateRenderElement, RescaleRenderElement,
+ };
+ use smithay::backend::renderer::element::{
+     default_primary_scanout_output_compare, Element, Id, Kind, PrimaryScanoutOutput, RenderElement,
+@@ -34,8 +35,10 @@ use smithay::backend::renderer::element::{
+ use smithay::backend::renderer::gles::GlesRenderer;
+ use smithay::backend::renderer::sync::SyncPoint;
+ use smithay::backend::renderer::Color32F;
++#[cfg(target_os = "linux")]
++use smithay::desktop::utils::send_dmabuf_feedback_surface_tree;
+ use smithay::desktop::utils::{
+-    bbox_from_surface_tree, output_update, send_dmabuf_feedback_surface_tree,
++    bbox_from_surface_tree, output_update,
+     send_frames_surface_tree, surface_presentation_feedback_flags_from_states,
+     surface_primary_scanout_output, take_presentation_feedback_surface_tree,
+     under_from_surface_tree, update_surface_primary_scanout_output, with_surfaces_surface_tree,
+@@ -115,8 +118,11 @@ use wayland_server::protocol::wl_output::WlOutput;
+ #[cfg(feature = "dbus")]
+ use crate::a11y::A11y;
+ use crate::animation::Clock;
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::SurfaceDmabufFeedback;
+-use crate::backend::{Backend, Headless, RenderResult, Tty, Winit};
++#[cfg(target_os = "linux")]
++use crate::backend::{Tty, Winit};
++use crate::backend::{Backend, Headless, Nested, RenderResult};
+ use crate::cursor::{CursorManager, CursorTextureCache, RenderCursor, XCursor};
+ #[cfg(feature = "dbus")]
+ use crate::dbus::freedesktop_locale1::Locale1ToNiri;
+@@ -131,10 +137,11 @@ use crate::handlers::{configure_lock_surface, XDG_ACTIVATION_TOKEN_TIMEOUT};
+ use crate::input::pick_color_grab::PickColorGrab;
+ use crate::input::scroll_swipe_gesture::ScrollSwipeGesture;
+ use crate::input::scroll_tracker::ScrollTracker;
+-use crate::input::{
+-    apply_libinput_settings, mods_with_finger_scroll_binds, mods_with_mouse_binds,
+-    mods_with_wheel_binds, TabletData,
+-};
++#[cfg(target_os = "linux")]
++use crate::input::apply_libinput_settings;
++#[cfg(target_os = "linux")]
++use crate::input::TabletData;
++use crate::input::{mods_with_finger_scroll_binds, mods_with_mouse_binds, mods_with_wheel_binds};
+ use crate::ipc::server::IpcServer;
+ use crate::layer::mapped::LayerSurfaceRenderElement;
+ use crate::layer::MappedLayer;
+@@ -266,8 +273,11 @@ pub struct Niri {
+     /// startup, libinput will immediately send a closed event.
+     pub is_lid_closed: bool,
+ 
++    #[cfg(target_os = "linux")]
+     pub devices: HashSet<input::Device>,
++    #[cfg(target_os = "linux")]
+     pub tablets: HashMap<input::Device, TabletData>,
++    #[cfg(target_os = "linux")]
+     pub touch: HashSet<input::Device>,
+ 
+     // Smithay state.
+@@ -716,16 +726,45 @@ impl State {
+             || env::var_os("WAYLAND_SOCKET").is_some()
+             || env::var_os("DISPLAY").is_some();
+ 
++        // Wawona (wwn-niri): NIRI_BACKEND=nested forces the nested (Wayland
++        // client of the host compositor) backend; on non-Linux targets it is
++        // the only session backend.
++        let force_nested = env::var_os("NIRI_BACKEND").is_some_and(|v| v == "nested");
++
+         let mut backend = if headless {
+             let headless = Headless::new();
+             Backend::Headless(headless)
++        } else if force_nested {
++            let nested = Nested::new(config.clone(), event_loop.clone())
++                .context("error initializing the nested backend")?;
++            Backend::Nested(Box::new(nested))
+         } else if has_display {
+-            let winit = Winit::new(config.clone(), event_loop.clone())?;
+-            Backend::Winit(winit)
++            #[cfg(target_os = "linux")]
++            {
++                let winit = Winit::new(config.clone(), event_loop.clone())?;
++                Backend::Winit(winit)
++            }
++            #[cfg(not(target_os = "linux"))]
++            {
++                let nested = Nested::new(config.clone(), event_loop.clone())
++                    .context("error initializing the nested backend")?;
++                Backend::Nested(Box::new(nested))
++            }
+         } else {
+-            let tty = Tty::new(config.clone(), event_loop.clone())
+-                .context("error initializing the TTY backend")?;
+-            Backend::Tty(tty)
++            #[cfg(target_os = "linux")]
++            {
++                let tty = Tty::new(config.clone(), event_loop.clone())
++                    .context("error initializing the TTY backend")?;
++                Backend::Tty(tty)
++            }
++            #[cfg(not(target_os = "linux"))]
++            {
++                return Err(anyhow::anyhow!(
++                    "no host Wayland display found (WAYLAND_DISPLAY/WAYLAND_SOCKET); \
++                     on this platform niri only runs nested inside the Wawona compositor"
++                )
++                .into());
++            }
+         };
+ 
+         let mut niri = Niri::new(
+@@ -1642,12 +1681,15 @@ impl State {
+             self.ipc_keyboard_layouts_changed();
+         }
+ 
++        #[cfg(target_os = "linux")]
+         if libinput_config_changed {
+             let config = self.niri.config.borrow();
+             for mut device in self.niri.devices.iter().cloned() {
+                 apply_libinput_settings(&config.input, &mut device);
+             }
+         }
++        #[cfg(not(target_os = "linux"))]
++        let _ = libinput_config_changed;
+ 
+         if ignored_nodes_changed {
+             self.backend.update_ignored_nodes_config(&mut self.niri);
+@@ -1819,13 +1861,16 @@ impl State {
+         // user. Since if we add a new section and some existing section also matches the
+         // output, then our new section won't do anything.
+         let temp;
+-        let match_name = if let Some(output) = self.niri.output_by_name_match(name) {
+-            output.user_data().get::<OutputName>().unwrap()
+-        } else if let Some(output_name) = self
++        #[cfg(target_os = "linux")]
++        let disconnected_name = self
+             .backend
+             .tty_checked()
+-            .and_then(|tty| tty.disconnected_connector_name_by_name_match(name))
+-        {
++            .and_then(|tty| tty.disconnected_connector_name_by_name_match(name));
++        #[cfg(not(target_os = "linux"))]
++        let disconnected_name: Option<OutputName> = None;
++        let match_name = if let Some(output) = self.niri.output_by_name_match(name) {
++            output.user_data().get::<OutputName>().unwrap()
++        } else if let Some(output_name) = disconnected_name {
+             temp = output_name;
+             &temp
+         } else {
+@@ -2345,7 +2390,10 @@ impl Niri {
+         let background_effect_state = BackgroundEffectState::new::<State>(&display_handle);
+         let xdg_foreign_state = XdgForeignState::new::<State>(&display_handle);
+ 
++        #[cfg(target_os = "linux")]
+         let is_tty = matches!(backend, Backend::Tty(_));
++        #[cfg(not(target_os = "linux"))]
++        let is_tty = false;
+         let gamma_control_manager_state =
+             GammaControlManagerState::new::<State, _>(&display_handle, move |client| {
+                 is_tty && !client.get_data::<ClientState>().unwrap().restricted
+@@ -2511,8 +2559,11 @@ impl Niri {
+             monitors_active: true,
+             is_lid_closed: false,
+ 
++            #[cfg(target_os = "linux")]
+             devices: HashSet::new(),
++            #[cfg(target_os = "linux")]
+             tablets: HashMap::new(),
++            #[cfg(target_os = "linux")]
+             touch: HashSet::new(),
+ 
+             compositor_state,
+@@ -4922,6 +4973,7 @@ impl Niri {
+         }
+     }
+ 
++    #[cfg(target_os = "linux")]
+     pub fn send_dmabuf_feedbacks(
+         &self,
+         output: &Output,
+diff --git a/src/render_helpers/border.rs b/src/render_helpers/border.rs
+index 923066e..d295371 100644
+--- a/src/render_helpers/border.rs
++++ b/src/render_helpers/border.rs
+@@ -15,7 +15,9 @@ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, T
+ use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
++#[cfg(target_os = "linux")]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ 
+ /// Renders a wide variety of borders and border parts.
+@@ -307,6 +309,7 @@ impl RenderElement<GlesRenderer> for BorderRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for BorderRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/clipped_surface.rs b/src/render_helpers/clipped_surface.rs
+index e357895..c618a26 100644
+--- a/src/render_helpers/clipped_surface.rs
++++ b/src/render_helpers/clipped_surface.rs
+@@ -11,8 +11,11 @@ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
+ use super::damage::ExtraDamage;
+-use super::renderer::{AsGlesFrame as _, NiriRenderer};
++#[cfg(target_os = "linux")]
++use super::renderer::AsGlesFrame as _;
++use super::renderer::NiriRenderer;
+ use super::shaders::{mat3_uniform, Shaders};
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ #[derive(Debug)]
+@@ -259,6 +262,7 @@ impl RenderElement<GlesRenderer> for ClippedSurfaceRenderElement<GlesRenderer> {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>>
+     for ClippedSurfaceRenderElement<TtyRenderer<'render>>
+ {
+diff --git a/src/render_helpers/framebuffer_effect.rs b/src/render_helpers/framebuffer_effect.rs
+index 4dc529d..387f5b0 100644
+--- a/src/render_helpers/framebuffer_effect.rs
++++ b/src/render_helpers/framebuffer_effect.rs
+@@ -13,9 +13,11 @@ use smithay::gpu_span_location;
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Rectangle, Scale, Transform};
+ 
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ use crate::render_helpers::background_effect::RenderParams;
+ use crate::render_helpers::blur::{Blur, BlurOptions};
++#[cfg(target_os = "linux")]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::{mat3_uniform, Shaders};
+ use crate::utils::region::TransformedRegion;
+@@ -409,6 +411,7 @@ impl RenderElement<GlesRenderer> for FramebufferEffectElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for FramebufferEffectElement {
+     fn capture_framebuffer(
+         &self,
+diff --git a/src/render_helpers/gradient_fade_texture.rs b/src/render_helpers/gradient_fade_texture.rs
+index bbdfef4..16c93ea 100644
+--- a/src/render_helpers/gradient_fade_texture.rs
++++ b/src/render_helpers/gradient_fade_texture.rs
+@@ -7,7 +7,9 @@ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Physical, Rectangle, Scale, Transform};
+ 
+ use super::texture::TextureRenderElement;
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
++#[cfg(target_os = "linux")]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::Shaders;
+ 
+@@ -121,6 +123,7 @@ impl RenderElement<GlesRenderer> for GradientFadeTextureRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for GradientFadeTextureRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/offscreen.rs b/src/render_helpers/offscreen.rs
+index 2f624b1..6496b33 100644
+--- a/src/render_helpers/offscreen.rs
++++ b/src/render_helpers/offscreen.rs
+@@ -19,7 +19,9 @@ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
+ use super::encompassing_geo;
++#[cfg(target_os = "linux")]
+ use super::renderer::AsGlesFrame as _;
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Buffer for offscreen rendering.
+@@ -334,6 +336,7 @@ impl RenderElement<GlesRenderer> for OffscreenRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for OffscreenRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/primary_gpu_texture.rs b/src/render_helpers/primary_gpu_texture.rs
+index 4cdec64..6aa4711 100644
+--- a/src/render_helpers/primary_gpu_texture.rs
++++ b/src/render_helpers/primary_gpu_texture.rs
+@@ -6,6 +6,7 @@ use smithay::utils::{Buffer, Physical, Rectangle, Scale, Transform};
+ 
+ use super::renderer::AsGlesFrame;
+ use super::texture::TextureRenderElement;
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Wrapper for a texture from the primary GPU for rendering with the primary GPU.
+@@ -84,6 +85,7 @@ impl RenderElement<GlesRenderer> for PrimaryGpuTextureRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for PrimaryGpuTextureRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/render_elements.rs b/src/render_helpers/render_elements.rs
+index f423b24..03b6232 100644
+--- a/src/render_helpers/render_elements.rs
++++ b/src/render_helpers/render_elements.rs
+@@ -141,6 +141,9 @@ macro_rules! niri_render_elements {
+             }
+         }
+ 
++        // Wawona (wwn-niri): the TTY (multi-gpu) renderer only exists on
++        // desktop Linux; other targets render exclusively with GlesRenderer.
++        #[cfg(target_os = "linux")]
+         impl<'render> smithay::backend::renderer::element::RenderElement<$crate::backend::tty::TtyRenderer<'render>>
+             for $($name_R<$crate::backend::tty::TtyRenderer<'render>>)? $($name_no_R)?
+         {
+diff --git a/src/render_helpers/renderer.rs b/src/render_helpers/renderer.rs
+index 9c42ea3..89390f0 100644
+--- a/src/render_helpers/renderer.rs
++++ b/src/render_helpers/renderer.rs
+@@ -4,6 +4,7 @@ use smithay::backend::renderer::{
+     Bind, ExportMem, ImportAll, ImportMem, Offscreen, Renderer, RendererSuper, Texture,
+ };
+ 
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer};
+ 
+ /// Trait with our main renderer requirements to save on the typing.
+@@ -47,6 +48,7 @@ impl AsGlesRenderer for GlesRenderer {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl AsGlesRenderer for TtyRenderer<'_> {
+     fn as_gles_renderer(&mut self) -> &mut GlesRenderer {
+         self.as_mut()
+@@ -67,6 +69,7 @@ impl<'frame, 'buffer> AsGlesFrame<'frame, 'buffer> for GlesFrame<'frame, 'buffer
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'frame, 'buffer> AsGlesFrame<'frame, 'buffer> for TtyFrame<'_, 'frame, 'buffer> {
+     fn as_gles_frame(&mut self) -> &mut GlesFrame<'frame, 'buffer> {
+         self.as_mut()
+diff --git a/src/render_helpers/resize.rs b/src/render_helpers/resize.rs
+index 79b26db..a5a85ad 100644
+--- a/src/render_helpers/resize.rs
++++ b/src/render_helpers/resize.rs
+@@ -11,9 +11,12 @@ use smithay::gpu_span_location;
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Rectangle, Scale, Size, Transform};
+ 
+-use super::renderer::{AsGlesFrame, NiriRenderer};
++#[cfg(target_os = "linux")]
++use super::renderer::AsGlesFrame;
++use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ #[derive(Debug)]
+@@ -193,6 +196,7 @@ impl RenderElement<GlesRenderer> for ResizeRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ResizeRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/shader_element.rs b/src/render_helpers/shader_element.rs
+index f1bf978..3b05d41 100644
+--- a/src/render_helpers/shader_element.rs
++++ b/src/render_helpers/shader_element.rs
+@@ -16,6 +16,7 @@ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size};
+ use super::renderer::AsGlesFrame;
+ use super::resources::Resources;
+ use super::shaders::{ProgramType, Shaders};
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Renders a shader with optional texture input, on the primary GPU.
+@@ -521,6 +522,7 @@ impl RenderElement<GlesRenderer> for ShaderRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ShaderRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/shadow.rs b/src/render_helpers/shadow.rs
+index 0d26201..8159976 100644
+--- a/src/render_helpers/shadow.rs
++++ b/src/render_helpers/shadow.rs
+@@ -13,7 +13,9 @@ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, T
+ use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
++#[cfg(target_os = "linux")]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ 
+ /// Renders a rounded rectangle shadow.
+@@ -268,6 +270,7 @@ impl RenderElement<GlesRenderer> for ShadowRenderElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ShadowRenderElement {
+     fn draw(
+         &self,
+diff --git a/src/render_helpers/xray.rs b/src/render_helpers/xray.rs
+index f4b4f86..3aba57b 100644
+--- a/src/render_helpers/xray.rs
++++ b/src/render_helpers/xray.rs
+@@ -13,9 +13,11 @@ use smithay::backend::renderer::Color32F;
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
++#[cfg(target_os = "linux")]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ use crate::render_helpers::background_effect::RenderParams;
+ use crate::render_helpers::effect_buffer::EffectBuffer;
++#[cfg(target_os = "linux")]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::{mat3_uniform, Shaders};
+ use crate::render_helpers::{RenderCtx, RenderTarget};
+@@ -357,6 +359,7 @@ impl RenderElement<GlesRenderer> for XrayElement {
+     }
+ }
+ 
++#[cfg(target_os = "linux")]
+ impl<'render> RenderElement<TtyRenderer<'render>> for XrayElement {
+     fn draw(
+         &self,
+diff --git a/src/ui/config_error_notification.rs b/src/ui/config_error_notification.rs
+index 7bd3d14..f2acabe 100644
+--- a/src/ui/config_error_notification.rs
++++ b/src/ui/config_error_notification.rs
+@@ -11,7 +11,7 @@ use pangocairo::pango::FontDescription;
+ use smithay::backend::renderer::element::Kind;
+ use smithay::backend::renderer::gles::{GlesRenderer, GlesTexture};
+ use smithay::output::Output;
+-use smithay::reexports::gbm::Format as Fourcc;
++use smithay::backend::allocator::Fourcc;
+ use smithay::utils::{Point, Transform};
+ 
+ use crate::animation::{Animation, Clock};
+diff --git a/src/ui/exit_confirm_dialog.rs b/src/ui/exit_confirm_dialog.rs
+index 221ae05..a721240 100644
+--- a/src/ui/exit_confirm_dialog.rs
++++ b/src/ui/exit_confirm_dialog.rs
+@@ -10,7 +10,7 @@ use pangocairo::pango::{Alignment, FontDescription};
+ use smithay::backend::renderer::element::utils::RescaleRenderElement;
+ use smithay::backend::renderer::element::Kind;
+ use smithay::output::Output;
+-use smithay::reexports::gbm::Format as Fourcc;
++use smithay::backend::allocator::Fourcc;
+ use smithay::utils::{Point, Transform};
+ 
+ use crate::animation::{Animation, Clock};
+diff --git a/src/ui/hotkey_overlay.rs b/src/ui/hotkey_overlay.rs
+index b8fdca1..b2cb7e8 100644
+--- a/src/ui/hotkey_overlay.rs
++++ b/src/ui/hotkey_overlay.rs
+@@ -12,7 +12,7 @@ use smithay::backend::renderer::element::Kind;
+ use smithay::backend::renderer::gles::{GlesRenderer, GlesTexture};
+ use smithay::input::keyboard::xkb::keysym_get_name;
+ use smithay::output::{Output, WeakOutput};
+-use smithay::reexports::gbm::Format as Fourcc;
++use smithay::backend::allocator::Fourcc;
+ use smithay::utils::{Scale, Transform};
+ 
+ use crate::render_helpers::primary_gpu_texture::PrimaryGpuTextureRenderElement;

@@ -1,0 +1,19 @@
+[package]
+name = "effectcraft-expr"
+version = "0.6.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "WASI P1 CLI over EffectCraft expression check_syntax (upstream v0.6.0 slice)"
+publish = false
+
+[[bin]]
+name = "effectcraft-expr"
+path = "src/main.rs"
+
+[dependencies]
+effectcraft-expr = { git = "https://github.com/storytold/effectcraft", tag = "v0.6.0" }
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

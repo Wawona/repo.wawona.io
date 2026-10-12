@@ -1,0 +1,1109 @@
+diff -uN -r /tmp/niri-macos-tty-old/Cargo.toml /tmp/niri-macos-tty/Cargo.toml
+--- a/Cargo.toml	1969-12-31 16:00:01
++++ b/Cargo.toml	2026-08-18 23:30:07
+@@ -35,6 +35,7 @@
+ # version = "0.1.0"
+ git = "https://github.com/Smithay/smithay.git"
+ rev = "ff5fa7df392cecfba049ffed55cdaa4e98a8e7ef"
++default-features = false
+ # path = "../smithay/smithay-drm-extras"
+ 
+ [package]
+@@ -108,16 +109,18 @@
+ xcursor = "0.3.10"
+ zbus = { version = "5.13.2", optional = true }
+ 
+-# Wawona (wwn-niri): the DRM/KMS + libinput + udev + libseat + pipewire stack
+-# only exists on desktop Linux. On Apple platforms and Android, niri runs
+-# strictly as a nested Wayland client of the Wawona compositor, so those
+-# backends (and their FFI crates) are compiled out entirely.
+-[target.'cfg(target_os = "linux")'.dependencies]
++# Wawona (wwn-niri): DRM/KMS + libinput + udev + libseat on Linux and on
++# macOS Mode B (iland userspace KMS + libwayland-mac.dylib). Pipewire and
++# winit stay Linux-only. iOS/Android stay nested-only.
++[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+ drm-ffi = "0.9.1"
+ input = { version = "0.10.0", features = ["libinput_1_21"] }
++smithay-drm-extras = { workspace = true, default-features = false }
++
++[target.'cfg(target_os = "linux")'.dependencies]
+ libdisplay-info = "0.3.0"
++smithay-drm-extras = { workspace = true, features = ["display-info"] }
+ pipewire = { version = "0.9.2", optional = true, features = ["v0_3_33"] }
+-smithay-drm-extras.workspace = true
+ 
+ [dependencies.smithay]
+ workspace = true
+@@ -130,10 +133,9 @@
+     "wayland_frontend",
+ ]
+ 
+-# Wawona (wwn-niri): backend_winit is Linux-only too — on macOS winit's
+-# EventLoop is CFRunLoop-based (no AsFd), which smithay's calloop integration
+-# cannot drive. Non-Linux targets use the nested backend exclusively.
+-[target.'cfg(target_os = "linux")'.dependencies.smithay]
++# Wawona (wwn-niri): DRM session backends on Linux and macOS Mode B.
++# backend_winit stays Linux-only (macOS winit EventLoop is CFRunLoop, no AsFd).
++[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies.smithay]
+ workspace = true
+ features = [
+     "backend_drm",
+@@ -141,8 +143,13 @@
+     "backend_libinput",
+     "backend_session_libseat",
+     "backend_udev",
+-    "backend_winit",
+     "renderer_multi",
++]
++
++[target.'cfg(target_os = "linux")'.dependencies.smithay]
++workspace = true
++features = [
++    "backend_winit",
+ ]
+ 
+ [dev-dependencies]
+diff -uN -r /tmp/niri-macos-tty-old/niri-config/Cargo.toml /tmp/niri-macos-tty/niri-config/Cargo.toml
+--- a/niri-config/Cargo.toml	1969-12-31 16:00:01
++++ b/niri-config/Cargo.toml	2026-08-18 23:10:33
+@@ -20,7 +20,7 @@
+ 
+ # Wawona (wwn-niri): libinput types only exist on desktop Linux; non-Linux
+ # builds use xkb/keysym types from smithay core only.
+-[target.'cfg(target_os = "linux")'.dependencies.smithay]
++[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies.smithay]
+ workspace = true
+ features = ["backend_libinput"]
+ 
+diff -uN -r /tmp/niri-macos-tty-old/niri-config/src/input.rs /tmp/niri-macos-tty/niri-config/src/input.rs
+--- a/niri-config/src/input.rs	1969-12-31 16:00:01
++++ b/niri-config/src/input.rs	2026-08-18 23:10:34
+@@ -4,7 +4,7 @@
+ use smithay::input::keyboard::XkbConfig;
+ // Wawona (wwn-niri): libinput only exists on desktop Linux; the config enums
+ // themselves stay portable, only the conversions into libinput types are gated.
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::reexports::input;
+ 
+ use crate::binds::Modifiers;
+@@ -300,7 +300,7 @@
+     ButtonAreas,
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl From<ClickMethod> for input::ClickMethod {
+     fn from(value: ClickMethod) -> Self {
+         match value {
+@@ -316,7 +316,7 @@
+     Flat,
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl From<AccelProfile> for input::AccelProfile {
+     fn from(value: AccelProfile) -> Self {
+         match value {
+@@ -334,7 +334,7 @@
+     OnButtonDown,
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl From<ScrollMethod> for input::ScrollMethod {
+     fn from(value: ScrollMethod) -> Self {
+         match value {
+@@ -352,7 +352,7 @@
+     LeftMiddleRight,
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl From<TapButtonMap> for input::TapButtonMap {
+     fn from(value: TapButtonMap) -> Self {
+         match value {
+diff -uN -r /tmp/niri-macos-tty-old/src/backend/mod.rs /tmp/niri-macos-tty/src/backend/mod.rs
+--- a/src/backend/mod.rs	1969-12-31 16:00:01
++++ b/src/backend/mod.rs	2026-08-18 23:10:33
+@@ -11,12 +11,11 @@
+ use crate::niri::Niri;
+ use crate::utils::id::IdCounter;
+ 
+-// Wawona (wwn-niri): the TTY (DRM/KMS + libinput) and winit backends only
+-// exist on desktop Linux. On Apple platforms and Android, niri runs strictly
+-// nested: a Wayland client of the Wawona compositor (the `nested` backend).
+-#[cfg(target_os = "linux")]
++// Wawona (wwn-niri): TTY (DRM/KMS + libinput) exists on desktop Linux and on
++// macOS Mode B. winit stays Linux-only. iOS/Android stay nested-only.
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ pub mod tty;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ pub use tty::Tty;
+ 
+ #[cfg(target_os = "linux")]
+@@ -32,7 +31,7 @@
+ 
+ #[allow(clippy::large_enum_variant)]
+ pub enum Backend {
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     Tty(Tty),
+     #[cfg(target_os = "linux")]
+     Winit(Winit),
+@@ -71,7 +70,7 @@
+     pub fn init(&mut self, niri: &mut Niri) {
+         let _span = tracy_client::span!("Backend::init");
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.init(niri),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.init(niri),
+@@ -82,7 +81,7 @@
+ 
+     pub fn seat_name(&self) -> String {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.seat_name(),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.seat_name(),
+@@ -96,7 +95,7 @@
+         f: impl FnOnce(&mut GlesRenderer) -> T,
+     ) -> Option<T> {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.with_primary_renderer(f),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.with_primary_renderer(f),
+@@ -113,7 +112,7 @@
+     ) -> RenderResult {
+         let _ = target_presentation_time;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.render(niri, output, target_presentation_time),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.render(niri, output),
+@@ -141,7 +140,7 @@
+                     ModKey::Alt
+                 }
+             }),
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(_) => config.input.mod_key.unwrap_or(ModKey::Super),
+             Backend::Headless(_) => config.input.mod_key.unwrap_or(ModKey::Super),
+         }
+@@ -150,7 +149,7 @@
+     pub fn change_vt(&mut self, vt: i32) {
+         let _ = vt;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.change_vt(vt),
+             _ => (),
+         }
+@@ -158,7 +157,7 @@
+ 
+     pub fn suspend(&mut self) {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.suspend(),
+             _ => (),
+         }
+@@ -166,7 +165,7 @@
+ 
+     pub fn toggle_debug_tint(&mut self) {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.toggle_debug_tint(),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.toggle_debug_tint(),
+@@ -177,7 +176,7 @@
+ 
+     pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.import_dmabuf(dmabuf),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.import_dmabuf(dmabuf),
+@@ -189,7 +188,7 @@
+     pub fn early_import(&mut self, surface: &WlSurface) {
+         let _ = surface;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.early_import(surface),
+             _ => (),
+         }
+@@ -197,7 +196,7 @@
+ 
+     pub fn ipc_outputs(&self) -> Arc<Mutex<IpcOutputMap>> {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.ipc_outputs(),
+             #[cfg(target_os = "linux")]
+             Backend::Winit(winit) => winit.ipc_outputs(),
+@@ -212,7 +211,7 @@
+     ) -> Option<smithay::backend::allocator::gbm::GbmDevice<smithay::backend::drm::DrmDeviceFd>>
+     {
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.primary_gbm_device(),
+             _ => None,
+         }
+@@ -221,7 +220,7 @@
+     pub fn set_monitors_active(&mut self, active: bool) {
+         let _ = active;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.set_monitors_active(active),
+             _ => (),
+         }
+@@ -230,7 +229,7 @@
+     pub fn set_output_on_demand_vrr(&mut self, niri: &mut Niri, output: &Output, enable_vrr: bool) {
+         let _ = (&niri, output, enable_vrr);
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.set_output_on_demand_vrr(niri, output, enable_vrr),
+             _ => (),
+         }
+@@ -239,7 +238,7 @@
+     pub fn update_ignored_nodes_config(&mut self, niri: &mut Niri) {
+         let _ = &niri;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.update_ignored_nodes_config(niri),
+             _ => (),
+         }
+@@ -248,13 +247,13 @@
+     pub fn on_output_config_changed(&mut self, niri: &mut Niri) {
+         let _ = &niri;
+         match self {
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             Backend::Tty(tty) => tty.on_output_config_changed(niri),
+             _ => (),
+         }
+     }
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub fn tty_checked(&mut self) -> Option<&mut Tty> {
+         if let Self::Tty(v) = self {
+             Some(v)
+@@ -263,7 +262,7 @@
+         }
+     }
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub fn tty(&mut self) -> &mut Tty {
+         if let Self::Tty(v) = self {
+             v
+diff -uN -r /tmp/niri-macos-tty-old/src/backend/tty.rs /tmp/niri-macos-tty/src/backend/tty.rs
+--- a/src/backend/tty.rs	1969-12-31 16:00:01
++++ b/src/backend/tty.rs	2026-08-18 23:22:08
+@@ -3061,6 +3061,41 @@
+ }
+ 
+ pub fn calculate_mode_cvt(width: u16, height: u16, refresh: f64) -> DrmMode {
++    #[cfg(target_os = "macos")]
++    {
++        let hblank = 160u16;
++        let vblank = 45u16;
++        let htotal = width.saturating_add(hblank);
++        let vtotal = height.saturating_add(vblank);
++        let hsync_start = width.saturating_add(48);
++        let hsync_end = hsync_start.saturating_add(32);
++        let vsync_start = height.saturating_add(3);
++        let vsync_end = vsync_start.saturating_add(5);
++        let clock = ((htotal as f64) * (vtotal as f64) * refresh / 1000.0).round() as u32;
++        let vrefresh = refresh.round() as u32;
++        let flags = drm_ffi::DRM_MODE_FLAG_NHSYNC | drm_ffi::DRM_MODE_FLAG_PVSYNC;
++        let mode_name = format!("{width}x{height}@{refresh:.2}");
++        let name = modeinfo_name_slice_from_string(&mode_name);
++        return DrmMode::from(drm_ffi::drm_sys::drm_mode_modeinfo {
++            clock,
++            hdisplay: width,
++            hsync_start,
++            hsync_end,
++            htotal,
++            vdisplay: height,
++            vsync_start,
++            vsync_end,
++            vtotal,
++            vrefresh,
++            flags,
++            type_: drm_ffi::DRM_MODE_TYPE_USERDEF,
++            name,
++            hskew: 0,
++            vscan: 0,
++        });
++    }
++    #[cfg(not(target_os = "macos"))]
++    {
+     // Cross-checked with sway's implementation:
+     // https://gitlab.freedesktop.org/wlroots/wlroots/-/blob/22528542970687720556035790212df8d9bb30bb/backend/drm/util.c#L251
+ 
+@@ -3121,6 +3156,7 @@
+     };
+ 
+     DrmMode::from(drm_ffi_mode)
++    }
+ }
+ 
+ // Returns a c-string of maximally 31 Rust string chars + null terminator. Excess characters are
+@@ -3213,6 +3249,7 @@
+     mode.map(|m| (*m, fallback))
+ }
+ 
++#[cfg(not(target_os = "macos"))]
+ fn get_edid_info(
+     device: &DrmDevice,
+     connector: connector::Handle,
+@@ -3374,6 +3411,18 @@
+     connector: connector::Handle,
+     connector_name: String,
+ ) -> OutputName {
++    #[cfg(target_os = "macos")]
++    {
++        let _ = (device, connector);
++        return OutputName {
++            connector: connector_name,
++            make: None,
++            model: None,
++            serial: None,
++        };
++    }
++    #[cfg(not(target_os = "macos"))]
++    {
+     let info = get_edid_info(device, connector)
+         .map_err(|err| warn!("error getting EDID info for {connector_name}: {err:?}"))
+         .ok();
+@@ -3382,6 +3431,7 @@
+         make: info.as_ref().and_then(|info| info.make()),
+         model: info.as_ref().and_then(|info| info.model()),
+         serial: info.as_ref().and_then(|info| info.serial()),
++    }
+     }
+ }
+ 
+diff -uN -r /tmp/niri-macos-tty-old/src/handlers/mod.rs /tmp/niri-macos-tty/src/handlers/mod.rs
+--- a/src/handlers/mod.rs	1969-12-31 16:00:01
++++ b/src/handlers/mod.rs	2026-08-18 23:10:33
+@@ -11,7 +11,7 @@
+ use std::time::Duration;
+ 
+ use smithay::backend::allocator::dmabuf::Dmabuf;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::backend::drm::DrmNode;
+ use smithay::backend::input::{InputEvent, TabletToolDescriptor};
+ use smithay::desktop::{PopupKind, PopupManager};
+@@ -27,7 +27,7 @@
+ use smithay::utils::{Logical, Point, Rectangle, Serial};
+ use smithay::wayland::compositor::{get_parent, with_states};
+ use smithay::wayland::dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::wayland::drm_lease::{
+     DrmLease, DrmLeaseBuilder, DrmLeaseHandler, DrmLeaseRequest, DrmLeaseState, LeaseRejected,
+ };
+@@ -63,7 +63,7 @@
+ use smithay::wayland::xdg_activation::{
+     XdgActivationHandler, XdgActivationState, XdgActivationToken, XdgActivationTokenData,
+ };
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::delegate_drm_lease;
+ use smithay::{
+     delegate_cursor_shape, delegate_data_control, delegate_data_device, delegate_dmabuf,
+@@ -132,7 +132,7 @@
+     fn led_state_changed(&mut self, _seat: &Seat<Self>, led_state: keyboard::LedState) {
+         // Wawona (wwn-niri): LED state only reaches real hardware through
+         // libinput devices, which exist on desktop Linux only.
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         {
+             let keyboards = self
+                 .niri
+@@ -145,7 +145,7 @@
+                 keyboard.led_update(led_state.into());
+             }
+         }
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         let _ = led_state;
+     }
+ }
+@@ -699,7 +699,7 @@
+ }
+ delegate_virtual_pointer!(State);
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl DrmLeaseHandler for State {
+     fn drm_lease_state(&mut self, node: DrmNode) -> &mut DrmLeaseState {
+         self.backend
+@@ -745,7 +745,7 @@
+             .remove_lease(lease_id);
+     }
+ }
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ delegate_drm_lease!(State);
+ 
+ delegate_viewporter!(State);
+@@ -756,7 +756,7 @@
+     }
+ 
+     fn get_gamma_size(&mut self, output: &Output) -> Option<u32> {
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         match self.backend.tty().get_gamma_size(output) {
+             Ok(0) => None, // Setting gamma is not supported.
+             Ok(size) => Some(size),
+@@ -769,7 +769,7 @@
+             }
+         }
+         // Wawona (wwn-niri): no DRM outputs on nested-only targets.
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         {
+             let _ = output;
+             None
+@@ -777,7 +777,7 @@
+     }
+ 
+     fn set_gamma(&mut self, output: &Output, ramp: Option<Vec<u16>>) -> Option<()> {
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         match self.backend.tty().set_gamma(output, ramp) {
+             Ok(()) => Some(()),
+             Err(err) => {
+@@ -785,7 +785,7 @@
+                 None
+             }
+         }
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         {
+             let _ = (output, ramp);
+             None
+diff -uN -r /tmp/niri-macos-tty-old/src/input/backend_ext.rs /tmp/niri-macos-tty/src/input/backend_ext.rs
+--- a/src/input/backend_ext.rs	1969-12-31 16:00:01
++++ b/src/input/backend_ext.rs	2026-08-18 23:46:58
+@@ -1,4 +1,4 @@
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use ::input as libinput;
+ use smithay::backend::input;
+ #[cfg(target_os = "linux")]
+@@ -26,7 +26,7 @@
+     fn output(&self, state: &State) -> Option<Output>;
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl NiriInputDevice for libinput::Device {
+     fn output(&self, _state: &State) -> Option<Output> {
+         // FIXME: Allow specifying the output per-device?
+diff -uN -r /tmp/niri-macos-tty-old/src/input/mod.rs /tmp/niri-macos-tty/src/input/mod.rs
+--- a/src/input/mod.rs	1969-12-31 16:00:01
++++ b/src/input/mod.rs	2026-08-18 23:10:33
+@@ -5,7 +5,7 @@
+ use std::time::Duration;
+ 
+ use calloop::timer::{TimeoutAction, Timer};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use input::event::gesture::GestureEventCoordinates as _;
+ use niri_config::{
+     Action, Bind, Binds, Config, Key, ModKey, Modifiers, MruDirection, SwitchBinds, Trigger,
+@@ -19,7 +19,7 @@
+     TabletToolButtonEvent, TabletToolEvent, TabletToolProximityEvent, TabletToolTipEvent,
+     TabletToolTipState, TouchEvent,
+ };
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::backend::libinput::LibinputInputBackend;
+ use smithay::input::dnd::DnDGrab;
+ use smithay::input::keyboard::{keysyms, FilterResult, Keysym, Layout, ModifiersState};
+@@ -197,7 +197,7 @@
+         }
+     }
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub fn process_libinput_event(&mut self, event: &mut InputEvent<LibinputInputBackend>) {
+         let _span = tracy_client::span!("process_libinput_event");
+ 
+@@ -268,7 +268,7 @@
+                 tablet_seat.clear_tools();
+             }
+         }
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         if device.has_capability(DeviceCapability::Touch) && self.niri.touch.is_empty() {
+             self.niri.seat.remove_touch();
+         }
+@@ -330,7 +330,7 @@
+             pos.x /= target_geo.size.w as f64;
+             pos.y /= target_geo.size.h as f64;
+ 
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             {
+                 let device = event.device();
+                 if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
+@@ -3793,7 +3793,7 @@
+         #[cfg_attr(not(target_os = "linux"), allow(unused_mut))]
+         let mut delta_y = event.delta_y();
+ 
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         if let Some(libinput_event) =
+             (&event as &dyn Any).downcast_ref::<input::event::gesture::GestureSwipeUpdateEvent>()
+         {
+@@ -3803,7 +3803,7 @@
+ 
+         let uninverted_delta_y = delta_y;
+ 
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         {
+             let device = event.device();
+             if let Some(device) = (&device as &dyn Any).downcast_ref::<input::Device>() {
+@@ -4685,7 +4685,7 @@
+     })
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::Device) {
+     // According to Mutter code, this setting is specific to touchpads.
+     let is_touchpad = device.config_tap_finger_count() > 0;
+diff -uN -r /tmp/niri-macos-tty-old/src/niri.rs /tmp/niri-macos-tty/src/niri.rs
+--- a/src/niri.rs	1969-12-31 16:00:01
++++ b/src/niri.rs	2026-08-18 23:10:33
+@@ -23,7 +23,7 @@
+ use smithay::backend::renderer::damage::OutputDamageTracker;
+ use smithay::backend::renderer::element::memory::MemoryRenderBufferRenderElement;
+ use smithay::backend::renderer::element::surface::WaylandSurfaceRenderElement;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::backend::renderer::element::utils::select_dmabuf_feedback;
+ use smithay::backend::renderer::element::utils::{
+     CropRenderElement, Relocate, RelocateRenderElement, RescaleRenderElement,
+@@ -35,7 +35,7 @@
+ use smithay::backend::renderer::gles::GlesRenderer;
+ use smithay::backend::renderer::sync::SyncPoint;
+ use smithay::backend::renderer::Color32F;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use smithay::desktop::utils::send_dmabuf_feedback_surface_tree;
+ use smithay::desktop::utils::{
+     bbox_from_surface_tree, output_update,
+@@ -118,10 +118,12 @@
+ #[cfg(feature = "dbus")]
+ use crate::a11y::A11y;
+ use crate::animation::Clock;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::SurfaceDmabufFeedback;
++#[cfg(any(target_os = "linux", target_os = "macos"))]
++use crate::backend::Tty;
+ #[cfg(target_os = "linux")]
+-use crate::backend::{Tty, Winit};
++use crate::backend::Winit;
+ use crate::backend::{Backend, Headless, Nested, RenderResult};
+ use crate::cursor::{CursorManager, CursorTextureCache, RenderCursor, XCursor};
+ #[cfg(feature = "dbus")]
+@@ -137,9 +139,9 @@
+ use crate::input::pick_color_grab::PickColorGrab;
+ use crate::input::scroll_swipe_gesture::ScrollSwipeGesture;
+ use crate::input::scroll_tracker::ScrollTracker;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::input::apply_libinput_settings;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::input::TabletData;
+ use crate::input::{mods_with_finger_scroll_binds, mods_with_mouse_binds, mods_with_wheel_binds};
+ use crate::ipc::server::IpcServer;
+@@ -273,11 +275,11 @@
+     /// startup, libinput will immediately send a closed event.
+     pub is_lid_closed: bool,
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub devices: HashSet<input::Device>,
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub tablets: HashMap<input::Device, TabletData>,
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub touch: HashSet<input::Device>,
+ 
+     // Smithay state.
+@@ -725,11 +727,40 @@
+-        let has_display = env::var_os("WAYLAND_DISPLAY").is_some()
+-            || env::var_os("WAYLAND_SOCKET").is_some()
+-            || env::var_os("DISPLAY").is_some();
+ 
+         // Wawona (wwn-niri): NIRI_BACKEND=nested forces the nested (Wayland
+-        // client of the host compositor) backend; on non-Linux targets it is
+-        // the only session backend.
+-        let force_nested = env::var_os("NIRI_BACKEND").is_some_and(|v| v == "nested");
++        // client of the host compositor) backend. NIRI_BACKEND=tty selects the
++        // DRM/KMS session backend on Linux and on macOS Mode B (iland).
++        let mut has_display = env::var_os("WAYLAND_SOCKET").is_some();
++        if let Some(d) = env::var_os("WAYLAND_DISPLAY") {
++            #[cfg(target_os = "macos")]
++            {
++                let p = std::path::PathBuf::from(&d);
++                let live = if p.is_absolute() {
++                    p.exists()
++                } else {
++                    let rt = env::var_os("XDG_RUNTIME_DIR")
++                        .map(std::path::PathBuf::from)
++                        .unwrap_or_else(|| std::path::PathBuf::from("/tmp"));
++                    rt.join(&p).exists()
++                };
++                has_display |= live;
++            }
++            #[cfg(not(target_os = "macos"))]
++            {
++                let _ = d;
++                has_display = true;
++            }
++        }
++        #[cfg(not(target_os = "macos"))]
++        {
++            has_display |= env::var_os("DISPLAY").is_some();
++        }
++        let modeb_tty = env::var_os("WWN_MODEB_TTY").is_some_and(|v| v != "0");
++        let want_nested = env::var_os("NIRI_BACKEND").is_some_and(|v| v == "nested");
++        let want_tty = env::var_os("NIRI_BACKEND").is_some_and(|v| v == "tty");
++        // Live parent Wayland (Wawona, weston, or another niri) always nests.
++        // Classic session compositor unsets WAYLAND_DISPLAY, then tty/DRM.
++        // Inherited WWN_MODEB_TTY must not steal an inner niri onto DRM.
++        let force_nested = has_display || (!modeb_tty && want_nested);
++        let force_tty = !has_display && (modeb_tty || want_tty);
+ 
+         let mut backend = if headless {
+             let headless = Headless::new();
+@@ -738,26 +767,14 @@
+             let nested = Nested::new(config.clone(), event_loop.clone())
+                 .context("error initializing the nested backend")?;
+             Backend::Nested(Box::new(nested))
+-        } else if has_display {
+-            #[cfg(target_os = "linux")]
++        } else if force_tty || !has_display {
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             {
+-                let winit = Winit::new(config.clone(), event_loop.clone())?;
+-                Backend::Winit(winit)
+-            }
+-            #[cfg(not(target_os = "linux"))]
+-            {
+-                let nested = Nested::new(config.clone(), event_loop.clone())
+-                    .context("error initializing the nested backend")?;
+-                Backend::Nested(Box::new(nested))
+-            }
+-        } else {
+-            #[cfg(target_os = "linux")]
+-            {
+                 let tty = Tty::new(config.clone(), event_loop.clone())
+                     .context("error initializing the TTY backend")?;
+                 Backend::Tty(tty)
+             }
+-            #[cfg(not(target_os = "linux"))]
++            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+             {
+                 return Err(anyhow::anyhow!(
+                     "no host Wayland display found (WAYLAND_DISPLAY/WAYLAND_SOCKET); \
+@@ -765,6 +781,18 @@
+                 )
+                 .into());
+             }
++        } else {
++            #[cfg(target_os = "linux")]
++            {
++                let winit = Winit::new(config.clone(), event_loop.clone())?;
++                Backend::Winit(winit)
++            }
++            #[cfg(not(target_os = "linux"))]
++            {
++                let nested = Nested::new(config.clone(), event_loop.clone())
++                    .context("error initializing the nested backend")?;
++                Backend::Nested(Box::new(nested))
++            }
+         };
+ 
+         let mut niri = Niri::new(
+@@ -1681,14 +1709,14 @@
+             self.ipc_keyboard_layouts_changed();
+         }
+ 
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         if libinput_config_changed {
+             let config = self.niri.config.borrow();
+             for mut device in self.niri.devices.iter().cloned() {
+                 apply_libinput_settings(&config.input, &mut device);
+             }
+         }
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         let _ = libinput_config_changed;
+ 
+         if ignored_nodes_changed {
+@@ -1861,12 +1889,12 @@
+         // user. Since if we add a new section and some existing section also matches the
+         // output, then our new section won't do anything.
+         let temp;
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         let disconnected_name = self
+             .backend
+             .tty_checked()
+             .and_then(|tty| tty.disconnected_connector_name_by_name_match(name));
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         let disconnected_name: Option<OutputName> = None;
+         let match_name = if let Some(output) = self.niri.output_by_name_match(name) {
+             output.user_data().get::<OutputName>().unwrap()
+@@ -2390,9 +2418,9 @@
+         let background_effect_state = BackgroundEffectState::new::<State>(&display_handle);
+         let xdg_foreign_state = XdgForeignState::new::<State>(&display_handle);
+ 
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         let is_tty = matches!(backend, Backend::Tty(_));
+-        #[cfg(not(target_os = "linux"))]
++        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+         let is_tty = false;
+         let gamma_control_manager_state =
+             GammaControlManagerState::new::<State, _>(&display_handle, move |client| {
+@@ -2559,11 +2587,11 @@
+             monitors_active: true,
+             is_lid_closed: false,
+ 
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             devices: HashSet::new(),
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             tablets: HashMap::new(),
+-            #[cfg(target_os = "linux")]
++            #[cfg(any(target_os = "linux", target_os = "macos"))]
+             touch: HashSet::new(),
+ 
+             compositor_state,
+@@ -4973,7 +5001,7 @@
+         }
+     }
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(any(target_os = "linux", target_os = "macos"))]
+     pub fn send_dmabuf_feedbacks(
+         &self,
+         output: &Output,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/border.rs /tmp/niri-macos-tty/src/render_helpers/border.rs
+--- a/src/render_helpers/border.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/border.rs	2026-08-18 23:10:33
+@@ -15,9 +15,9 @@
+ use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ 
+ /// Renders a wide variety of borders and border parts.
+@@ -309,7 +309,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for BorderRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/clipped_surface.rs /tmp/niri-macos-tty/src/render_helpers/clipped_surface.rs
+--- a/src/render_helpers/clipped_surface.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/clipped_surface.rs	2026-08-18 23:10:33
+@@ -11,11 +11,11 @@
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
+ use super::damage::ExtraDamage;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use super::renderer::AsGlesFrame as _;
+ use super::renderer::NiriRenderer;
+ use super::shaders::{mat3_uniform, Shaders};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ #[derive(Debug)]
+@@ -262,7 +262,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>>
+     for ClippedSurfaceRenderElement<TtyRenderer<'render>>
+ {
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/framebuffer_effect.rs /tmp/niri-macos-tty/src/render_helpers/framebuffer_effect.rs
+--- a/src/render_helpers/framebuffer_effect.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/framebuffer_effect.rs	2026-08-18 23:10:33
+@@ -13,11 +13,11 @@
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Rectangle, Scale, Transform};
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ use crate::render_helpers::background_effect::RenderParams;
+ use crate::render_helpers::blur::{Blur, BlurOptions};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::{mat3_uniform, Shaders};
+ use crate::utils::region::TransformedRegion;
+@@ -411,7 +411,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for FramebufferEffectElement {
+     fn capture_framebuffer(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/gradient_fade_texture.rs /tmp/niri-macos-tty/src/render_helpers/gradient_fade_texture.rs
+--- a/src/render_helpers/gradient_fade_texture.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/gradient_fade_texture.rs	2026-08-18 23:10:33
+@@ -7,9 +7,9 @@
+ use smithay::utils::{Buffer, Physical, Rectangle, Scale, Transform};
+ 
+ use super::texture::TextureRenderElement;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::Shaders;
+ 
+@@ -123,7 +123,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for GradientFadeTextureRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/offscreen.rs /tmp/niri-macos-tty/src/render_helpers/offscreen.rs
+--- a/src/render_helpers/offscreen.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/offscreen.rs	2026-08-18 23:10:33
+@@ -19,9 +19,9 @@
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
+ use super::encompassing_geo;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use super::renderer::AsGlesFrame as _;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Buffer for offscreen rendering.
+@@ -336,7 +336,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for OffscreenRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/primary_gpu_texture.rs /tmp/niri-macos-tty/src/render_helpers/primary_gpu_texture.rs
+--- a/src/render_helpers/primary_gpu_texture.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/primary_gpu_texture.rs	2026-08-18 23:10:33
+@@ -6,7 +6,7 @@
+ 
+ use super::renderer::AsGlesFrame;
+ use super::texture::TextureRenderElement;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Wrapper for a texture from the primary GPU for rendering with the primary GPU.
+@@ -85,7 +85,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for PrimaryGpuTextureRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/render_elements.rs /tmp/niri-macos-tty/src/render_helpers/render_elements.rs
+--- a/src/render_helpers/render_elements.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/render_elements.rs	2026-08-18 23:10:33
+@@ -143,7 +143,7 @@
+ 
+         // Wawona (wwn-niri): the TTY (multi-gpu) renderer only exists on
+         // desktop Linux; other targets render exclusively with GlesRenderer.
+-        #[cfg(target_os = "linux")]
++        #[cfg(any(target_os = "linux", target_os = "macos"))]
+         impl<'render> smithay::backend::renderer::element::RenderElement<$crate::backend::tty::TtyRenderer<'render>>
+             for $($name_R<$crate::backend::tty::TtyRenderer<'render>>)? $($name_no_R)?
+         {
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/renderer.rs /tmp/niri-macos-tty/src/render_helpers/renderer.rs
+--- a/src/render_helpers/renderer.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/renderer.rs	2026-08-18 23:10:33
+@@ -4,7 +4,7 @@
+     Bind, ExportMem, ImportAll, ImportMem, Offscreen, Renderer, RendererSuper, Texture,
+ };
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer};
+ 
+ /// Trait with our main renderer requirements to save on the typing.
+@@ -48,7 +48,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl AsGlesRenderer for TtyRenderer<'_> {
+     fn as_gles_renderer(&mut self) -> &mut GlesRenderer {
+         self.as_mut()
+@@ -69,7 +69,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'frame, 'buffer> AsGlesFrame<'frame, 'buffer> for TtyFrame<'_, 'frame, 'buffer> {
+     fn as_gles_frame(&mut self) -> &mut GlesFrame<'frame, 'buffer> {
+         self.as_mut()
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/resize.rs /tmp/niri-macos-tty/src/render_helpers/resize.rs
+--- a/src/render_helpers/resize.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/resize.rs	2026-08-18 23:10:33
+@@ -11,12 +11,12 @@
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Rectangle, Scale, Size, Transform};
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use super::renderer::AsGlesFrame;
+ use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ #[derive(Debug)]
+@@ -196,7 +196,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ResizeRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/shader_element.rs /tmp/niri-macos-tty/src/render_helpers/shader_element.rs
+--- a/src/render_helpers/shader_element.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/shader_element.rs	2026-08-18 23:10:33
+@@ -16,7 +16,7 @@
+ use super::renderer::AsGlesFrame;
+ use super::resources::Resources;
+ use super::shaders::{ProgramType, Shaders};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ 
+ /// Renders a shader with optional texture input, on the primary GPU.
+@@ -522,7 +522,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ShaderRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/shadow.rs /tmp/niri-macos-tty/src/render_helpers/shadow.rs
+--- a/src/render_helpers/shadow.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/shadow.rs	2026-08-18 23:10:33
+@@ -13,9 +13,9 @@
+ use super::renderer::NiriRenderer;
+ use super::shader_element::ShaderRenderElement;
+ use super::shaders::{mat3_uniform, ProgramType, Shaders};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ 
+ /// Renders a rounded rectangle shadow.
+@@ -270,7 +270,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for ShadowRenderElement {
+     fn draw(
+         &self,
+diff -uN -r /tmp/niri-macos-tty-old/src/render_helpers/xray.rs /tmp/niri-macos-tty/src/render_helpers/xray.rs
+--- a/src/render_helpers/xray.rs	1969-12-31 16:00:01
++++ b/src/render_helpers/xray.rs	2026-08-18 23:10:33
+@@ -13,11 +13,11 @@
+ use smithay::utils::user_data::UserDataMap;
+ use smithay::utils::{Buffer, Logical, Physical, Point, Rectangle, Scale, Size, Transform};
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::backend::tty::{TtyFrame, TtyRenderer, TtyRendererError};
+ use crate::render_helpers::background_effect::RenderParams;
+ use crate::render_helpers::effect_buffer::EffectBuffer;
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ use crate::render_helpers::renderer::AsGlesFrame as _;
+ use crate::render_helpers::shaders::{mat3_uniform, Shaders};
+ use crate::render_helpers::{RenderCtx, RenderTarget};
+@@ -359,7 +359,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "linux")]
++#[cfg(any(target_os = "linux", target_os = "macos"))]
+ impl<'render> RenderElement<TtyRenderer<'render>> for XrayElement {
+     fn draw(
+         &self,

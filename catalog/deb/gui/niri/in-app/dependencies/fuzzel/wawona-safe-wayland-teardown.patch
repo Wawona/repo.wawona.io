@@ -1,0 +1,333 @@
+diff --git a/shm.c b/shm.c
+--- a/shm.c	2026-07-21 14:53:27
++++ b/shm.c	2026-07-21 14:54:31
+@@ -58,6 +58,15 @@
+  */
+ static off_t max_pool_size = 512 * 1024 * 1024;
+ 
++/* When set, skip protocol destroys (connection already dead). */
++static bool abandon_wayland = false;
++
++void
++shm_abandon_wayland(void)
++{
++    abandon_wayland = true;
++}
++
+ static bool can_punch_hole = false;
+ static bool can_punch_hole_initialized = false;
+ 
+@@ -135,8 +144,11 @@
+     }
+ #endif
+ 
+-    if (buf->wl_buf != NULL)
+-        wl_buffer_destroy(buf->wl_buf);
++    if (buf->wl_buf != NULL) {
++        if (!abandon_wayland)
++            wl_buffer_destroy(buf->wl_buf);
++        buf->wl_buf = NULL;
++    }
+ 
+     buf->pix = NULL;
+     buf->wl_buf = NULL;
+@@ -157,8 +169,11 @@
+ 
+     if (pool->real_mmapped != MAP_FAILED)
+         munmap(pool->real_mmapped, pool->mmap_size);
+-    if (pool->wl_pool != NULL)
+-        wl_shm_pool_destroy(pool->wl_pool);
++    if (pool->wl_pool != NULL) {
++        if (!abandon_wayland)
++            wl_shm_pool_destroy(pool->wl_pool);
++        pool->wl_pool = NULL;
++    }
+     if (pool->fd >= 0)
+         close(pool->fd);
+ 
+@@ -370,7 +385,7 @@
+     }
+ #endif
+ 
+-    if (wl_buf != NULL)
++    if (wl_buf != NULL && !abandon_wayland)
+         wl_buffer_destroy(wl_buf);
+ 
+     abort();
+@@ -598,7 +613,7 @@
+ 
+ err:
+     pool_unref(pool);
+-    if (wl_pool != NULL)
++    if (wl_pool != NULL && !abandon_wayland)
+         wl_shm_pool_destroy(wl_pool);
+     if (real_mmapped != MAP_FAILED)
+         munmap(real_mmapped, memfd_size);
+diff --git a/shm.h b/shm.h
+--- a/shm.h	2026-07-21 14:53:27
++++ b/shm.h	2026-07-21 14:53:43
+@@ -48,6 +48,13 @@
+ void shm_fini(void);
+ void shm_set_max_pool_size(off_t max_pool_size);
+ 
++/*
++ * After the Wayland socket is already gone (EPOLLHUP / nested compositor
++ * teardown), marshalling wl_buffer.destroy SEGV's in wl_closure_send.
++ * Call this before shm_fini()/object teardown so we only free local state.
++ */
++void shm_abandon_wayland(void);
++
+ struct buffer_chain;
+ struct buffer_chain *shm_chain_new(
+     struct wl_shm *shm, bool scrollable, size_t pix_instances,
+diff --git a/wayland.c b/wayland.c
+--- a/wayland.c	2026-07-21 14:53:29
++++ b/wayland.c	2026-07-21 14:54:31
+@@ -156,6 +156,9 @@
+     int exit_code;
+     bool force_cache_update;
+ 
++    /* Socket already closed (HUP / read error). Do not marshal destroys. */
++    bool connection_dead;
++
+     struct wl_callback *frame_cb;
+     bool need_refresh;
+     bool is_configured;
+@@ -262,18 +265,22 @@
+ 
+     kb_remove_seat(seat->wayl->kb_manager, seat);
+ 
+-    if (seat->clipboard.data_source != NULL)
+-        wl_data_source_destroy(seat->clipboard.data_source);
+-    if (seat->clipboard.data_offer != NULL)
+-        wl_data_offer_destroy(seat->clipboard.data_offer);
+-    if (seat->primary.data_source != NULL)
+-        zwp_primary_selection_source_v1_destroy(seat->primary.data_source);
+-    if (seat->primary.data_offer != NULL)
+-        zwp_primary_selection_offer_v1_destroy(seat->primary.data_offer);
+-    if (seat->primary_selection_device != NULL)
+-        zwp_primary_selection_device_v1_destroy(seat->primary_selection_device);
+-    if (seat->data_device != NULL)
+-        wl_data_device_release(seat->data_device);
++    const bool dead = seat->wayl->connection_dead;
++
++    if (!dead) {
++        if (seat->clipboard.data_source != NULL)
++            wl_data_source_destroy(seat->clipboard.data_source);
++        if (seat->clipboard.data_offer != NULL)
++            wl_data_offer_destroy(seat->clipboard.data_offer);
++        if (seat->primary.data_source != NULL)
++            zwp_primary_selection_source_v1_destroy(seat->primary.data_source);
++        if (seat->primary.data_offer != NULL)
++            zwp_primary_selection_offer_v1_destroy(seat->primary.data_offer);
++        if (seat->primary_selection_device != NULL)
++            zwp_primary_selection_device_v1_destroy(seat->primary_selection_device);
++        if (seat->data_device != NULL)
++            wl_data_device_release(seat->data_device);
++    }
+     if (seat->kbd.xkb_compose_state != NULL)
+         xkb_compose_state_unref(seat->kbd.xkb_compose_state);
+     if (seat->kbd.xkb_compose_table != NULL)
+@@ -286,23 +293,25 @@
+         xkb_context_unref(seat->kbd.xkb);
+     if (seat->kbd.repeat.fd > 0)
+         fdm_del(seat->wayl->fdm, seat->kbd.repeat.fd);
+-    if (seat->wl_keyboard != NULL)
+-        wl_keyboard_release(seat->wl_keyboard);
++    if (!dead) {
++        if (seat->wl_keyboard != NULL)
++            wl_keyboard_release(seat->wl_keyboard);
+ 
+-    if (seat->pointer.viewport != NULL)
+-        wp_viewport_destroy(seat->pointer.viewport);
+-    if (seat->pointer.theme != NULL)
+-        wl_cursor_theme_destroy(seat->pointer.theme);
+-    if (seat->pointer.surface != NULL)
+-        wl_surface_destroy(seat->pointer.surface);
+-    if (seat->wl_pointer != NULL)
+-        wl_pointer_release(seat->wl_pointer);
++        if (seat->pointer.viewport != NULL)
++            wp_viewport_destroy(seat->pointer.viewport);
++        if (seat->pointer.theme != NULL)
++            wl_cursor_theme_destroy(seat->pointer.theme);
++        if (seat->pointer.surface != NULL)
++            wl_surface_destroy(seat->pointer.surface);
++        if (seat->wl_pointer != NULL)
++            wl_pointer_release(seat->wl_pointer);
+ 
+-    if (seat->wl_touch != NULL)
+-        wl_touch_release(seat->wl_touch);
++        if (seat->wl_touch != NULL)
++            wl_touch_release(seat->wl_touch);
+ 
+-    if (seat->wl_seat != NULL)
+-        wl_seat_release(seat->wl_seat);
++        if (seat->wl_seat != NULL)
++            wl_seat_release(seat->wl_seat);
++    }
+ 
+     free(seat->clipboard.text);
+     free(seat->primary.text);
+@@ -2351,12 +2360,14 @@
+ }
+ 
+ static void
+-monitor_destroy(struct monitor *mon)
++monitor_destroy(struct monitor *mon, bool connection_dead)
+ {
+-    if (mon->xdg != NULL)
+-        zxdg_output_v1_destroy(mon->xdg);
+-    if (mon->output != NULL)
+-        wl_output_release(mon->output);
++    if (!connection_dead) {
++        if (mon->xdg != NULL)
++            zxdg_output_v1_destroy(mon->xdg);
++        if (mon->output != NULL)
++            wl_output_release(mon->output);
++    }
+     free(mon->name);
+     free(mon->make);
+     free(mon->model);
+@@ -2380,7 +2391,7 @@
+         if (wayl->monitor == mon)
+             wayl->monitor = NULL;
+ 
+-        monitor_destroy(mon);
++        monitor_destroy(mon, wayl->connection_dead);
+         tll_remove(wayl->monitors, it);
+         return;
+     }
+@@ -2645,6 +2656,8 @@
+     if (events & EPOLLIN) {
+         if (wl_display_read_events(wayl->display) < 0) {
+             LOG_ERRNO("failed to read events from the Wayland socket");
++            wayl->connection_dead = true;
++            shm_abandon_wayland();
+             return false;
+         }
+ 
+@@ -2653,12 +2666,16 @@
+         while (wl_display_prepare_read(wayl->display) != 0)
+             if (wl_display_dispatch_pending(wayl->display) < 0) {
+                 LOG_ERRNO("failed to dispatch pending Wayland events");
++                wayl->connection_dead = true;
++                shm_abandon_wayland();
+                 return false;
+             }
+     }
+ 
+     if (events & EPOLLHUP) {
+         LOG_WARN("disconnected from Wayland");
++        wayl->connection_dead = true;
++        shm_abandon_wayland();
+         return false;
+     }
+ 
+@@ -3036,9 +3053,13 @@
+     if (wayl == NULL)
+         return;
+ 
++    const bool dead = wayl->connection_dead;
++    if (dead)
++        shm_abandon_wayland();
++
+     shm_chain_free(wayl->chain);
+ 
+-    if (wayl->frame_cb != NULL)
++    if (wayl->frame_cb != NULL && !dead)
+         wl_callback_destroy(wayl->frame_cb);
+ 
+     if (wayl->display != NULL)
+@@ -3049,49 +3070,52 @@
+     tll_free(wayl->seats);
+ 
+     tll_foreach(wayl->monitors, it)
+-        monitor_destroy(&it->item);
++        monitor_destroy(&it->item, dead);
+     tll_free(wayl->monitors);
+ 
+-    if (wayl->single_pixel_manager != NULL)
+-        wp_single_pixel_buffer_manager_v1_destroy(wayl->single_pixel_manager);
+-    if (wayl->color_management_surface != NULL)
+-        wp_color_management_surface_v1_destroy(wayl->color_management_surface);
+-    if (wayl->color_management.img_description != NULL)
+-        wp_image_description_v1_destroy(wayl->color_management.img_description);
+-    if (wayl->color_management.manager != NULL)
+-        wp_color_manager_v1_destroy(wayl->color_management.manager);
+-    if (wayl->data_device_manager != NULL)
+-        wl_data_device_manager_destroy(wayl->data_device_manager);
+-    if (wayl->primary_selection_device_manager != NULL)
+-        zwp_primary_selection_device_manager_v1_destroy(wayl->primary_selection_device_manager);
+-    if (wayl->xdg_output_manager != NULL)
+-        zxdg_output_manager_v1_destroy(wayl->xdg_output_manager);
+-    if (wayl->xdg_activation_v1 != NULL)
+-        xdg_activation_v1_destroy(wayl->xdg_activation_v1);
+-    if (wayl->fractional_scale != NULL)
+-        wp_fractional_scale_v1_destroy(wayl->fractional_scale);
+-    if (wayl->viewport != NULL)
+-        wp_viewport_destroy(wayl->viewport);
+-    if (wayl->layer_surface != NULL)
+-        zwlr_layer_surface_v1_destroy(wayl->layer_surface);
+-    if (wayl->layer_shell != NULL)
+-        zwlr_layer_shell_v1_destroy(wayl->layer_shell);
+-    if (wayl->surface != NULL)
+-        wl_surface_destroy(wayl->surface);
+-    if (wayl->fractional_scale_manager != NULL)
+-        wp_fractional_scale_manager_v1_destroy(wayl->fractional_scale_manager);
+-    if (wayl->viewporter != NULL)
+-        wp_viewporter_destroy(wayl->viewporter);
+-    if (wayl->cursor_shape_manager != NULL)
+-        wp_cursor_shape_manager_v1_destroy(wayl->cursor_shape_manager);
+-    if (wayl->compositor != NULL)
+-        wl_compositor_destroy(wayl->compositor);
+-    if (wayl->shm != NULL)
+-        wl_shm_destroy(wayl->shm);
+-    if (wayl->registry != NULL)
+-        wl_registry_destroy(wayl->registry);
++    if (!dead) {
++        if (wayl->single_pixel_manager != NULL)
++            wp_single_pixel_buffer_manager_v1_destroy(wayl->single_pixel_manager);
++        if (wayl->color_management_surface != NULL)
++            wp_color_management_surface_v1_destroy(wayl->color_management_surface);
++        if (wayl->color_management.img_description != NULL)
++            wp_image_description_v1_destroy(wayl->color_management.img_description);
++        if (wayl->color_management.manager != NULL)
++            wp_color_manager_v1_destroy(wayl->color_management.manager);
++        if (wayl->data_device_manager != NULL)
++            wl_data_device_manager_destroy(wayl->data_device_manager);
++        if (wayl->primary_selection_device_manager != NULL)
++            zwp_primary_selection_device_manager_v1_destroy(wayl->primary_selection_device_manager);
++        if (wayl->xdg_output_manager != NULL)
++            zxdg_output_manager_v1_destroy(wayl->xdg_output_manager);
++        if (wayl->xdg_activation_v1 != NULL)
++            xdg_activation_v1_destroy(wayl->xdg_activation_v1);
++        if (wayl->fractional_scale != NULL)
++            wp_fractional_scale_v1_destroy(wayl->fractional_scale);
++        if (wayl->viewport != NULL)
++            wp_viewport_destroy(wayl->viewport);
++        if (wayl->layer_surface != NULL)
++            zwlr_layer_surface_v1_destroy(wayl->layer_surface);
++        if (wayl->layer_shell != NULL)
++            zwlr_layer_shell_v1_destroy(wayl->layer_shell);
++        if (wayl->surface != NULL)
++            wl_surface_destroy(wayl->surface);
++        if (wayl->fractional_scale_manager != NULL)
++            wp_fractional_scale_manager_v1_destroy(wayl->fractional_scale_manager);
++        if (wayl->viewporter != NULL)
++            wp_viewporter_destroy(wayl->viewporter);
++        if (wayl->cursor_shape_manager != NULL)
++            wp_cursor_shape_manager_v1_destroy(wayl->cursor_shape_manager);
++        if (wayl->compositor != NULL)
++            wl_compositor_destroy(wayl->compositor);
++        if (wayl->shm != NULL)
++            wl_shm_destroy(wayl->shm);
++        if (wayl->registry != NULL)
++            wl_registry_destroy(wayl->registry);
++    }
+     if (wayl->display != NULL) {
+-        wayl_flush(wayl);
++        if (!dead)
++            wayl_flush(wayl);
+         wl_display_disconnect(wayl->display);
+     }
+ 

@@ -1,0 +1,10 @@
+[package]
+name = "crabsay"
+version = "0.1.0"
+edition = "2021"
+description = "WASIX crabsay smoke binary (in-tree; upstream repo retired)"
+license = "MIT"
+
+[[bin]]
+name = "crabsay"
+path = "src/main.rs"

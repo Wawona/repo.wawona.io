@@ -1,0 +1,62 @@
+diff --git a/src/backend/nested/mod.rs b/src/backend/nested/mod.rs
+--- a/src/backend/nested/mod.rs
++++ b/src/backend/nested/mod.rs
+@@ -168,7 +168,18 @@ fn egl_has_wayland_winsys() -> bool {
+             .any(|ext| ext == "EGL_KHR_platform_wayland" || ext == "EGL_EXT_platform_wayland")
+     }
+ }
+ 
++/// Pixman nested weston (iOS Machines Start) has wl_shm only. Iland EGL still
++/// reports Wayland-EGL, so probing the library would attach dmabuf/IOSurface
++/// that weston never maps: `niri` from zsh claims start and shows no window.
++/// Use EGL present only when the host offers linux-dmabuf (Wawona itself).
++fn host_offers_linux_dmabuf(globals: &GlobalList) -> bool {
++    globals.contents().with_list(|list| {
++        list.iter()
++            .any(|g| g.interface == "zwp_linux_dmabuf_v1")
++    })
++}
++
+ /// EGL native surface over a wl_egl_window for the host surface.
+ struct NestedEglSurface(wegl::WlEglSurface);
+ 
+@@ -419,7 +433,10 @@ impl Nested {
+         let xdg_surface = wm_base.get_xdg_surface(&surface, &qh, ());
+         let toplevel = xdg_surface.get_toplevel(&qh, ());
+         toplevel.set_title("niri (nested)".to_owned());
+         toplevel.set_app_id("niri".to_owned());
++        // Phone weston is far smaller than DEFAULT_SIZE (1280x800). Let the
++        // host pick the workarea so the window is on-screen.
++        toplevel.set_maximized();
+ 
+         // Ask the host for server-side decorations when available; Wawona
+         // draws SSD frames for nested compositors.
+@@ -488,7 +506,27 @@ impl Nested {
+         .map_err(|err| anyhow::anyhow!("error creating the nested EGL context: {err:?}"))?;
+         info!("nested: EGL context created");
+ 
+-        let present = if egl_has_wayland_winsys() {
++        let host_dmabuf = host_offers_linux_dmabuf(&globals);
++        // iOS Wawona advertises linux-dmabuf, but nested EGL/wl_egl_window
++        // still fails (PLATFORM_WAYLAND_KHR then Nested::new error). Force
++        // wl_shm. WWN_NIRI_SHM=1 does the same on any target.
++        let force_shm = cfg!(target_os = "ios")
++            || std::env::var_os("WWN_NIRI_SHM").is_some();
++        let use_egl_present = egl_has_wayland_winsys() && host_dmabuf && !force_shm;
++        if !use_egl_present {
++            eprintln!(
++                "niri: presenting via wl_shm (host linux-dmabuf={}, egl wayland winsys={})",
++                host_dmabuf,
++                egl_has_wayland_winsys()
++            );
++        }
++        info!(
++            "nested: present={} (wayland_winsys={} host_dmabuf={})",
++            if use_egl_present { "egl" } else { "wl_shm" },
++            egl_has_wayland_winsys(),
++            host_dmabuf
++        );
++        let present = if use_egl_present {
+             let wl_egl_surface =
+                 wegl::WlEglSurface::new(surface.id(), DEFAULT_SIZE.0, DEFAULT_SIZE.1)
+                     .context("error creating the wl_egl_window")?;

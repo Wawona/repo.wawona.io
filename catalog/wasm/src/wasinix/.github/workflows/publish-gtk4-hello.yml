@@ -1,0 +1,122 @@
+name: Publish gtk4-hello (WASIX)
+
+# Build Hello Wayland World GTK4 demo; optionally stage into repo.wawona.io
+# as wasi=wasix (never P1). Secret for publish job: WAWONA_REPO_TOKEN.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [development, main]
+    paths:
+      - "pkgs/programs/gtk4-hello/**"
+      - "pkgs/libraries/gtk.nix"
+      - "pkgs/libraries/wawona-wayland.c"
+      - "pkgs/libraries/gtk4-wawona-gdkshm.c"
+      - ".github/workflows/publish-gtk4-hello.yml"
+      - "scripts/stage-gtk4-hello-for-repo.py"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: publish-gtk4-hello-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build wasmer.gtk4-hello
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v19
+
+      - name: Cache the Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-gtk4-hello-${{ runner.os }}-${{ hashFiles('flake.lock', 'pkgs/**/*.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          gc-max-store-size-linux: 8G
+
+      - name: Build wasmer.gtk4-hello
+        run: |
+          set -euo pipefail
+          nix build --print-build-logs --show-trace .#wasmer.gtk4-hello -o result-gtk4-hello \
+            || nix build --print-build-logs --show-trace .#wasmer.gtk4-hello -o result-gtk4-hello
+          find result-gtk4-hello -type f | head -40
+          test -f result-gtk4-hello/pkg/gtk4-hello/bin/gtk4-hello.wasm
+
+      - name: Upload wasmer package
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtk4-hello-wasmer
+          path: result-gtk4-hello/pkg/gtk4-hello
+          if-no-files-found: error
+
+  publish:
+    name: Stage into repo.wawona.io
+    needs: build
+    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require WAWONA_REPO_TOKEN
+        id: token
+        env:
+          WAWONA_REPO_TOKEN: ${{ secrets.WAWONA_REPO_TOKEN }}
+        run: |
+          if [[ -z "${WAWONA_REPO_TOKEN:-}" ]]; then
+            echo "WAWONA_REPO_TOKEN missing or empty on Wawona/wasinix."
+            echo "Set with: gh secret set WAWONA_REPO_TOKEN --repo Wawona/wasinix"
+            exit 1
+          fi
+          echo "present=true" >> "$GITHUB_OUTPUT"
+
+      - name: Download wasmer package
+        if: steps.token.outputs.present == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: gtk4-hello-wasmer
+          path: gtk4-hello-pkg
+
+      - name: Checkout catalog
+        if: steps.token.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: Wawona/repo.wawona.io
+          ref: development
+          path: catalog
+          token: ${{ secrets.WAWONA_REPO_TOKEN }}
+
+      - name: Stage into catalog
+        if: steps.token.outputs.present == 'true'
+        run: |
+          set -euo pipefail
+          python3 scripts/stage-gtk4-hello-for-repo.py \
+            --wasm gtk4-hello-pkg/bin/gtk4-hello.wasm \
+            --wasmer-toml gtk4-hello-pkg/wasmer.toml \
+            --catalog catalog
+
+      - name: Push catalog tip
+        if: steps.token.outputs.present == 'true'
+        working-directory: catalog
+        run: |
+          set -euo pipefail
+          git config user.name "wawona-wasm-bot"
+          git config user.email "wawona-wasm-bot@users.noreply.github.com"
+          git add wasm/v1/packages/gtk4-hello wasm/v1/index.json
+          if git diff --cached --quiet; then
+            echo "no catalog changes"
+            exit 0
+          fi
+          git commit -m "$(cat <<'EOF'
+          wasm(wasix): publish gtk4-hello 0.1.0 (Hello, Wayland World!)
+
+          WASIX GTK4 demo from wasinix. Label wasi=wasix. Not store Pulley P1.
+          EOF
+          )"
+          git push origin HEAD:development

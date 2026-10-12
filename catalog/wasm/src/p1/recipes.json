@@ -1,0 +1,59 @@
+{
+  "packages": [
+    {
+      "name": "hello-wasi",
+      "version": "0.1.2",
+      "abi": "wasi-p1",
+      "abi_target": "wasm32-wasip1",
+      "origin": "scratch",
+      "kind": "cli",
+      "summary": "Wawona WASI P1 hello smoke for wpm",
+      "path": "packages/hello-wasi",
+      "bin": "hello-wasi",
+      "smoke_args": [],
+      "smoke_stdin": null,
+      "smoke_expect": "hello",
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "homepage": "https://github.com/Wawona/wasm-packages/tree/development/packages/hello-wasi"
+    },
+    {
+      "name": "wasi-true",
+      "version": "0.1.0",
+      "abi": "wasi-p1",
+      "abi_target": "wasm32-wasip1",
+      "origin": "scratch",
+      "kind": "cli",
+      "summary": "Wawona WASI P1 true(1): exit 0",
+      "path": "packages/wasi-true",
+      "bin": "wasi-true",
+      "smoke_args": [],
+      "smoke_stdin": null,
+      "smoke_expect": null,
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "homepage": "https://github.com/Wawona/wasm-packages/tree/development/packages/wasi-true"
+    },
+    {
+      "name": "wasi-false",
+      "version": "0.1.0",
+      "abi": "wasi-p1",
+      "abi_target": "wasm32-wasip1",
+      "origin": "scratch",
+      "kind": "cli",
+      "summary": "WASI P1 false(1): exit 1",
+      "path": "packages/cli-kit",
+      "bin": "wasi-false",
+      "smoke_args": [],
+      "smoke_stdin": null,
+      "smoke_expect": null,
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "homepage": "https://github.com/Wawona/wasm-packages/tree/development/packages/cli-kit",
+      "smoke_exit": 1
+    }
+  ]
+}

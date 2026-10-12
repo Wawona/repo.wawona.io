@@ -1,0 +1,96 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  readme-badge:
+    name: README CI badge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: README has CI status badge
+        run: grep -E 'actions/workflows/.+/badge\.svg' README.md
+  patch-anchors:
+    name: verify fastfetch patch anchors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python3 .github/scripts/verify-fastfetch-ios-patches.py
+
+  eval:
+    name: flake eval (instantiation)
+    runs-on: macos-15
+    needs: patch-anchors
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix eval .#registryFragment --apply builtins.attrNames
+      - run: |
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-ipados.drvPath
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-tvos.drvPath
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-watchos.drvPath
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-visionos.drvPath
+          nix eval --raw .#packages.aarch64-darwin.fastfetch-android.drvPath
+
+  build-ios:
+    name: build fastfetch (Apple mobile)
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            sandbox = relaxed
+            allow-import-from-derivation = true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.fastfetch-ios -L
+
+  build-watchos:
+    name: build fastfetch (watchOS, no Metal/VideoToolbox)
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            sandbox = relaxed
+            allow-import-from-derivation = true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.fastfetch-watchos -L
+
+  build-android:
+    name: build fastfetch (Android)
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+          extra-conf: |
+            sandbox = relaxed
+            allow-import-from-derivation = true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.fastfetch-android -L

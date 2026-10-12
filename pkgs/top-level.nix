@@ -21,10 +21,9 @@ let
     inherit mkDebFromBins;
   };
 
-  # Optional Wayland clients: process debs, no App Store patches.
-  # Add a program in pkgs/wayland/clients.nix. Copy TEMPLATE.nix.
+  # Process debs: catalog/deb/gui/<name>/default.nix. Copy TEMPLATE.nix.
   # linux = glibc host. android = Termux Bionic via ndkLibs (not glibc).
-  waylandClients = import ./wayland/clients.nix;
+  waylandClients = import ../catalog/load.nix { channel = "deb"; kind = "gui"; };
   waylandOptional =
     if !(target == "linux" || target == "android") then {}
     else pkgs.lib.mapAttrs (_name: file:

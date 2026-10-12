@@ -1,0 +1,59 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  readme-badge:
+    name: README CI badge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: README has CI status badge
+        run: grep -E 'actions/workflows/.+/badge\.svg' README.md
+  patch-anchors:
+    name: verify weston iOS patch anchors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python3 .github/scripts/verify-weston-ios-patches.py
+
+  eval:
+    name: flake eval (instantiation)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - name: fragment evaluates
+        run: nix eval .#registryFragment --apply builtins.attrNames
+      - name: weston instantiates (no build)
+        run: |
+          nix eval --raw .#packages.aarch64-darwin.weston-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.weston-compositor-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.weston-simple-shm-ios.drvPath
+
+  build:
+    name: build weston archives
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.weston-ios -L

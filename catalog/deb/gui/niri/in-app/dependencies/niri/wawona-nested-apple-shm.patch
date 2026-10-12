@@ -1,0 +1,42 @@
+diff --git a/src/backend/nested/mod.rs b/src/backend/nested/mod.rs
+--- a/src/backend/nested/mod.rs
++++ b/src/backend/nested/mod.rs
+@@ -150,15 +150,25 @@ static NESTED_SURFACE_ATTRIBUTES: [c_int; 3] = [
+ ///
+ /// ANGLE on Apple targets and Android system EGL initialize a display over
+ /// the wl_display handle (Vulkan/Metal backends) but have no Wayland window
+-/// surface support — CreatePlatformWindowSurfaceEXT would treat the
++/// surface support. CreatePlatformWindowSurfaceEXT would treat the
+ /// wl_egl_window as a native object of the underlying OS (CALayer /
+ /// ANativeWindow) and crash. In that case rendering goes through the
+ /// offscreen + wl_shm readback path instead.
+ ///
+ /// Must be called after the EGL library has been loaded (EGLDisplay::new).
++///
++/// wwn-iland's EGL shim is a real Wayland-EGL winsys (wl_egl_window +
++/// linux-dmabuf IOSurface/AHB). Probe it on macOS, iOS, iPadOS, visionOS,
++/// and Android. watchOS has no Metal (GPU blocked). tvOS GPU is still
++/// planned, so keep SHM there until that phase.
+ fn egl_has_wayland_winsys() -> bool {
++    #[cfg(any(target_os = "watchos", target_os = "tvos"))]
++    {
++        false
++    }
++    #[cfg(not(any(target_os = "watchos", target_os = "tvos")))]
+     unsafe {
+         let ptr = ffi::egl::QueryString(ffi::egl::NO_DISPLAY, ffi::egl::EXTENSIONS as ffi::EGLint);
+         if ptr.is_null() {
+             return false;
+         }
+diff --git a/src/c_api.rs b/src/c_api.rs
+--- a/src/c_api.rs
++++ b/src/c_api.rs
+@@ -38,7 +38,7 @@ pub extern "C" fn niri_main() -> c_int {
+     match catch_unwind(AssertUnwindSafe(|| run())) {
+         Ok(Ok(())) => 0,
+         Ok(Err(err)) => {
+-            eprintln!("niri_main: fatal error: {err:?}");
++            eprintln!("niri_main: fatal error: {err:#}");
+             1
+         }
+         Err(payload) => {

@@ -1,0 +1,5 @@
+result
+result-man
+__pycache__/
+*.pyc
+out/

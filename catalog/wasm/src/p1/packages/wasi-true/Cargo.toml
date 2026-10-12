@@ -1,0 +1,16 @@
+[package]
+name = "wasi-true"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "WASI P1 true(1): exit 0"
+publish = false
+
+[[bin]]
+name = "wasi-true"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

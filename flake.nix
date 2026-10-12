@@ -3,9 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Substrate only. This flake does not input Wawona or wwn-iland.
+    wwn-toolchain.url = "github:Wawona/wwn-toolchain/development";
+    wwn-toolchain.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs }: let
+  outputs = { self, nixpkgs, wwn-toolchain }: let
     inherit (nixpkgs) lib;
     darwinHost = "aarch64-darwin";
     checkSystems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
@@ -117,6 +120,25 @@
         ];
       };
   in {
+    registryFragment = import ./catalog/registry.nix {
+      inherit (wwn-toolchain.lib) withPlatformVariants;
+    };
+
+    # Card index. abi is a field. Kind is the directory.
+    catalogIndex =
+      let
+        load = import ./catalog/load.nix;
+        cards =
+          (load { channel = "wasm"; kind = "cli"; })
+          // (load { channel = "wasm"; kind = "gui"; })
+          // (load { channel = "wasm"; kind = "lib"; });
+      in
+      builtins.mapAttrs (_: file: import file { }) cards;
+
+    # WASIX implementation. Call with { system, nixpkgs } the way the old
+    # wasinix flake did. Do not evaluate it from the card index.
+    legacyWasix = import ./catalog/wasm/src/wasinix/pkgs;
+
     packages =
       (lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] mkLinuxPackages)
       // {

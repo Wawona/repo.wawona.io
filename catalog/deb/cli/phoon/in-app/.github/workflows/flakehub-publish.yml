@@ -1,0 +1,31 @@
+name: FlakeHub publish
+
+# Public rolling FlakeHub *releases* (registry), not the binary cache.
+# Cache stays on flakehub-cache-action in build jobs.
+# Docs: https://docs.determinate.systems/flakehub/publishing/
+
+on:
+  push:
+    branches: [development]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  flakehub-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: DeterminateSystems/flakehub-push@main
+        with:
+          name: Wawona/wwn-phoon-rs
+          rolling: true
+          visibility: public
+          # Inspecting every output on ubuntu-latest throws (Android SDK /
+          # Darwin-only attrs). Registry publish does not need NAR paths;
+          # FlakeHub Cache already stores those from build jobs.
+          include-output-paths: false

@@ -1,0 +1,19 @@
+[package]
+name = "flate-selftest"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Wawona flate2 self-test (not GNU gzip)"
+publish = false
+
+[[bin]]
+name = "flate-selftest"
+path = "src/main.rs"
+
+[dependencies]
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

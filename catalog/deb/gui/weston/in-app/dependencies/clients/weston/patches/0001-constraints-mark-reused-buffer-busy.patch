@@ -1,0 +1,16 @@
+diff --git a/clients/constraints.c b/clients/constraints.c
+index b15c957b..e04a41ea 100644
+--- a/clients/constraints.c
++++ b/clients/constraints.c
+@@ -536,8 +536,10 @@ shm_pool_get_buffer(struct shm_pool *pool, const struct surface *surface)
+ 	cairo_t *cr;
+ 
+ 	/* reuse current buffer if possible */
+-	if (buffer && !buffer->used)
++	if (buffer && !buffer->used) {
++		buffer->used = true;
+ 		return buffer;
++	}
+ 
+ 	for (i = 0; i < ARRAY_LENGTH(pool->buffers); i++) {
+ 		if (!pool->buffers[i].used) {

@@ -1,0 +1,16 @@
+--- a/src/utils/xwayland/satellite.rs
++++ b/src/utils/xwayland/satellite.rs
+@@ -36,6 +36,13 @@
+         return;
+     }
+ 
++    // Wawona Mode A has no X11 session. Do not spawn xwayland-satellite
++    // (ENOENT on PATH, then failed client connections on niri's socket).
++    if !cfg!(target_os = "linux") {
++        tracing::debug!("xwayland-satellite disabled (not Linux)");
++        return;
++    }
++
+     let config = state.niri.config.borrow();
+     let xwls_config = &config.xwayland_satellite;
+     if xwls_config.off {

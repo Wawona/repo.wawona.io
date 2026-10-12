@@ -1,0 +1,48 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  readme-badge:
+    name: README CI badge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: README has CI status badge
+        run: grep -E 'actions/workflows/.+/badge\.svg' README.md
+  eval:
+    name: flake eval (instantiation)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - name: registry fragment
+        run: nix eval .#registryFragment --apply builtins.attrNames
+      - name: kmscube instantiates (no build)
+        run: |
+          nix eval --raw .#packages.aarch64-darwin.kmscube-ios.drvPath
+          nix eval --raw .#packages.aarch64-darwin.kmscube-macos.drvPath
+
+  build:
+    name: build kmscube archives
+    runs-on: macos-15
+    needs: eval
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          determinate: true
+      - uses: DeterminateSystems/flakehub-cache-action@v3
+
+      - run: nix build .#packages.aarch64-darwin.kmscube-ios -L

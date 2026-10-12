@@ -1,0 +1,100 @@
+# Per-package Wasmer runtime smokes for WASIX builds.
+# Runtime is always Wasmer (never Wasmtime). Store P1/P2 smokes live in wasm-packages.
+# status = active | skip
+# Each active row must pass or CI fails.
+
+[meta]
+runtime = "wasmer"
+abi = "wasix"
+
+[[packages]]
+name = "grep"
+wasm = "grep.wasm"
+status = "active"
+args = ["-E", "hello"]
+stdin = "hello world\n"
+expect = "hello"
+exit = 0
+
+[[packages]]
+name = "sed"
+wasm = "sed.wasm"
+status = "active"
+args = ["s/hello/hi/"]
+stdin = "hello\n"
+expect = "hi"
+exit = 0
+
+[[packages]]
+name = "find"
+wasm = "find.wasm"
+status = "active"
+# --version is enough to prove the WASIX module starts under Wasmer.
+args = ["--version"]
+expect = "find"
+exit = 0
+
+[[packages]]
+name = "gzip"
+wasm = "gzip.wasm"
+status = "active"
+args = ["--version"]
+# WASIX module argv0 surfaces as gunzip.wasm in --version output.
+expect = "gunzip"
+exit = 0
+
+[[packages]]
+name = "tar"
+wasm = "tar.wasm"
+status = "active"
+args = ["--version"]
+expect = "tar"
+exit = 0
+
+[[packages]]
+name = "crabsay"
+wasm = "crabsay.wasm"
+status = "active"
+args = ["hi"]
+expect = "hi"
+exit = 0
+
+[[packages]]
+name = "less"
+wasm = "less.wasm"
+status = "active"
+args = ["--version"]
+expect = "less"
+exit = 0
+
+[[packages]]
+name = "nano"
+wasm = "nano.wasm"
+status = "active"
+args = ["--version"]
+expect = "nano"
+exit = 0
+
+[[packages]]
+name = "ncurses"
+# Library / multi-bin package: skip until a dedicated smoke binary is chosen.
+status = "skip"
+
+# Wayland suite: needs Relay host imports (wawona_wayland_*). Not plain wasmer.
+# Drive with scripts/smoke-wayland-relay.sh when WAWONA_RELAY_RUN + WAYLAND_DISPLAY set.
+[[packages]]
+name = "wayland-bridge-smoke"
+wasm = "wayland-bridge-smoke.wasm"
+status = "skip"
+reason = "wayland suite: Relay host required (smoke-wayland-relay.sh)"
+
+[[packages]]
+name = "gtk4-hello"
+wasm = "gtk4-hello.wasm"
+status = "skip"
+reason = "wayland suite: Relay host required (smoke-wayland-relay.sh)"
+
+[[packages]]
+name = "cliPlatform"
+status = "skip"
+reason = "Meta Wasmer platform package; not a single CLI wasm"

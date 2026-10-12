@@ -1,0 +1,31 @@
+--- a/src/backend/nested/mod.rs
++++ b/src/backend/nested/mod.rs
+@@ -85,6 +85,28 @@
+ impl EGLNativeDisplay for NestedEglDisplay {
+     fn supported_platforms(&self) -> Vec<EGLPlatform<'_>> {
+         let display = self.0;
++        // iOS Wawona advertises linux-dmabuf, so niri used to pick
++        // PLATFORM_WAYLAND_KHR, then Nested::new died before SHM present.
++        // WWN_NIRI_SHM / iOS: ANGLE Metal only, no Wayland native display.
++        // Do not require EGL_ANGLE_platform_angle* in the client string
++        // (iland/ANGLE on this guest does not advertise those names).
++        let force_shm = cfg!(target_os = "ios")
++            || std::env::var_os("WWN_NIRI_SHM").is_some();
++        if force_shm {
++            #[cfg(any(target_os = "ios", target_os = "tvos", target_os = "visionos", target_os = "macos"))]
++            {
++                return vec![egl_platform!(
++                    PLATFORM_ANGLE_ANGLE,
++                    std::ptr::null_mut(),
++                    &[],
++                    vec![
++                        ffi::egl::PLATFORM_ANGLE_TYPE_ANGLE,
++                        0x3489 as ffi::EGLint, // EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE
++                        ffi::egl::NONE as ffi::EGLint
++                    ]
++                )];
++            }
++        }
+         vec![
+             // see: https://www.khronos.org/registry/EGL/extensions/KHR/EGL_KHR_platform_wayland.txt
+             egl_platform!(PLATFORM_WAYLAND_KHR, display, &["EGL_KHR_platform_wayland"]),

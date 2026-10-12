@@ -1,0 +1,16 @@
+[package]
+name = "hello-wasi"
+version = "0.1.2"
+edition = "2021"
+license = "MIT"
+description = "Tiny WASI P1 hello for wpm smoke tests"
+publish = false
+
+[[bin]]
+name = "hello-wasi"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

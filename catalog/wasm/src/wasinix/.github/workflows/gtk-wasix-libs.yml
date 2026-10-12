@@ -1,0 +1,90 @@
+name: GTK WASIX libs
+
+# Build the GTK toolkit closure with wasixcc + WASIX sysroot.
+# Libraries live under pkgs/libraries/ (not pkgs/programs/).
+# Plain wasi-libc is not enough (libffi/emscripten, epoll-shim/signals).
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+      - main
+      - "gtk/**"
+    paths:
+      - "pkgs/libraries/**"
+      - "pkgs/toolchain/wasixcc*"
+      - "pkgs/toolchain/wasixcc-version-sigpipe.patch"
+      - ".github/workflows/gtk-wasix-libs.yml"
+      - "flake.nix"
+      - "flake.lock"
+  pull_request:
+    branches:
+      - development
+      - main
+    paths:
+      - "pkgs/libraries/**"
+      - "pkgs/toolchain/wasixcc*"
+      - "pkgs/toolchain/wasixcc-version-sigpipe.patch"
+      - ".github/workflows/gtk-wasix-libs.yml"
+      - "flake.nix"
+      - "flake.lock"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gtk-wasix-libs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-libs:
+    name: wasix ${{ matrix.package }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - libffi
+          - pcre2
+          - expat
+          - wayland
+          - wayland-protocols
+          - glib
+          - pixman
+          - fribidi
+          - harfbuzz
+          - fontconfig
+          - cairo
+          - pango
+          - gdk-pixbuf
+          - graphene
+          - libxkbcommon
+          - libepoxy
+          - gtk4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v19
+      - name: Cache the Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock', 'pkgs/**/*.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          gc-max-store-size-linux: 5G
+      - name: Build ${{ matrix.package }} with wasixcc
+        run: |
+          set -euo pipefail
+          # The wasixcc wrapper occasionally dies with SIGPIPE on
+          # `clang --version`; retry once.
+          nix build --print-build-logs --show-trace \
+            ".#wasix.libraries.exnrefEh.${{ matrix.package }}" \
+            -o "result-${{ matrix.package }}" \
+            || nix build --print-build-logs --show-trace \
+              ".#wasix.libraries.exnrefEh.${{ matrix.package }}" \
+              -o "result-${{ matrix.package }}"
+      - name: Inspect output
+        run: |
+          # `find | head` under pipefail fails with SIGPIPE; do not fail here.
+          find "result-${{ matrix.package }}" -maxdepth 3 | head -40 || true

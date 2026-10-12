@@ -1,0 +1,153 @@
+name: Publish to repo.wawona.io
+
+# On green Build wasm packages (development): stage wasm/v1 and push to
+# repo.wawona.io development as wawona-wasm-bot. Optional OPEN_PR dry-run.
+# Secret: WAWONA_REPO_TOKEN (contents:write on repo.wawona.io, actions:read here).
+
+on:
+  workflow_run:
+    workflows: ["Build wasm packages"]
+    types: [completed]
+    branches: [development]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "build-wasm workflow run id (empty = latest successful on development)"
+        required: false
+        default: ""
+      open_pr:
+        description: "If true, open a PR instead of pushing to development"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: publish-wasm-catalog
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Stage into repo.wawona.io
+    runs-on: ubuntu-24.04
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event != 'pull_request')
+    steps:
+      - name: Require WAWONA_REPO_TOKEN
+        env:
+          WAWONA_REPO_TOKEN: ${{ secrets.WAWONA_REPO_TOKEN }}
+        run: |
+          if [[ -z "$WAWONA_REPO_TOKEN" ]]; then
+            echo "Set repo secret WAWONA_REPO_TOKEN (PAT/App with contents:write on repo.wawona.io)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Resolve run id
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            RID='${{ github.event.workflow_run.id }}'
+          else
+            RID='${{ github.event.inputs.run_id }}'
+            if [[ -z "$RID" ]]; then
+              RID="$(gh run list --repo Wawona/wasm-packages --workflow build-wasm.yml \
+                --branch development --status success --limit 1 --json databaseId \
+                --jq '.[0].databaseId')"
+            fi
+          fi
+          test -n "$RID"
+          echo "id=$RID" >> "$GITHUB_OUTPUT"
+          echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Download wasm-out
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out
+          gh run download "${{ steps.run.outputs.id }}" --repo Wawona/wasm-packages \
+            --name wasm-out --dir out
+          # Fallback: per-package artifacts if combine missing
+          if [[ ! -d out ]] || [[ -z "$(find out -name component.wasm 2>/dev/null | head -1)" ]]; then
+            rm -rf out
+            mkdir -p out
+            gh run download "${{ steps.run.outputs.id }}" --repo Wawona/wasm-packages --dir /tmp/arts
+            for d in /tmp/arts/wasm-*; do
+              [[ -d "$d" ]] || continue
+              name="${d##*/wasm-}"
+              [[ "$name" == "out" ]] && continue
+              mkdir -p "out/$name"
+              cp -a "$d"/. "out/$name/"
+            done
+          fi
+          find out -type f -name component.wasm
+
+      - name: Checkout catalog
+        uses: actions/checkout@v4
+        with:
+          repository: Wawona/repo.wawona.io
+          ref: development
+          path: catalog
+          token: ${{ secrets.WAWONA_REPO_TOKEN }}
+
+      - name: Stage packages
+        id: stage
+        run: |
+          chmod +x scripts/*.sh
+          python3 scripts/stage-for-repo.py catalog | tee /tmp/stage.log
+          CHANGED="$(grep -E '^changed=' /tmp/stage.log | tail -1 | cut -d= -f2)"
+          echo "changed=${CHANGED:-0}" >> "$GITHUB_OUTPUT"
+          NAMES="$(grep -E '^staged ' /tmp/stage.log | awk '{print $2}' | cut -d@ -f1 | tr '\n' ' ' | xargs)"
+          echo "names=${NAMES}" >> "$GITHUB_OUTPUT"
+
+      - name: Gate check-packages.py
+        working-directory: catalog
+        run: |
+          python3 scripts/check-packages.py
+
+      - name: Publish
+        if: steps.stage.outputs.changed != '0'
+        env:
+          GH_TOKEN: ${{ secrets.WAWONA_REPO_TOKEN }}
+          OPEN_PR: ${{ github.event.inputs.open_pr || 'false' }}
+          SRC_SHA: ${{ steps.run.outputs.sha }}
+          NAMES: ${{ steps.stage.outputs.names }}
+          RUN_ID: ${{ steps.run.outputs.id }}
+        working-directory: catalog
+        run: |
+          git config user.name "wawona-wasm-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Blobs + index ci status + Hydra-style ci.json
+          git add wasm/v1
+          if git diff --cached --quiet; then
+            echo "no catalog changes after stage"
+            exit 0
+          fi
+          MSG="wasm: auto-publish ${NAMES:-packages} + CI status from wasm-packages@${SRC_SHA:0:12}"
+          if [[ "$OPEN_PR" == "true" ]]; then
+            branch="wasm-packages/gha-$(date -u +%Y%m%d%H%M%S)"
+            git checkout -b "$branch"
+            git commit -m "$MSG"
+            git push -u origin "$branch"
+            gh pr create --repo Wawona/repo.wawona.io --base development --head "$branch" \
+              --title "$MSG" \
+              --body "Automated staging from Wawona/wasm-packages run ${RUN_ID} (includes Hydra-style ci.json)."
+          else
+            git commit -m "$MSG"
+            git pull --rebase --ff-only origin development || git pull --ff-only origin development || true
+            git push origin HEAD:development
+          fi
+
+      - name: No-op
+        if: steps.stage.outputs.changed == '0'
+        run: echo "catalog already up to date (blobs and CI status unchanged)"

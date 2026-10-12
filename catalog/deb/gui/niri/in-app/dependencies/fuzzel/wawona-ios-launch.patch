@@ -1,0 +1,58 @@
+--- a/application.c
++++ b/application.c
+@@ -11,6 +11,9 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ #include <fcntl.h>
++#if defined(__APPLE__)
++#include <TargetConditionals.h>
++#endif
+ 
+ #define LOG_MODULE "application"
+ #define LOG_ENABLE_DBG 0
+@@ -290,7 +293,45 @@
+ 
+     xassert(argv != NULL);
+     xassert(argv[0] != NULL);
++
++    /*
++     * Apple mobile cannot fork/exec. Route bundled helpers through Wawona's
++     * in-process async dispatcher (same path niri uses for Mod+D → fuzzel).
++     * WAYLAND_DISPLAY is already niri's nested socket in this process.
++     */
++#if defined(__APPLE__) && (TARGET_OS_IPHONE || TARGET_OS_TV || TARGET_OS_WATCH || TARGET_OS_VISION)
++    {
++        extern int wawona_dispatch_can_handle(const char *argv0);
++        extern int wawona_dispatch_spawn_async(const char *path,
++                                               char *const argv[],
++                                               char *const envp[]);
+ 
++        if (xdg_activation_token != NULL) {
++            setenv("XDG_ACTIVATION_TOKEN", xdg_activation_token, 1);
++            setenv("DESKTOP_STARTUP_ID", xdg_activation_token, 1);
++        }
++
++        if (wawona_dispatch_can_handle(argv[0])) {
++            int rc = wawona_dispatch_spawn_async(argv[0], argv, NULL);
++            free(unescaped);
++            free(argv);
++            if (rc == 0) {
++                LOG_DBG("%s: in-process async spawn succeeded", execute);
++                return true;
++            }
++            LOG_ERR("%s: in-process async spawn failed (rc=%d)", execute, rc);
++            return false;
++        }
++
++        free(unescaped);
++        free(argv);
++        LOG_ERR("%s: not a bundled in-process client; "
++                "fork/exec is unavailable on Apple mobile",
++                execute);
++        return false;
++    }
++#endif
++
+     int pipe_fds[2];
+     if (pipe2(pipe_fds, O_CLOEXEC) == -1) {
+         LOG_ERRNO("failed to create pipe");
