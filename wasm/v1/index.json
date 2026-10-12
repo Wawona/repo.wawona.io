@@ -54,6 +54,52 @@
       }
     },
     {
+      "name": "gtk4-hello",
+      "version": "0.1.0",
+      "digest": "sha256:3297ea2f77091be2eeb05eb0275f69ccec04951ef14d485c6ad8a295957b24d0",
+      "url": "packages/gtk4-hello/0.1.0/gtk4-hello.wasm",
+      "wasi": "wasix",
+      "kind": "wayland",
+      "summary": "Hello, Wayland World! GTK4 demo on WASIX (Wasmer + Relay)",
+      "long_description": "GTK4 ApplicationWindow with the title Hello, Wayland World!. Built with wasixcc against wasinix libraries.gtk4. Needs Wawona Relay host imports (wawona_wayland_*). Not store Pulley / WASI P1.",
+      "license": "MIT",
+      "runtime": "wasmer",
+      "entry": "gtk4-hello.wasm",
+      "homepage": "https://github.com/Wawona/wasinix/tree/development/pkgs/programs/gtk4-hello",
+      "source": "https://github.com/Wawona/wasinix/tree/development/pkgs/programs/gtk4-hello",
+      "programs": [
+        "gtk4-hello"
+      ],
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "platforms": [
+        "macos",
+        "ios",
+        "ipados",
+        "android",
+        "linux"
+      ],
+      "capabilities": {
+        "wayland": true,
+        "filesystem": [],
+        "network": false
+      },
+      "origin": "scratch",
+      "upstream_version": "0.1.0",
+      "ci": {
+        "status": "unknown",
+        "runtime": "wasmer",
+        "checked_at": "2026-10-12T15:40:01Z",
+        "suites": {
+          "smoke": "unknown",
+          "terminal": "unknown",
+          "socket": "unknown",
+          "wayland": "unknown"
+        }
+      }
+    },
+    {
       "name": "hello-wasi",
       "version": "0.1.2",
       "digest": "sha256:019d79014a3f26b61e9afb8b61a95be1c0b2a3cf6d3a771ddb5be09706d55fb9",

@@ -1,0 +1,25 @@
+[package]
+name = "wawona/gtk4-hello"
+version = "0.1.0"
+description = "Hello, Wayland World! GTK4 demo for WASIX (links libraries.gtk4)"
+license = "MIT"
+
+public = true
+
+[package.metadata]
+"abi" = "wasix"
+"abi-target" = "wasm32-wasix"
+"posix" = true
+"runtime" = "wasmer"
+"wawona-host" = "wawona_wayland_*"
+"wayland" = true
+
+[[module]]
+name = "gtk4-hello"
+source = "bin/gtk4-hello.wasm"
+[[command]]
+name = "gtk4-hello"
+module = "gtk4-hello"
+runner = "https://webc.org/runner/wasi"
+[command.annotations.wasi]
+atom = "gtk4-hello"
