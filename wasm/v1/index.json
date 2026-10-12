@@ -90,7 +90,7 @@
       "ci": {
         "status": "unknown",
         "runtime": "wasmer",
-        "checked_at": "2026-10-12T15:40:01Z",
+        "checked_at": "2026-10-12T15:41:51Z",
         "suites": {
           "smoke": "unknown",
           "terminal": "unknown",
