@@ -26,3 +26,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/check-packages.py
+      - name: Wayland packages use ndkLibs
+        run: python3 scripts/check-wayland-ndk-imports.py

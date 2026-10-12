@@ -3,7 +3,7 @@
 { pname
 , version
 , src
-, target ? "ios" # "ios" or "android"
+, target ? "ios" # "ios" | "android" | "linux"
 , # iOS Sileo layout. Rootful and rootless are different builds.
   # null keeps sileo.architecture (existing recipes).
   jailbreakScheme ? null # "rootless" | "rootful" | "roothide"
@@ -11,6 +11,7 @@
 , patches ? []
 , iosPatches ? []
 , androidPatches ? []
+, linuxPatches ? []
 , buildInputs ? []
 , nativeBuildInputs ? []
 , configureFlags ? []
@@ -45,6 +46,12 @@ let
 
   # Explicit target validation and defaults.
   # Sileo picks the stanza whose Architecture matches the device dpkg arch.
+  # Linux uses Debian arch names (amd64 / arm64).
+  linuxArch =
+    if stdenv.hostPlatform.isAarch64 then "arm64"
+    else if stdenv.hostPlatform.isx86_64 then "amd64"
+    else throw "Wawona linux deb: unsupported host CPU ${stdenv.hostPlatform.system}";
+
   targetData =
     if scheme != null && target != "ios" then
       throw "jailbreakScheme is for iOS Sileo packages, not target '${target}'"
@@ -54,11 +61,15 @@ let
       prefix = "/data/data/com.termux/files/usr";
       arch = "aarch64";
       host = "aarch64-linux-android";
+    } else if target == "linux" then {
+      prefix = "/usr";
+      arch = linuxArch;
+      host = stdenv.hostPlatform.config;
     } else if target == "ios" then {
       prefix = iosPrefix;
       arch = iosArch;
       host = "aarch64-apple-ios";
-    } else throw "Wawona: Unsupported target '${target}'. Expecting 'ios' or 'android'.";
+    } else throw "Wawona: Unsupported target '${target}'. Expecting 'ios', 'android', or 'linux'.";
 
   prefix =
     if scheme != null && args ? prefix && args.prefix != iosPrefix
@@ -67,7 +78,11 @@ let
   arch = targetData.arch;
   host = targetData.host;
 
-  allPatches = patches ++ (if target == "android" then androidPatches else if target == "ios" then iosPatches else []);
+  allPatches = patches
+    ++ (if target == "android" then androidPatches
+        else if target == "ios" then iosPatches
+        else if target == "linux" then linuxPatches
+        else []);
 
   # RootHide's Sileo fork reads these. Stock Sileo uses Architecture alone.
   rootHideControl = arch == "iphoneos-arm64e";
@@ -80,10 +95,13 @@ stdenv.mkDerivation (rec {
 
   nativeBuildInputs = [ dpkg coreutils ] ++ (args.nativeBuildInputs or []);
 
-  configureFlags = [
-    "--prefix=${prefix}"
-    "--host=${host}"
-  ] ++ (args.configureFlags or []);
+  configureFlags =
+    (if target == "linux" then [
+      "--prefix=${prefix}"
+    ] else [
+      "--prefix=${prefix}"
+      "--host=${host}"
+    ]) ++ (args.configureFlags or []);
 
   postInstall = (args.postInstall or "") + ''
     # Prepare DEBIAN control file

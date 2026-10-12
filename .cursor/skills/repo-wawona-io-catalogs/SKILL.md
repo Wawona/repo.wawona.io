@@ -21,6 +21,11 @@ jailbreak.
 |--------------|--------|--------------|------------|-------------|
 | Jailbroken iOS / iPadOS | Any APT client that speaks the repo | `iphoneos-arm64` rootless, `iphoneos-arm` rootful, `iphoneos-arm64e` RootHide | Yes | No |
 | Sideloaded Android | Termux `apt` | `aarch64` (and `arm`) | **No** | **No** |
+| Linux | host apt / dpkg | `amd64` / `arm64` | No | No |
+
+Wayland clients that used to link into the Wawona App Store app (weston, niri,
+foot, toys, cubes) publish here as **debs** without App Store no-fork patches.
+Org rule: `wawona-optional-software`.
 
 Do not rank iOS package managers in UI copy (no "Sileo, then Irisin, then
 Zebra, then Cydia"). They are interchangeable APT clients for the same root.

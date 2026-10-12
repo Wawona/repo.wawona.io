@@ -12,8 +12,28 @@ let
     inherit (nativePkgs) lib stdenv dpkg coreutils;
   };
 
-  # Common packages
-  packages = rec {
+  mkDebFromBins = import ../lib/mkDebFromBins.nix {
+    inherit (nativePkgs) lib stdenv dpkg coreutils;
+  };
+
+  packProcessDeb = import ../lib/packProcessDeb.nix {
+    inherit (pkgs) lib;
+    inherit mkDebFromBins;
+  };
+
+  # Optional Wayland clients: process debs, no App Store patches.
+  # Add a program in pkgs/wayland/clients.nix. Copy TEMPLATE.nix.
+  # linux = glibc host. android = Termux Bionic via ndkLibs (not glibc).
+  waylandClients = import ./wayland/clients.nix;
+  waylandOptional =
+    if !(target == "linux" || target == "android") then {}
+    else pkgs.lib.mapAttrs (_name: file:
+      import file {
+        inherit pkgs nativePkgs mkDebFromBins packProcessDeb target;
+      }
+    ) waylandClients;
+
+  iosAndroidPackages = pkgs.lib.optionalAttrs (target == "ios" || target == "android") (rec {
     hello = import ./devel/hello/default.nix { inherit pkgs mkWawonaPackage target; };
     libiosexec = import ./systems/libiosexec/default.nix { inherit pkgs mkWawonaPackage target; };
     bash = import ./shells/bash/default.nix { inherit pkgs mkWawonaPackage target; };
@@ -21,7 +41,7 @@ let
     zsh = import ./shells/zsh/default.nix { inherit pkgs mkWawonaPackage target; };
     curl = import ./systems/curl/default.nix { inherit pkgs mkWawonaPackage target; };
     neofetch = import ./systems/neofetch/default.nix { inherit pkgs mkWawonaPackage target; };
-    system-cmds = import ./systems/system-cmds/default.nix { 
+    system-cmds = import ./systems/system-cmds/default.nix {
       inherit pkgs mkWawonaPackage libiosexec target;
     };
     apr = import ./devel/apr/default.nix { inherit pkgs mkWawonaPackage target; };
@@ -41,7 +61,9 @@ let
       mkWawonaPackage = mkHostWawonaPackage;
       jailbreakScheme = "rootful";
     };
-  };
+  });
+
+  packages = iosAndroidPackages // waylandOptional;
 
   # Aggregate all packages into a single derivation for easy "build everything"
   all = pkgs.linkFarm "${target}-all-packages" (

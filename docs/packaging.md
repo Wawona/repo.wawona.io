@@ -8,6 +8,26 @@ Mode B product itself has an **iOS 13.0** Mach-O floor: use the rootful
 `iphoneos-arm` package where an older jailbreak requires it. Do not claim that
 RootHide supports iOS 11-14.
 
+### Optional Wayland clients (no App Store patches)
+
+`pkgs/wayland/` (weston, niri, foot, weston-simple-shm, …) are **process**
+debs. They may fork/exec/JIT. Do not copy `apple-mobile.nix`, renamed `*_main`
+entry points, or in-process cairo skips into these recipes.
+
+| Target | Flake attr | ABI / prefix |
+|--------|------------|--------------|
+| Linux | `.#packages.aarch64-linux.linux-wayland` | glibc, `/usr` |
+| Termux Android | `.#android-wayland` (`weston-simple-shm`, `foot`, `weston`) | Bionic `aarch64`, `/data/data/com.termux/files/usr` |
+| Termux niri | `.#niri-android` / `.#android-wayland` | `aarch64-linux-android` + Bionic rust-std. Winit patched for Wayland free_unix (not android-activity). |
+
+Never pack a glibc Linux ELF into a Termux `aarch64` deb. Android Termux
+debs build with Google NDK clang via `lib/androidNdk.nix` (Bionic,
+`Architecture: aarch64`, interpreter `/system/bin/linker64`). NDK leaf
+deps live under `pkgs/wayland/*-android/` (pixman, cairo, libinput via
+libudev-zero, …). Do not use the nixpkgs
+`aarch64-unknown-linux-android` GCC bootstrap on Darwin (hours of
+binutils/gcc). Org rule: `wawona-optional-software`.
+
 ### Key Difference: jbroot Path
 - **Standard Rootless**: Uses a fixed path `/var/jb`.
 - **RootHide**: Uses a **randomized** directory name for the "jbroot" for improved detection evasion.
