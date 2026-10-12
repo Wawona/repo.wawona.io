@@ -20,8 +20,8 @@ a compliance bug.
 
 Wasm ABI labels and the later Wasmer/WebC/wasinix registry are documented in
 `docs/wasm-abi.md`. WebC/wasinix is **planned**. `/wasm/v1` remains the live
-`wpm` machine API. Production P1 builds run on **GitHub Actions** in
-`Wawona/wasm-packages` (`ubuntu-24.04`); this repo only hosts the catalog.
+`wpm` machine API. P1 and WASIX recipes live in `catalog/wasm`.
+`Wawona/wasm-packages` and `Wawona/wasinix` are deleted. Do not recreate them.
 Do not claim WASIX ships, publish laptop-built blobs, or revive `nixpkgs2wasi`.
 
 `/wasm/`, `/deb/`, `/jailbreak/`, and `/termux/` HTML redirect into `/search/`.

@@ -31,12 +31,12 @@ Org skills still apply: `wawona-rag`, `wawona-write`, `wawona-learn`,
 | `repo-wawona-io-channels` | Two catalogs. Never one list. |
 | `repo-wawona-io-maintainers` | GitHub-queryable maintainers on every package |
 | `repo-wawona-io-ports` | Port names = upstream; versions = upstream; homepage + source |
-| `wawona-wasm-cli-ports` | Two build lanes: P1 GHA vs wasinix WASIX. No nixpkgs scrape. |
+| `wawona-wasm-cli-ports` | Two lanes inside `catalog/wasm`. `abi` is a field. No nixpkgs scrape. |
 | `wawona-product-map` | Wasm Runtime vs Sileo vs Termux. Do not conflate. |
 | `wawona-no-em-dash` | Copy |
 
 Wasm ABI / later Wasmer WebC: `docs/wasm-abi.md`.
-P1 builds: `Wawona/wasm-packages` GHA (`build-wasm.yml`). Catalog stays here.
+P1 sources: `catalog/wasm/src/p1`. WASIX sources: `catalog/wasm/src/wasinix`. Do not recreate those old repos.
 Do not revive `nixpkgs2wasi`. Do not publish laptop blobs.
 
 ## Hard-won (do not re-learn)

@@ -13,12 +13,11 @@ on the website, not here:
 **Status today:** `/wasm/v1` serves Mode A `wpm` via `index.json` and
 `.wasm` blobs. That path stays live.
 
-**Builds:** Production package builds run on **GitHub Actions**
-(`Wawona/wasm-packages`, `ubuntu-24.04`). Curated `allowlist.toml` drives
-nightly stale builds; green runs auto-publish into this repo's `development`
-`wasm/v1` (bot + `WAWONA_REPO_TOKEN`). Pages deploys `development`. Local
-`cargo` is optional recipe debug only. Do not publish laptop-built blobs as
-the source of truth. Never auto-mirror nixpkgs.
+**Builds:** P1 recipes live in `catalog/wasm/src/p1` (`abi = wasi-p1`).
+WASIX recipes live in `catalog/wasm/src/wasinix` (`abi = wasix`).
+`Wawona/wasm-packages` and `Wawona/wasinix` are deleted. Do not recreate them.
+Local `cargo` is optional recipe debug only. Do not publish laptop-built blobs as
+the source of truth. Never auto-mirror nixpkgs. Pages deploys `development`.
 
 **Versions:** Catalog `version` is the **package** version (upstream release for
 ports; scratch uses distinct unbranded names). ABI (`wasi-p1` / `wasix`) is a
@@ -83,14 +82,13 @@ through the wawona profile).
 
 Two build lanes (rule/skill `wawona-wasm-cli-ports`):
 
-1. **Store P1 on GHA.** `Wawona/wasm-packages` `allowlist.toml`. Real upstream
+1. **Store P1.** `catalog/wasm/src/p1/allowlist.toml`. Real upstream
    recipes only. Native-first: never wasm-package names in
-   `native-all-targets.txt`. Stub `jq`/`grep`/`sed` stay blocked. Nightly
-   grows `/wasm/v1`. Not a nixpkgs scrape.
-2. **Nixpkgs → WASIX.** `github.com/Wawona/wasinix`: override nixpkgs packages
-   with wasixcc, `makeWasmerPackage`, owner `wawona`. Docs:
-   `wasinix/docs/wawona-publish.md`. Do not revive `n2w`. Do not dump WASIX
-   into Mode A `/wasm/v1` P1 rows.
+   `catalog/wasm/src/p1/scripts/native-all-targets.txt`. Stub `jq`/`grep`/`sed` stay blocked.
+   Not a nixpkgs scrape. Publish path stays `/wasm/v1`.
+2. **Nixpkgs → WASIX.** `catalog/wasm/src/wasinix`: override nixpkgs packages
+   with wasixcc, `makeWasmerPackage`, owner `wawona`. Card `abi = wasix`.
+   Do not revive `n2w`. Do not dump WASIX into Mode A `/wasm/v1` P1 rows.
 3. **Broader WASIX CLI set** (WebC): curl, wget, git, tar, find, less, nano,
    bash, make, cmake, python3, openssl, … Grow wasinix recipes; keep matching
    allowlist rows `build = wasinix` blocked until published.
@@ -117,8 +115,8 @@ claim WASIX runs on store Pulley.
 
 | ABI | CI smoke runtime | Producer |
 |-----|------------------|----------|
-| WASI P1 / P2 | **Wasmtime** | `Wawona/wasm-packages` (`smoke-package.sh`) |
-| WASIX | **Wasmer** | `Wawona/wasinix` (`smokes.toml` + `smoke-wasix-package.sh`) |
+| WASI P1 / P2 | **Wasmtime** | `catalog/wasm/src/p1/scripts/smoke-package.sh` |
+| WASIX | **Wasmer** | `catalog/wasm/src/wasinix/smokes.toml` |
 
 Every active package must pass or fail under that runtime (JSON result per
 package). Do not smoke WASIX with Wasmtime. Do not use Wasmer as the store
@@ -171,7 +169,7 @@ Hard rejects until the gate lands:
 |---------|-------|-------|
 | Machine API | `/wasm/v1/index.json` + `.wasm` | Wasmer/WebC publish profile; keep or evolve `/wasm/v1` for `wpm` without breaking store clients |
 | Humans | `/search/?channel=wasm` | Same channel; show ABI labels when present |
-| Producer | GHA allowlist in `Wawona/wasm-packages` (auto-publish) | wasinix + `wawona` profile |
+| Producer | `catalog/wasm` cards (`abi` field) | same tree, WebC publish profile |
 | Deb APT | Separate | Still separate. Never one list |
 
 See also: [`../wasm/README.md`](../wasm/README.md),

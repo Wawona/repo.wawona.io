@@ -58,8 +58,8 @@ own the Nix→WASIX converter.
 
 | Lane | Repo | ABI | Lands here as |
 |------|------|-----|---------------|
-| Store P1 | `Wawona/wasm-packages` GHA | `wasm32-wasip1` | `/wasm/v1` for `wpm` / Pulley |
-| Nixpkgs → WASIX | `Wawona/wasinix` | `wasm32-wasix` | Wasmer/WebC under `/wasm` (not Pulley P1 rows) |
+| Store P1 | `catalog/wasm` `abi = wasi-p1` | `wasm32-wasip1` | `/wasm/v1` for `wpm` / Pulley |
+| WASIX | `catalog/wasm` `abi = wasix` | `wasm32-wasix` | Wasmer/WebC under `/wasm` (not Pulley P1 rows) |
 
 Hydra-style verified dots: index `ci.status` + `/wasm/v1/ci.json`. Green =
 Wasmtime (P1/P2) or Wasmer (WASIX) smoke pass. Gray = not verified. Red =
@@ -76,10 +76,8 @@ Store P1 loop:
 | Catalog | this repo `wasm/v1/` |
 
 ```bash
-gh secret set WAWONA_REPO_TOKEN --repo Wawona/wasm-packages
-gh workflow run build-wasm.yml --repo Wawona/wasm-packages
-# WASIX (separate lane):
-nix build github:Wawona/wasinix#wasix.grep
+nix eval .#catalogIndex.hello-wasi.abi
+nix eval .#legacyWasix --apply 'f: builtins.isFunction f'
 ```
 
 Stub `jq`/`grep`/`sed` stay blocked until real upstream trees ship. Do not
@@ -101,7 +99,7 @@ is a port of existing software.
   blocked until the real upstream tree ships with that project's version.
 
 `scripts/check-packages.py` enforces this on `wasm/v1/index.json`. Build
-allowlist: `Wawona/wasm-packages` `docs/package-versioning.md`.
+allowlist: `catalog/wasm/src/p1/docs/package-versioning.md`.
 
 ## Never
 
@@ -117,7 +115,7 @@ allowlist: `Wawona/wasm-packages` `docs/package-versioning.md`.
 - Publish laptop-built `.wasm` as the production catalog source
 - Revive `nixpkgs2wasi` / `n2w` as the wasm producer
 - Route `where_to_edit("repo.wawona.io …")` to the `wawona.io` website
-- Route wasm **build** recipes to this repo (builds live in `Wawona/wasm-packages`)
+- Recreate `Wawona/wasm-packages` or `Wawona/wasinix`. Recipes live in `catalog/wasm`.
 - Mention retired `wwn-apt` in `setup.sh`
 - Drop `hello-wasi` from `wasm/v1/index.json`
 - Brand package names with `wawona-` / `wwn-` (or `-wawona` / `-wwn`)

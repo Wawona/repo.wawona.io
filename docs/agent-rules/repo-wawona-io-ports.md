@@ -74,16 +74,16 @@ UI shows **homepage** and **source**.
 Do not scrape nixpkgs. Do not revive `nixpkgs2wasi`. Full law:
 `wawona-wasm-cli-ports`.
 
-| Need | Repo |
+| Need | Where |
 |------|------|
-| Store WASI P1 / Pulley | `Wawona/wasm-packages` GHA allowlist + real upstream recipe |
-| Nixpkgs → WASIX / WebC | `Wawona/wasinix` (`nix build .#wasix.*` / `.#wasmer.*`) |
+| Store WASI P1 / Pulley | `catalog/wasm` `abi = wasi-p1` |
+| Nixpkgs → WASIX / WebC | `catalog/wasm` `abi = wasix` |
 
 ## Related
 
 - Build law: `wawona-wasm-cli-ports` (skill + rule)
-- Build allowlist / GHA: `Wawona/wasm-packages` (`docs/package-versioning.md`)
-- WASIX: `wasinix/docs/wawona-publish.md`
+- Build allowlist: `catalog/wasm/src/p1/docs/package-versioning.md`
+- WASIX: `catalog/wasm/src/wasinix/docs/wawona-publish.md`
 - Dual catalogs: `repo-wawona-io-channels`
 - Maintainers: `repo-wawona-io-maintainers`
 - Skill: `repo-wawona-io-catalogs`
