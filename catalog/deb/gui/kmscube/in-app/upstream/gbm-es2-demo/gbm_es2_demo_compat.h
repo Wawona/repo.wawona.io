@@ -1,4 +1,4 @@
-/* Force-included for Apple + Android gbm_es2_demo builds over wwn-iland.
+/* Force-included for Apple + Android gbm_es2_demo builds over iLand.
  *
  * Mode A has no Dobby open() hook. Use iland's store-safe /dev/dri/cardN
  * redirect (shared with kmscube / Weston). Also fix EGLNativeDisplayType

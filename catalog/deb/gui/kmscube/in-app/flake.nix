@@ -1,5 +1,5 @@
 {
-  description = "wwn-kmscube: native OpenGL and Vulkan acceptance clients over wwn-iland KMS/GBM for Apple and Android.";
+  description = "wwn-kmscube: native OpenGL and Vulkan acceptance clients over iLand KMS/GBM for Apple and Android.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -10,9 +10,9 @@
     wwn-toolchain.inputs.rust-overlay.follows = "rust-overlay";
     # L2 -> L1 edge; see Wawona/docs/wwn-repo-dag.md. FlakeHub rolling follows
     # the published L1 tip (MoltenVK/SwiftShader provider registry).
-    wwn-iland.url = "github:Wawona/wwn-iland/tvos-gpu";
-    wwn-iland.inputs.nixpkgs.follows = "nixpkgs";
-    wwn-iland.inputs.wwn-toolchain.follows = "wwn-toolchain";
+    iland.url = "github:Wawona/iLand/tvos-gpu";
+    iland.inputs.nixpkgs.follows = "nixpkgs";
+    iland.inputs.wwn-toolchain.follows = "wwn-toolchain";
   };
 
   outputs =
@@ -21,7 +21,7 @@
       nixpkgs,
       rust-overlay,
       wwn-toolchain,
-      wwn-iland,
+      iland,
       ...
     }:
     let
@@ -170,7 +170,7 @@
               "aarch64-darwin"
               "aarch64-linux"
             ];
-            registry = baseRegistry // wwn-iland.registryFragment // self.registryFragment;
+            registry = baseRegistry // iland.registryFragment // self.registryFragment;
           };
           isDarwin = builtins.elem system darwinSystems;
         in

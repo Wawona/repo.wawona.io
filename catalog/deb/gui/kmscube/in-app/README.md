@@ -8,7 +8,7 @@ an iland-portable adaptation of [krh/vkcube](https://github.com/krh/vkcube).
 Both are static, in-process clients on Apple mobile and Android.
 
 KMS/GBM/DRM and all GPU providers come from
-[wwn-iland](https://github.com/Wawona/wwn-iland). `vkcube` calls Vulkan
+[iLand](https://github.com/Wawona/iLand). `vkcube` calls Vulkan
 directly: MoltenVK or KosmicKrisp to Metal on Apple, and the system or bundled
 SwiftShader ICD on Android. Android's client-local dispatch keeps SwiftShader
 separate from the system loader used for host ANativeWindow WSI. It never opens
@@ -61,7 +61,7 @@ OpenGL vs Vulkan, and the live backend (ANGLE, MoltenVK, KosmicKrisp).
 inputs.wwn-kmscube.url = "github:Wawona/wwn-kmscube";
 
 registry = wwn-toolchain.lib.baseRegistry
-  // wwn-iland.registryFragment
+  // iLand.registryFragment
   // wwn-kmscube.registryFragment;
 ```
 

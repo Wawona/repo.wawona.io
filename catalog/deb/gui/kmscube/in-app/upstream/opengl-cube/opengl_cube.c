@@ -8,7 +8,7 @@
  *   opengl-cube  — this file: OpenGL ES over Wayland-EGL on the compositor.
  *   vkcube       — Vulkan over Wayland on the compositor.
  *
- * The Wayland-EGL winsys itself lives in wwn-iland (shims/egl/src/egl_wayland.c
+ * The Wayland-EGL winsys itself lives in iLand (shims/egl/src/egl_wayland.c
  * + shims/wayland-egl): eglSwapBuffers posts the IOSurface ANGLE rendered into
  * as a linux-dmabuf wl_buffer, so this client is zero-copy to the compositor.
  *
@@ -51,7 +51,7 @@
 #include "../wwn_cube_hud.h"
 #include "../wwn_cube_hud.c"
 
-/* Provided by wwn-iland's EGL shim. Declared rather than pulled from a vendor
+/* Provided by iLand's EGL shim. Declared rather than pulled from a vendor
  * EGL header so the client does not depend on which extension headers ANGLE
  * happens to install. */
 extern EGLDisplay eglGetPlatformDisplayEXT(EGLenum platform,

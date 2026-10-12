@@ -29,7 +29,7 @@
   # stack links (kmscube smoke test via wwn-kmscube).
   enableGlClients ? false,
   # Injected by wwn-toolchain: apple toolchain (was ../../utils/xcode-wrapper.nix),
-  # the wwn-iland source tree (gl-clients + udev/gbm shim copies), and the
+  # the iland source tree (gl-clients + udev/gbm shim copies), and the
   # wwn-toolchain source tree (apple-mobile-platform.nix). These replace the
   # now-invalid ../../utils, ../../libs/iland and ../../toolchains relative paths.
   xcodeUtils ? iosToolchain,

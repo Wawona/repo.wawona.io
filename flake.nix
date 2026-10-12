@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # Substrate only. This flake does not input Wawona or wwn-iland.
+    # Substrate only. This flake does not input Wawona or iland.
     wwn-toolchain.url = "github:Wawona/wwn-toolchain/development";
     wwn-toolchain.inputs.nixpkgs.follows = "nixpkgs";
   };

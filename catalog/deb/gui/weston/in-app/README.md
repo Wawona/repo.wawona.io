@@ -6,7 +6,7 @@ All [Weston](https://gitlab.freedesktop.org/wayland/weston) ports for Wawona liv
 
 Targets: **iOS, iPadOS, tvOS, watchOS, visionOS, macOS, Android (Wear OS), and Linux** (reference / host bundles). Apple mobile and Android ship Weston as **in-process static archives** (`*_main` entry points). macOS and Linux use conventional Meson / binary builds where appropriate.
 
-Built with [wwn-toolchain](https://github.com/Wawona/wwn-toolchain). The iland DRM/GL compositor path consumes [wwn-iland](https://github.com/Wawona/wwn-iland) udev/gbm shims.
+Built with [wwn-toolchain](https://github.com/Wawona/wwn-toolchain). The iland DRM/GL compositor path consumes [iLand](https://github.com/Wawona/iLand) udev/gbm shims.
 
 ## Nix registry
 
@@ -51,7 +51,7 @@ Nested compositor archives for in-process nesting inside Wawona (`libweston-comp
 | Recipe | Backend |
 |--------|---------|
 | `compositor-ios.nix`, `compositor-tvos.nix`, … | Wayland + headless, Pixman renderer |
-| `compositor-ios-drm.nix` | iland DRM/KMS + GL renderer (`wwn-iland` shims) |
+| `compositor-ios-drm.nix` | iland DRM/KMS + GL renderer (`iLand` shims) |
 | `compositor-android.nix` | Wayland + headless for Android NDK |
 
 Shared Apple-mobile logic: `compositor-apple-mobile.nix`.
@@ -102,10 +102,10 @@ dependencies/
 inputs.wwn-weston.url = "github:Wawona/wwn-weston";
 
 registry = wwn-toolchain.lib.baseRegistry
-  // wwn-iland.registryFragment
+  // iLand.registryFragment
   // wwn-weston.registryFragment;
 
-extraArgs = { ilandSrc = wwn-iland; };   # compositor-drm copies iland udev/gbm shims
+extraArgs = { ilandSrc = iLand; };   # compositor-drm copies iland udev/gbm shims
 ```
 
 Consumer examples (Wawona flake): `weston-ios`, `weston-ios-gl`, `weston-compositor-ios`, `weston-compositor-ios-drm`, `weston-android`, `weston-compositor-android`, `weston-macos`, `weston-simple-shm` per platform.

@@ -5,7 +5,7 @@
 # App Store posture: iOS cannot fork/exec a bundled compositor binary, so
 # Wawona links libniri.a and starts niri on a dedicated thread in-process.
 # niri connects to Wawona through WAYLAND_DISPLAY (nested backend), renders
-# GLES via the wwn-iland/ANGLE EGL (EGL_EXT_platform_wayland), and serves its
+# GLES via the iland/ANGLE EGL (EGL_EXT_platform_wayland), and serves its
 # own scrollable-tiling clients on a child socket inside the sandbox-safe
 # XDG_RUNTIME_DIR under the app container. No JIT, no dlopen of downloaded
 # code; the config KDL ships as read-only bundle data.
@@ -163,7 +163,7 @@ rustPlatform.buildRustPackage {
     fi
     echo "Patched vendored wayland-backend + calloop cfgs for Apple mobile"
 
-    # Apple mobile links wwn-iland + ANGLE statically. Resolve EGL from the
+    # Apple mobile links iland + ANGLE statically. Resolve EGL from the
     # current process (dlopen(NULL)), then let iland's eglGetProcAddress bridge
     # extension entry points to ANGLE. This is store-safe and avoids a second
     # EGL dylib/transition layer.

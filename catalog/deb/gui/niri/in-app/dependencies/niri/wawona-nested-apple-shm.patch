@@ -13,7 +13,7 @@ diff --git a/src/backend/nested/mod.rs b/src/backend/nested/mod.rs
  ///
  /// Must be called after the EGL library has been loaded (EGLDisplay::new).
 +///
-+/// wwn-iland's EGL shim is a real Wayland-EGL winsys (wl_egl_window +
++/// iLand's EGL shim is a real Wayland-EGL winsys (wl_egl_window +
 +/// linux-dmabuf IOSurface/AHB). Probe it on macOS, iOS, iPadOS, visionOS,
 +/// and Android. watchOS has no Metal (GPU blocked). tvOS GPU is still
 +/// planned, so keep SHM there until that phase.

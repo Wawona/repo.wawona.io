@@ -15,7 +15,7 @@
   macos ? false,
   enableIlandDrm ? false,
   # Injected by wwn-toolchain (xcodeUtils === apple toolchain; was
-  # ../../utils/xcode-wrapper.nix), wwn-iland source tree (udev/gbm shim copies;
+  # ../../utils/xcode-wrapper.nix), iland source tree (udev/gbm shim copies;
   # was ../../libs/iland), and wwn-toolchain source tree (apple-mobile-platform.nix;
   # was ../../toolchains).
   xcodeUtils ? iosToolchain,

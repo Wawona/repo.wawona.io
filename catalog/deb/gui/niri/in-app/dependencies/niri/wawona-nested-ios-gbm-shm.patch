@@ -40,7 +40,7 @@
              // see: https://www.khronos.org/registry/EGL/extensions/KHR/EGL_KHR_platform_wayland.txt
              egl_platform!(PLATFORM_WAYLAND_KHR, display, &["EGL_KHR_platform_wayland"]),
 @@ -468,6 +458,9 @@
-         // Apple targets this resolves to the wwn-iland/ANGLE EGL).
+         // Apple targets this resolves to the iLand/ANGLE EGL).
          let display_ptr = connection.backend().display_ptr() as *mut std::os::raw::c_void;
          let egl_display = unsafe { EGLDisplay::new(NestedEglDisplay(display_ptr)) }
 +            .inspect_err(|err| {

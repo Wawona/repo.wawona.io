@@ -1,4 +1,4 @@
-# gbm_es2_demo for Android NDK — in-process libgbm_es2_demo.a over wwn-iland + ANGLE.
+# gbm_es2_demo for Android NDK — in-process libgbm_es2_demo.a over iland + ANGLE.
 {
   lib,
   pkgs,

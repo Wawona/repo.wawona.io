@@ -863,7 +863,7 @@ index 0000000..ce00c20
 +//! libinput, or winit-Wayland, so niri runs strictly *nested* — it connects to
 +//! the host compositor (Wawona) advertised via WAYLAND_DISPLAY, creates one
 +//! xdg_toplevel that acts as niri's single output, renders with GLES through
-+//! EGL_KHR_platform_wayland (served by wwn-iland/ANGLE on Apple targets), and
++//! EGL_KHR_platform_wayland (served by iLand/ANGLE on Apple targets), and
 +//! translates the host seat's wl_pointer/wl_keyboard/wl_touch events into
 +//! niri's input pipeline. niri in turn hosts its own scrollable-tiling clients
 +//! on its own (child) Wayland socket.
@@ -1278,7 +1278,7 @@ index 0000000..ce00c20
 +            .context("error flushing the initial host commit")?;
 +
 +        // EGL over the host wayland display (EGL_KHR_platform_wayland; on
-+        // Apple targets this resolves to the wwn-iland/ANGLE EGL).
++        // Apple targets this resolves to the iLand/ANGLE EGL).
 +        let display_ptr = connection.backend().display_ptr() as *mut std::os::raw::c_void;
 +        let egl_display = unsafe { EGLDisplay::new(NestedEglDisplay(display_ptr)) }
 +            .context("error creating the nested EGL display")?;
@@ -1462,7 +1462,7 @@ index 0000000..ce00c20
 +        let primary_formats = renderer.dmabuf_formats();
 +        if primary_formats.iter().next().is_none() {
 +            // No dmabuf support in the host EGL (common on the SHM-first
-+            // Wawona mobile targets, where wwn-iland/ANGLE serves EGL);
++            // Wawona mobile targets, where iLand/ANGLE serves EGL);
 +            // clients fall back to wl_shm.
 +            debug!("nested EGL exposes no dmabuf formats; skipping the dmabuf global");
 +            return;

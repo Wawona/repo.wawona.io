@@ -84,7 +84,7 @@
       "inputs": {
         "nixpkgs": "nixpkgs",
         "rust-overlay": "rust-overlay",
-        "wwn-iland": "wwn-iland",
+        "iland": "iland",
         "wwn-kmscube": "wwn-kmscube",
         "wwn-toolchain": "wwn-toolchain"
       }
@@ -112,7 +112,7 @@
     "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
-          "wwn-iland",
+          "iland",
           "nixpkgs"
         ]
       },
@@ -166,7 +166,7 @@
         "type": "github"
       }
     },
-    "wwn-iland": {
+    "iland": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -182,11 +182,11 @@
         "rev": "b65fb5e1acdaf9fc784180b9fb7c737ced958f04",
         "revCount": 66,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/Wawona/wwn-iland/0.1.66%2Brev-b65fb5e1acdaf9fc784180b9fb7c737ced958f04/019ffa09-d33d-7d01-8376-dcf2b817efd3/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/Wawona/iLand/0.1.66%2Brev-b65fb5e1acdaf9fc784180b9fb7c737ced958f04/019ffa09-d33d-7d01-8376-dcf2b817efd3/source.tar.gz"
       },
       "original": {
         "type": "tarball",
-        "url": "https://flakehub.com/f/Wawona/wwn-iland/%2A"
+        "url": "https://flakehub.com/f/Wawona/iLand/%2A"
       }
     },
     "wwn-kmscube": {
@@ -195,8 +195,8 @@
           "nixpkgs"
         ],
         "rust-overlay": "rust-overlay_3",
-        "wwn-iland": [
-          "wwn-iland"
+        "iland": [
+          "iland"
         ],
         "wwn-toolchain": [
           "wwn-toolchain"

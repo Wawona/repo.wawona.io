@@ -18,7 +18,7 @@ index 78f8675..fa8a526 100644
  }
  
 +
-+/// wwn-iland: Mode B hooks libc open("/dev/dri/..."), not rustix stat(2).
++/// iLand: Mode B hooks libc open("/dev/dri/..."), not rustix stat(2).
 +#[cfg(target_os = "macos")]
 +fn drm_node_open_iland(path: &Path) -> anyhow::Result<DrmNode> {
 +    use std::fs::OpenOptions;

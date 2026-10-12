@@ -1,4 +1,4 @@
-# kmscube over wwn-iland (GBM/EGL/DRM) + ANGLE — Apple mobile in-process archive.
+# kmscube over iland (GBM/EGL/DRM) + ANGLE — Apple mobile in-process archive.
 #
 # Produces libkmscube.a with kmscube_main for nested GL inside Wawona. Standalone
 # kmscube binary is only built on macOS (see macos.nix).

@@ -30,7 +30,7 @@ nested-port patch:
 - adds `src/backend/nested/` — a Wayland-client backend: the niri output is an
   `xdg_toplevel` on the host compositor, rendering is GLES over
   `EGL_KHR_platform_wayland` / `EGL_EXT_platform_wayland` (served on mobile by
-  the `wwn-iland`/ANGLE EGL), and host seat input (pointer/keyboard/touch) is
+  the `iLand`/ANGLE EGL), and host seat input (pointer/keyboard/touch) is
   translated into niri's input pipeline;
 - gates winit/pipewire as Linux-only; macOS Mode B re-enables DRM/KMS tty
   (`wawona-macos-drm-tty.patch`). iOS/Android stay nested-only. Desktop-Linux

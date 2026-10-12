@@ -1,5 +1,5 @@
-# kmscube for Android NDK — in-process libkmscube.a over wwn-iland + ANGLE.
-# Requires iland Android port (wwn-iland); archive-only build (no standalone APK).
+# kmscube for Android NDK — in-process libkmscube.a over iland + ANGLE.
+# Requires iland Android port (iland); archive-only build (no standalone APK).
 {
   lib,
   pkgs,

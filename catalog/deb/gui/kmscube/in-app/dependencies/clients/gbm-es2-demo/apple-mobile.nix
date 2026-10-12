@@ -1,4 +1,4 @@
-# gbm_es2_demo over wwn-iland + ANGLE — Apple mobile in-process archive.
+# gbm_es2_demo over iland + ANGLE — Apple mobile in-process archive.
 {
   lib,
   pkgs,

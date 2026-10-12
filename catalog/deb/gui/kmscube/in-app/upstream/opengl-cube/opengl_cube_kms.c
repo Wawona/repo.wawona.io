@@ -4,7 +4,7 @@
  * The real opengl-cube (opengl_cube.c) is a Wayland client: xdg-shell +
  * wl_egl_window on Wawona's compositor. Android cannot run that yet because two
  * pieces are missing — an AHardwareBuffer-backed Wayland-EGL winsys in
- * wwn-iland (the Apple side posts IOSurfaces, see shims/egl/src/egl_wayland.c),
+ * iLand (the Apple side posts IOSurfaces, see shims/egl/src/egl_wayland.c),
  * and an AHB import path in the compositor's zwp_linux_dmabuf_v1 handler, which
  * today accepts only IOSurface-id modifiers.
  *

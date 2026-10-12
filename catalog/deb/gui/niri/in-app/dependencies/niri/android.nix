@@ -93,7 +93,7 @@ rustPlatform.buildRustPackage {
     # iland EGL + Wayland-EGL. Target-only so host proc-macros are not linked.
     export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-L native=${iland}/lib -C link-arg=-Wl,--whole-archive -C link-arg=-liland_userland -C link-arg=-liland_wayland_egl -C link-arg=-Wl,--no-whole-archive $CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS"
 
-    # Apple mobile / Android link wwn-iland. Resolve EGL from this process.
+    # Apple mobile / Android link iland. Resolve EGL from this process.
     for sm in "$NIX_BUILD_TOP"/cargo-vendor-dir/smithay-*/src/backend/egl/ffi.rs; do
       if [ -f "$sm" ]; then
         python3 - "$sm" <<'PY'

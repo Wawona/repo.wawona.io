@@ -9,12 +9,12 @@
     wwn-toolchain.inputs.nixpkgs.follows = "nixpkgs";
     wwn-toolchain.inputs.rust-overlay.follows = "rust-overlay";
     # L1 graphics: macOS niri Tty/DRM links iland userland KMS (Mode B).
-    wwn-iland.url = "https://flakehub.com/f/Wawona/wwn-iland/*";
-    wwn-iland.inputs.nixpkgs.follows = "nixpkgs";
-    wwn-iland.inputs.wwn-toolchain.follows = "wwn-toolchain";
+    iland.url = "https://flakehub.com/f/Wawona/iLand/*";
+    iland.inputs.nixpkgs.follows = "nixpkgs";
+    iland.inputs.wwn-toolchain.follows = "wwn-toolchain";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, wwn-toolchain, wwn-iland, ... }:
+  outputs = { self, nixpkgs, rust-overlay, wwn-toolchain, iland, ... }:
     let
       darwinSystems = [ "x86_64-darwin" "aarch64-darwin" ];
       linuxSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -71,8 +71,8 @@
           pkgs = pkgsFor system;
           tc = mkToolchains {
             inherit pkgs;
-            registry = baseRegistry // wwn-iland.registryFragment // self.registryFragment;
-            extraArgs = { ilandSrc = wwn-iland; };
+            registry = baseRegistry // iland.registryFragment // self.registryFragment;
+            extraArgs = { ilandSrc = iland; };
           };
           isDarwin = builtins.elem system darwinSystems;
         in
