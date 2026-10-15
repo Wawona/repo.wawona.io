@@ -539,9 +539,13 @@ static inline void wrapIoObjectRelease(io_object_t* service) {
 smbios = Path("src/common/impl/smbios.c")
 text = smbios.read_text()
 if "SMBIOS unavailable" not in text:
+    # tvOS/visionOS ship IOKit *headers* but not a linkable IOKit framework.
+    # Gating only on __has_include pulls ffGetSmbiosHeaderTable IOKit calls into
+    # the archive and then fails at app link (no -framework IOKit; forbidden on
+    # tvOS/watchOS). WAWONA_APPLE_MOBILE always stubs SMBIOS.
     smbios_anchor = """#elif defined(__APPLE__)
     #include "common/apple/cf_helpers.h\""""
-    smbios_patch = """#elif defined(__APPLE__) && __has_include(<IOKit/IOKitLib.h>)
+    smbios_patch = """#elif defined(__APPLE__) && !defined(WAWONA_APPLE_MOBILE) && __has_include(<IOKit/IOKitLib.h>)
     #include "common/apple/cf_helpers.h\""""
     if smbios_anchor not in text:
         raise SystemExit("smbios.c Apple branch anchor missing")
@@ -554,7 +558,8 @@ if "SMBIOS unavailable" not in text:
 }
 #elif defined(__APPLE__)
 const FFSmbiosHeaderTable* ffGetSmbiosHeaderTable() {
-    // SMBIOS unavailable without IOKit (watchOS).
+    // SMBIOS unavailable on Apple mobile (no IOKit link on tvOS/watchOS;
+    // Mode A never walks IORegistry).
     return NULL;
 }
 #endif"""
