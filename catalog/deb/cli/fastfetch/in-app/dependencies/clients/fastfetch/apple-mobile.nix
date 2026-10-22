@@ -1,4 +1,4 @@
-# fastfetch in-process static archive for Apple mobile (App Store–safe).
+# fastfetch in-process static archive for Apple mobile (App Store-safe).
 {
   lib,
   pkgs,
