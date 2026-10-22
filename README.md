@@ -11,7 +11,7 @@ App Store / Play compliance is **wasm only**. Debs never go in store binaries.
 | **`/search/`** | Humans | Chooser. Wasm and debs are never one list. |
 | **`/search/?channel=wasm`** | Humans (Mode A) | App Store / Play wasm catalog for `wpm`. Store compliance. |
 | **`/search/?channel=deb`** | Humans | APT debs. Two audiences on one `Packages` file. |
-| **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Runtime**. Do not redirect this tree. |
+| **`/wasm/v1/`** | App Store, Play, macOS (`wpm`) | WASI `.wasm` packages for **Wawona Relay**. Do not redirect this tree. |
 | **`/` APT** (`Packages`, `debs/`) | Jailbroken iOS APT clients **and** Termux | Same source URL `https://repo.wawona.io/`. Split by Architecture. |
 | **`/jailbreak/`** | Jailbroken iOS | Bookmark onto the deb catalog. Rootless (`iphoneos-arm64`) and rootful (`iphoneos-arm`). **Not** Termux. **Not** a second APT tree. |
 | **`/termux/`** | Sideloaded Android (Termux) | Bookmark onto `aarch64` debs. **Not jailbreak.** **Not Play.** |

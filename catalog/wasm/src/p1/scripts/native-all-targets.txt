@@ -1,5 +1,5 @@
 # CLI names already shipped as native ports on every Wawona product target
-# (uutils safe subset via wwn-coreutils / wawona-dispatch). Do not package
+# (uutils safe subset via wwn-uutils-rs / wawona-dispatch). Do not package
 # these for WASI/WASIX /wasm/v1. Keep in sync with wwn_safe_subset[] in
 # wwn-toolchain/.../wawona-dispatch.c
 ls
