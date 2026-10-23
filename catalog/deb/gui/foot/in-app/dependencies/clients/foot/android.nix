@@ -138,8 +138,8 @@ pkgs.stdenv.mkDerivation (applySandbox {
     # -D_GNU_SOURCE=200809L and -Werror turns the redefinition into a hard fail.
     c_args = ['-fPIC', '-D__STDC_ISO_10646__=201103L']
     cpp_args = ['-fPIC', '-D__STDC_ISO_10646__=201103L']
-    c_link_args = ['-Wl,-rpath,\$ORIGIN']
-    cpp_link_args = ['-Wl,-rpath,\$ORIGIN']
+    c_link_args = ['-Wl,-rpath,\$ORIGIN', '-Wl,--no-fatal-warnings']
+    cpp_link_args = ['-Wl,-rpath,\$ORIGIN', '-Wl,--no-fatal-warnings']
     EOF
 
     cat > native-file.txt <<EOF

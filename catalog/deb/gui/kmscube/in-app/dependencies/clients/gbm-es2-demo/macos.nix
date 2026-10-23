@@ -29,13 +29,18 @@ pkgs.stdenv.mkDerivation {
     cp ${../../../upstream/wwn_cube_hud.c} wwn_cube_hud.c
     cp ${../../../upstream/wwn_cube_hud.h} wwn_cube_hud.h
 
-    unset DEVELOPER_DIR
-    MACOS_SDK=$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)
-    if [ ! -d "$MACOS_SDK" ]; then
-      MACOS_SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+    if [ -z "''${XCODE_APP:-}" ]; then
+      XCODE_APP=$(${xcodeUtils.findXcodeScript}/bin/find-xcode || true)
+    fi
+    if [ -n "''${XCODE_APP:-}" ] && [ -d "$XCODE_APP/Contents/Developer" ]; then
+      export DEVELOPER_DIR="$XCODE_APP/Contents/Developer"
+      MACOS_SDK="$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    fi
+    if [ -z "''${MACOS_SDK:-}" ] || [ ! -d "$MACOS_SDK" ]; then
+      MACOS_SDK=$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)
     fi
     if [ ! -d "$MACOS_SDK" ]; then
-      MACOS_SDK=$(${xcodeUtils.findXcodeScript}/bin/find-xcode)/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+      MACOS_SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
     fi
     if [ ! -d "$MACOS_SDK" ]; then
       echo "ERROR: MacOSX SDK not found." >&2
@@ -43,10 +48,6 @@ pkgs.stdenv.mkDerivation {
     fi
     export SDKROOT="$MACOS_SDK"
 
-    if [ -z "''${XCODE_APP:-}" ]; then
-      XCODE_APP=$(${xcodeUtils.findXcodeScript}/bin/find-xcode || true)
-      [ -n "$XCODE_APP" ] && export DEVELOPER_DIR="$XCODE_APP/Contents/Developer"
-    fi
     if [ -n "''${DEVELOPER_DIR:-}" ] && [ -x "$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ]; then
       CLANGXX="$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
       AR="$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar"
