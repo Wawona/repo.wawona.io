@@ -29,6 +29,21 @@ smoke_args = []
 smoke_expect = "hello"
 
 [[packages]]
+name = "protocol-probe"
+version = "0.1.0"
+abi = "wasi-p1"
+status = "active"
+origin = "scratch"
+build = "cargo-wasip1"
+version_policy = "local"
+source = "packages/protocol-probe"
+bin = "protocol-probe"
+homepage = "https://github.com/Wawona/repo.wawona.io/tree/master/catalog/wasm/src/p1/packages/protocol-probe"
+summary = "Wayland registry honesty probe: expect diff + store-safe smokes (NDJSON)"
+smoke_args = ["--self-check"]
+smoke_expect = "protocol-probe self-check ok"
+
+[[packages]]
 name = "wasi-true"
 version = "0.1.0"
 abi = "wasi-p1"

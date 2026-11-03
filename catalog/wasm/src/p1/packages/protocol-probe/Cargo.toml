@@ -1,0 +1,24 @@
+[package]
+name = "protocol-probe"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "WASI P1 Wayland registry honesty probe for Wawona Runtime"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "protocol-probe"
+path = "src/main.rs"
+
+[features]
+default = ["host-abi"]
+# Link Wawona Runtime env imports (wawona_wayland_*). Disable for Wasmtime
+# --self-check smoke, which cannot satisfy those imports.
+host-abi = []
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true

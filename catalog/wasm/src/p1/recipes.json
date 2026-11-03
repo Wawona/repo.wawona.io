@@ -19,6 +19,26 @@
       "homepage": "https://github.com/Wawona/wasm-packages/tree/development/packages/hello-wasi"
     },
     {
+      "name": "protocol-probe",
+      "version": "0.1.0",
+      "abi": "wasi-p1",
+      "abi_target": "wasm32-wasip1",
+      "origin": "scratch",
+      "kind": "cli",
+      "summary": "Wayland registry honesty probe: expect diff + store-safe smokes (NDJSON)",
+      "path": "packages/protocol-probe",
+      "bin": "protocol-probe",
+      "smoke_args": [
+        "--self-check"
+      ],
+      "smoke_stdin": null,
+      "smoke_expect": "protocol-probe self-check ok",
+      "maintainers": [
+        "aspauldingcode"
+      ],
+      "homepage": "https://github.com/Wawona/repo.wawona.io/tree/master/catalog/wasm/src/p1/packages/protocol-probe"
+    },
+    {
       "name": "wasi-true",
       "version": "0.1.0",
       "abi": "wasi-p1",

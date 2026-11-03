@@ -51,6 +51,8 @@ for p in recipes["packages"]:
     if p["name"] == name:
         print(f"version={shlex.quote(p['version'])}")
         print(f"abi={shlex.quote(p.get('abi') or 'wasi-p1')}")
+        print(f"pkg_path={shlex.quote(p.get('path') or ('packages/' + name))}")
+        print(f"pkg_bin={shlex.quote(p.get('bin') or name)}")
         expect = p.get("smoke_expect")
         print(f"smoke_expect={shlex.quote('' if expect is None else expect)}")
         args = p.get("smoke_args") or []
@@ -87,6 +89,17 @@ mapfile -t smoke_args < <(python3 -c 'import json,sys; [print(a) for a in json.l
 wasmtime_cmd=(wasmtime run)
 if [[ "$abi" == "wasi-p2" ]]; then
   wasmtime_cmd=(wasmtime run -W component-model)
+fi
+
+# protocol-probe product wasm imports Wawona host ABI. Wasmtime cannot link
+# those; rebuild without host-abi for --self-check smoke only.
+if [[ "$NAME" == "protocol-probe" ]]; then
+  echo "smoke $NAME: rebuilding without host-abi for Wasmtime self-check"
+  (
+    cd "$ROOT/$pkg_path"
+    cargo build --release --target wasm32-wasip1 --bin "$pkg_bin" --no-default-features
+  )
+  wasm="$ROOT/$pkg_path/target/wasm32-wasip1/release/${pkg_bin}.wasm"
 fi
 
 # Do not pass a bare "--" after the module: wasmtime forwards it to the guest.
