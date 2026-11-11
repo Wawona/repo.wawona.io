@@ -153,7 +153,7 @@ EOF
     # the atexit guard both apply here too.
     $XCODE_CLANG -c src/fastfetch.c \
       -I. -Ibuild -Isrc \
-      -arch $IOS_ARCH -isysroot $SDKROOT $APPLE_DEPLOYMENT_FLAG -fPIC -O2 \
+      -arch $IOS_ARCH -target $APPLE_LINKER_TARGET -isysroot $SDKROOT $APPLE_DEPLOYMENT_FLAG -fPIC -O2 \
       -DWAWONA_APPLE_MOBILE=1 ${platformDefine} \
       -D_GNU_SOURCE -D_XOPEN_SOURCE -D__STDC_WANT_LIB_EXT1__ -D_FILE_OFFSET_BITS=64 -D_DARWIN_C_SOURCE -DNDEBUG \
       -include src/wawona_ff_inprocess.h \
